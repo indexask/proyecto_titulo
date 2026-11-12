@@ -6,7 +6,8 @@
 // únicamente como canal de envío). Marca la alerta como enviada si llegó al
 // menos a un dispositivo y elimina los tokens que FCM reporta como inválidos.
 //
-// Solo acepta la service_role key (desplegar con --no-verify-jwt).
+// Solo acepta la service_role key en formato JWT: pasa la verificación del
+// gateway de Supabase y además se compara aquí con SUPABASE_SERVICE_ROLE_KEY.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { HttpError, json, servir } from "../_shared/comun.ts";
 import { CuentaServicio, enviarPush, tokenDeAcceso } from "./fcm.ts";

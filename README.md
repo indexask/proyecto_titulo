@@ -37,7 +37,7 @@ supabase secrets set GOOGLE_MAPS_API_KEY=<clave-servidor>   # Routes API + Place
 supabase secrets set FIREBASE_SERVICE_ACCOUNT="$(cat cuenta-servicio.json)"   # push (ver §4)
 supabase functions deploy geocodificar
 supabase functions deploy optimizar-ruta
-supabase functions deploy enviar-alertas --no-verify-jwt   # valida la service key por sí misma
+supabase functions deploy enviar-alertas   # con verificación JWT (ver paso 4 de abajo)
 ```
 
 En el panel de Supabase:
@@ -49,7 +49,8 @@ En el panel de Supabase:
 4. **SQL Editor**: guardar en Vault los datos para que el CRON dispare el envío push:
    ```sql
    select vault.create_secret('https://<ref>.supabase.co', 'gygtrack_url_proyecto');
-   select vault.create_secret('<service_role key>', 'gygtrack_service_role_key');
+   -- service_role en formato JWT ("eyJ..."; Settings → API Keys → Legacy API keys):
+   select vault.create_secret('<service_role JWT>', 'gygtrack_service_role_key');
    ```
 
 ### 3. Claves de la app (no se versionan)

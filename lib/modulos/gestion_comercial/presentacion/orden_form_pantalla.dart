@@ -96,12 +96,22 @@ class _LineaForm implements LineaConMargen {
   bool get incluida => producto != null || esNueva;
   String get nombre => producto?.nombre ?? nombreNuevoCtrl?.text.trim() ?? '';
 
-  void elegir(Producto p) {
+  /// Controladores que ya no se muestran. No se liberan aquí porque un widget
+  /// en transición todavía puede usarlos; se liberan en [dispose].
+  final _descartados = <TextEditingController>[];
+
+  /// Pasa la línea a un producto del catálogo. Con [conservarPrecios] mantiene
+  /// costo y precio escritos (al guardar un producto recién creado).
+  void elegir(Producto p, {bool conservarPrecios = false}) {
     producto = p;
-    nombreNuevoCtrl?.dispose();
-    nombreNuevoCtrl = null;
-    costoCtrl.text = textoMonto(p.costoCompra);
-    precioCtrl.text = textoMonto(p.precioVenta);
+    if (nombreNuevoCtrl != null) {
+      _descartados.add(nombreNuevoCtrl!);
+      nombreNuevoCtrl = null;
+    }
+    if (!conservarPrecios) {
+      costoCtrl.text = textoMonto(p.costoCompra);
+      precioCtrl.text = textoMonto(p.precioVenta);
+    }
   }
 
   @override
@@ -128,6 +138,9 @@ class _LineaForm implements LineaConMargen {
 
   void dispose() {
     nombreNuevoCtrl?.dispose();
+    for (final c in _descartados) {
+      c.dispose();
+    }
     cantidadCtrl.dispose();
     costoCtrl.dispose();
     precioCtrl.dispose();
@@ -249,7 +262,10 @@ class _FormularioState extends ConsumerState<_Formulario> {
           );
           if (l.foto != null) await productosRepo.subirFoto(id, l.foto!);
           // Si algo falla después, reintentar no vuelve a crear el producto.
-          l.elegir(Producto(id: id, nombre: l.nombre, costoCompra: l.costoCompra, precioVenta: l.precioVenta));
+          l.elegir(
+            Producto(id: id, nombre: l.nombre, costoCompra: l.costoCompra, precioVenta: l.precioVenta),
+            conservarPrecios: true,
+          );
         } else if (l.foto != null && l.producto!.fotoPath == null) {
           await productosRepo.subirFoto(l.producto!.id, l.foto!);
         }
@@ -436,6 +452,7 @@ class _FormularioState extends ConsumerState<_Formulario> {
     final faltaCosto = linea.incluida && parsearMonto(linea.costoCtrl.text) == null;
 
     return Card(
+      key: ObjectKey(linea),
       margin: const EdgeInsets.symmetric(vertical: 6),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -471,7 +488,12 @@ class _FormularioState extends ConsumerState<_Formulario> {
                 IconButton(
                   tooltip: 'Quitar',
                   icon: const Icon(Icons.close),
-                  onPressed: () => setState(() => _lineas.removeAt(indice).dispose()),
+                  onPressed: () {
+                    final quitada = _lineas[indice];
+                    setState(() => _lineas.removeAt(indice));
+                    // Se libera cuando su widget ya no está en pantalla.
+                    WidgetsBinding.instance.addPostFrameCallback((_) => quitada.dispose());
+                  },
                 ),
               ],
             ),

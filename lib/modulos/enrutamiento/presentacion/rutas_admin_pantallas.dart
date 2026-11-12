@@ -204,7 +204,7 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
     if (_seleccion.isEmpty) return mostrarMensaje(context, 'Selecciona al menos un despacho');
     setState(() => _guardando = true);
     try {
-      final id = await ref.read(rutasRepositorioProvider).crearOptimizada(
+      final creada = await ref.read(rutasRepositorioProvider).crearOptimizada(
             fecha: _fecha,
             choferId: _choferId,
             origenDireccion: _origen!.direccion,
@@ -213,7 +213,11 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
             despachoIds: _seleccion.toList(),
           );
       ref.invalidate(rutasAdminProvider);
-      if (mounted) context.pushReplacement('/admin/rutas/$id');
+      if (!mounted) return;
+      if (creada.advertencias.isNotEmpty) {
+        mostrarMensaje(context, 'Atención: ${creada.advertencias.join(' · ')}');
+      }
+      context.pushReplacement('/admin/rutas/${creada.id}');
     } catch (e) {
       if (mounted) mostrarMensaje(context, mensajeError(e));
     } finally {
@@ -289,7 +293,9 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
             ),
             const Divider(height: 32),
             Text('Despachos de la jornada', style: Theme.of(context).textTheme.titleMedium),
-            const Text('Ordenados por plazo. El orden de visita se optimiza automáticamente.',
+            const Text(
+                'Ordenados por plazo. Lo que vence en la jornada se visita primero; '
+                'dentro de cada grupo el orden se optimiza automáticamente.',
                 style: TextStyle(fontSize: 12)),
             if (candidatas.isEmpty)
               const Padding(padding: EdgeInsets.all(24), child: Text('No hay despachos pendientes.')),

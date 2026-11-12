@@ -21,6 +21,23 @@ export function costoRecorrido(r: Recorrido): number {
 }
 
 /**
+ * El plazo manda sobre la distancia: separa las paradas cuyo plazo vence en
+ * la jornada (o ya venció), que deben visitarse primero, del resto. La
+ * optimización por distancia/costo se aplica dentro de cada grupo.
+ * Fechas en formato ISO (YYYY-MM-DD), comparables como texto.
+ */
+export function separarPorPlazo<T extends { fechaComprometida: string }>(
+  paradas: T[],
+  fechaJornada: string,
+): { urgentes: T[]; resto: T[]; vencidas: T[] } {
+  return {
+    urgentes: paradas.filter((p) => p.fechaComprometida <= fechaJornada),
+    resto: paradas.filter((p) => p.fechaComprometida > fechaJornada),
+    vencidas: paradas.filter((p) => p.fechaComprometida < fechaJornada),
+  };
+}
+
+/**
  * Elige entre dos alternativas de recorrido aplicando la regla de negocio:
  * la alternativa más rápida solo se acepta si su costo adicional es menor a
  * $500 por cada 10 minutos ahorrados. Si además es igual o más barata, se

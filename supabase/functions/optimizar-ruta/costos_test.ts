@@ -3,7 +3,19 @@
 // o con Node ≥ 23:  node --test supabase/functions/optimizar-ruta/costos_test.ts
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { costoRecorrido, elegirRecorrido } from "./costos.ts";
+import { costoRecorrido, elegirRecorrido, separarPorPlazo } from "./costos.ts";
+
+test("plazo: lo que vence en la jornada (o ya venció) va primero", () => {
+  const paradas = [
+    { id: "manana", fechaComprometida: "2026-11-13" },
+    { id: "hoy", fechaComprometida: "2026-11-12" },
+    { id: "atrasada", fechaComprometida: "2026-11-10" },
+  ];
+  const r = separarPorPlazo(paradas, "2026-11-12");
+  assert.deepEqual(r.urgentes.map((p) => p.id), ["hoy", "atrasada"]);
+  assert.deepEqual(r.resto.map((p) => p.id), ["manana"]);
+  assert.deepEqual(r.vencidas.map((p) => p.id), ["atrasada"]);
+});
 
 test("costo: 90 km sin peajes = 10 L × $1.272", () => {
   assert.equal(costoRecorrido({ distanciaMetros: 90_000, duracionSegundos: 0, peajesClp: 0 }), 12_720);

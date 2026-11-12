@@ -26,8 +26,10 @@ class RutasRepositorio {
   }
 
   /// Compila las direcciones de los despachos elegidos y pide a la Edge
-  /// Function `optimizar-ruta` la ruta óptima (Routes API). Devuelve el id.
-  Future<String> crearOptimizada({
+  /// Function `optimizar-ruta` la ruta óptima (Routes API). Primero se visita
+  /// lo que vence en la jornada; después se optimiza por distancia/costo.
+  /// Devuelve el id y las advertencias (p. ej. plazos ya vencidos).
+  Future<({String id, List<String> advertencias})> crearOptimizada({
     required DateTime fecha,
     required String? choferId,
     required String origenDireccion,
@@ -41,7 +43,11 @@ class RutasRepositorio {
       'origen': {'direccion': origenDireccion, 'lat': origenLat, 'lng': origenLng},
       'despachoIds': despachoIds,
     });
-    return (res.data as Map<String, dynamic>)['rutaId'] as String;
+    final data = res.data as Map<String, dynamic>;
+    return (
+      id: data['rutaId'] as String,
+      advertencias: ((data['advertencias'] as List?) ?? const []).cast<String>(),
+    );
   }
 
   Future<void> eliminar(String id) => supabase.from('ruta').delete().eq('id', id);

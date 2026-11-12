@@ -112,7 +112,11 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 5. **Regla de $500 por cada 10 min:** se calcula la ruta optimizada **con peajes** y **sin peajes**. La más rápida se acepta solo si su costo adicional es menor a $500 × (minutos ahorrados / 10). Si además es más barata, se elige siempre.
 6. **Costo de una ruta** = km ÷ 9 km/L × $1.272/L + peajes (TAG, estimación de Routes API).
 7. **Viaje redondo:** la ruta sale de la bodega y vuelve a ella.
-8. **"Optimizar según plazos":** la optimización minimiza el recorrido. La prioridad estricta por plazo (por ejemplo, visitar primero lo que vence hoy) **no está implementada**: queda **por definir** con el equipo.
+8. **"Optimizar según plazos" — el plazo manda sobre la distancia** (decisión del equipo, 2026-11-12): primero se cumple el plazo y después se optimiza.
+   - Las paradas cuyo plazo vence en la jornada, o que ya vencieron, se visitan **antes** que el resto, aunque el recorrido total resulte más largo.
+   - Dentro de cada grupo, Routes API ordena las paradas por distancia. Entre las rutas que respetan esa prioridad (con y sin peajes) se aplica la regla de $500 por cada 10 minutos.
+   - Si se incluye un pedido con el plazo ya vencido, el Administrador recibe una advertencia.
+   - Límite: como el plazo es una fecha (no una hora), no se puede verificar la hora exacta de llegada; se garantiza el **orden de visita**. Probado en `costos_test.ts` (`separarPorPlazo`).
 9. **Cuentas:** no hay registro público. El Administrador crea las cuentas en Supabase Auth y toda cuenta nueva nace como Chofer.
 10. **Cambios offline rechazados:** si el servidor rechaza un cambio de la cola (por ejemplo, porque el despacho se reasignó), se descarta y se avisa al Chofer.
 
@@ -130,13 +134,12 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 |---|---|---|
 | Reglas de dominio (margen, estados, formatos, polilínea) y lógica offline | `flutter test` | 17 pruebas OK |
 | Migraciones, RLS, vistas, triggers, RPC, alertas, KPI | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 39 verificaciones OK |
-| Regla de $500 por cada 10 min y costo de ruta | Incluido en `npm test` | 5 pruebas OK |
+| Regla de $500 por cada 10 min, costo de ruta y prioridad por plazo | Incluido en `npm test` | 6 pruebas OK |
 
 ---
 
 ## 6. Pendiente
 
 1. **RF-19 — Notificaciones push.** Las alertas se generan y se registran (RF-17, 18 y 20), y se ven en la app. Falta **enviarlas al teléfono**. Para eso hay que elegir el proveedor de push, que la especificación no define. Opción habitual en Flutter: Firebase Cloud Messaging (solo para push; la base de datos sigue en Supabase). **Decisión del equipo.**
-2. Prioridad estricta por plazo al optimizar (§4.2 punto 8).
-3. Desplegar en el proyecto Supabase (ver README).
-4. Migrar de `package:flutter/material.dart` a `material_ui` (aviso de deprecación de Flutter 3.47+; no afecta el funcionamiento).
+2. Desplegar en el proyecto Supabase (ver README).
+3. Migrar de `package:flutter/material.dart` a `material_ui` (aviso de deprecación de Flutter 3.47+; no afecta el funcionamiento).

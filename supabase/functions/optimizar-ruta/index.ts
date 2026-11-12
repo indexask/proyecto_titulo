@@ -1,15 +1,17 @@
 // Edge Function: Módulo Enrutamiento (RF-21 a RF-24).
 //
 // 1. Compila las direcciones de entrega de los despachos de la jornada (RF-21).
-// 2. Consulta Google Routes API (RF-22):
-//    a) ruta SIN optimizar: paradas en orden de plazo (fecha_comprometida),
-//       que es como se arman hoy los repartos → línea base para el ahorro.
-//    b) ruta optimizada permitiendo peajes (TAG).
-//    c) ruta optimizada evitando peajes.
-// 3. Entre (b) y (c) aplica la regla de negocio: el desvío más rápido solo se
-//    acepta si cuesta menos de $500 por cada 10 minutos ahorrados.
-// 4. Guarda la ruta, sus paradas en el orden óptimo y el ahorro estimado en
-//    combustible y peajes (RF-24). El Chofer solo la visualiza (RF-23).
+// 2. "Cumplir el plazo primero, optimizar después": las paradas cuyo plazo
+//    vence en la jornada (o ya venció) se visitan ANTES que el resto. Dentro de
+//    cada grupo, Google Routes API ordena las paradas para minimizar el
+//    recorrido (RF-22).
+// 3. Se calcula esa ruta priorizada permitiendo peajes (TAG) y evitándolos, y
+//    se aplica la regla de negocio: el desvío más rápido solo se acepta si
+//    cuesta menos de $500 por cada 10 minutos ahorrados.
+// 4. Línea base para el ahorro: las mismas paradas en orden de plazo, sin
+//    optimizar (como se arman hoy los repartos).
+// 5. Guarda la ruta, sus paradas y el ahorro estimado en combustible y
+//    peajes (RF-24). El Chofer solo la visualiza (RF-23).
 import {
   clienteAdministrador,
   googleMapsApiKey,
@@ -17,7 +19,7 @@ import {
   json,
   servir,
 } from "../_shared/comun.ts";
-import { costoRecorrido, elegirRecorrido, Recorrido } from "./costos.ts";
+import { costoRecorrido, elegirRecorrido, Recorrido, separarPorPlazo } from "./costos.ts";
 
 interface Punto {
   lat: number;
@@ -32,7 +34,8 @@ interface Parada extends Punto {
 
 interface ResultadoRuta extends Recorrido {
   polilinea: string;
-  ordenOptimo: number[];
+  /** Paradas en el orden de visita. */
+  secuencia: Parada[];
   usaPeajes: boolean;
 }
 
@@ -63,6 +66,7 @@ servir(async (req) => {
     .in("id", despachoIds);
   if (error) throw new HttpError(500, error.message);
 
+  // deno-lint-ignore no-explicit-any
   const paradas: Parada[] = (filas ?? []).map((f: any) => {
     const o = f.orden_compra;
     if (f.estado === "entregado") {
@@ -83,19 +87,22 @@ servir(async (req) => {
     throw new HttpError(404, "Algún despacho no existe");
   }
 
-  // Orden por plazo: primero lo que vence antes.
   paradas.sort((a, b) =>
     a.fechaComprometida.localeCompare(b.fechaComprometida) || a.cliente.localeCompare(b.cliente)
   );
 
+  // --- Plazo primero --------------------------------------------------------
+  const { urgentes, resto, vencidas } = separarPorPlazo(paradas, fecha);
+
   // --- RF-22: Google Routes API --------------------------------------------
   const apiKey = googleMapsApiKey();
   const [sinOptimizar, conPeajes, sinPeajes] = await Promise.all([
-    calcularRuta(apiKey, origen, paradas, { optimizar: false, evitarPeajes: false }),
-    calcularRuta(apiKey, origen, paradas, { optimizar: true, evitarPeajes: false }),
-    calcularRuta(apiKey, origen, paradas, { optimizar: true, evitarPeajes: true }),
+    calcularRuta(apiKey, origen, origen, paradas, { optimizar: false, evitarPeajes: false }),
+    rutaPriorizada(apiKey, origen, urgentes, resto, false),
+    rutaPriorizada(apiKey, origen, urgentes, resto, true),
   ]);
 
+  // Ambas alternativas respetan el plazo; entre ellas manda la regla de costo.
   const elegida = elegirRecorrido(conPeajes, sinPeajes);
 
   // --- RF-24: costos y ahorro ----------------------------------------------
@@ -121,9 +128,9 @@ servir(async (req) => {
     .single();
   if (errRuta) throw new HttpError(500, errRuta.message);
 
-  const filasParadas = elegida.ordenOptimo.map((indice, posicion) => ({
+  const filasParadas = elegida.secuencia.map((p, posicion) => ({
     ruta_id: ruta.id,
-    despacho_id: paradas[indice].despachoId,
+    despacho_id: p.despachoId,
     orden: posicion,
   }));
   const { error: errParadas } = await supabase.from("ruta_parada").insert(filasParadas);
@@ -138,12 +145,52 @@ servir(async (req) => {
     costoSinOptimizar,
     costoOptimizada,
     ahorro: costoSinOptimizar - costoOptimizada,
+    paradasPrioritarias: urgentes.length,
+    advertencias: vencidas.map((p) =>
+      `${p.cliente}: el plazo venció el ${p.fechaComprometida}; se visita primero`
+    ),
   });
 });
 
-async function calcularRuta(
+/**
+ * Ruta que visita primero las paradas urgentes y después el resto, cada
+ * grupo en su orden óptimo:
+ *   a) urgentes: bodega → urgentes (orden óptimo) → bodega
+ *   b) resto:    última urgente → resto (orden óptimo) → bodega
+ *   c) recorrido final con ese orden fijo (distancia, peajes y trazado reales)
+ */
+async function rutaPriorizada(
   apiKey: string,
   origen: Punto,
+  urgentes: Parada[],
+  resto: Parada[],
+  evitarPeajes: boolean,
+): Promise<ResultadoRuta> {
+  if (urgentes.length === 0 || resto.length === 0) {
+    const todas = urgentes.length ? urgentes : resto;
+    return calcularRuta(apiKey, origen, origen, todas, { optimizar: true, evitarPeajes });
+  }
+
+  const tramoUrgente = await calcularRuta(apiKey, origen, origen, urgentes, {
+    optimizar: true,
+    evitarPeajes,
+  });
+  const ultimaUrgente = tramoUrgente.secuencia[tramoUrgente.secuencia.length - 1];
+  const tramoResto = await calcularRuta(apiKey, ultimaUrgente, origen, resto, {
+    optimizar: true,
+    evitarPeajes,
+  });
+
+  return calcularRuta(apiKey, origen, origen, [...tramoUrgente.secuencia, ...tramoResto.secuencia], {
+    optimizar: false,
+    evitarPeajes,
+  });
+}
+
+async function calcularRuta(
+  apiKey: string,
+  desde: Punto,
+  hasta: Punto,
   paradas: Parada[],
   opciones: { optimizar: boolean; evitarPeajes: boolean },
 ): Promise<ResultadoRuta> {
@@ -163,8 +210,8 @@ async function calcularRuta(
       ].join(","),
     },
     body: JSON.stringify({
-      origin: punto(origen),
-      destination: punto(origen), // viaje redondo: vuelve a bodega
+      origin: punto(desde),
+      destination: punto(hasta),
       intermediates: paradas.map(punto),
       travelMode: "DRIVE",
       routingPreference: "TRAFFIC_UNAWARE",
@@ -185,7 +232,9 @@ async function calcularRuta(
   if (!r) throw new HttpError(502, "Routes API no devolvió rutas");
 
   const peajesClp = (r.travelAdvisory?.tollInfo?.estimatedPrice ?? [])
+    // deno-lint-ignore no-explicit-any
     .filter((m: any) => m.currencyCode === "CLP")
+    // deno-lint-ignore no-explicit-any
     .reduce((s: number, m: any) => s + Number(m.units ?? 0) + (m.nanos ?? 0) / 1e9, 0);
 
   const indices: number[] =
@@ -199,7 +248,7 @@ async function calcularRuta(
     duracionSegundos: parseInt(String(r.duration ?? "0s").replace("s", ""), 10),
     peajesClp,
     polilinea: r.polyline?.encodedPolyline ?? "",
-    ordenOptimo: indices,
+    secuencia: indices.map((i) => paradas[i]),
     usaPeajes: peajesClp > 0,
   };
 }

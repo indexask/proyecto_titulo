@@ -10,6 +10,7 @@ import '../../logistico_notificaciones/presentacion/widgets_despacho.dart';
 import '../dominio/orden_compra.dart';
 import '../dominio/rentabilidad.dart';
 import 'comercial_providers.dart';
+import 'foto_producto.dart';
 
 /// Detalle de una orden para el Administrador: rentabilidad (RF-07) y
 /// despacho, con registro de bultos (RF-12).
@@ -110,6 +111,9 @@ class OrdenDetallePantalla extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             children: [
               Text(o.cliente, style: tema.textTheme.headlineSmall),
+              if (o.numeroCotizacion != null)
+                Text('Cotización ${o.numeroCotizacion}'
+                    '${o.fechaCotizacion != null ? ' · ${formatoFecha(o.fechaCotizacion)}' : ''}'),
               if (o.numeroOc != null) Text('OC ${o.numeroOc}'),
               const SizedBox(height: 4),
               TextoPlazo(fechaComprometida: o.fechaComprometida, entregado: o.fechaHoraEntrega != null),
@@ -128,6 +132,17 @@ class OrdenDetallePantalla extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text('Productos', style: tema.textTheme.titleMedium),
+              if (o.detalles.any((d) => d.productoFotoPath != null))
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Wrap(spacing: 8, children: [
+                    for (final d in o.detalles.where((d) => d.productoFotoPath != null))
+                      Tooltip(
+                        message: d.productoNombre,
+                        child: FotoProducto(ruta: d.productoFotoPath, tamano: 120),
+                      ),
+                  ]),
+                ),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(

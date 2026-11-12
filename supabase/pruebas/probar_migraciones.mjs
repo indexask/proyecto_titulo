@@ -261,6 +261,13 @@ const cmd = (await db.query(`select command from cron.job where jobname = 'gygtr
 ok(cmd.includes("generar_alertas()") && cmd.includes("disparar_envio_push()"),
   "el CRON genera las alertas y luego dispara el push");
 
+// --- Importación de cotizaciones ---
+await como(A, `update orden_compra set numero_cotizacion = '5609-132-COT26', fecha_cotizacion = '2026-08-12' where id = $1`, [o2]);
+ok((await falla(A, `insert into orden_compra (cliente, direccion_entrega, fecha_comprometida, numero_cotizacion) values ('X', 'Y', current_date, '5609-132-COT26')`))?.includes("duplicate") ?? false,
+  "no se puede importar dos veces la misma cotización");
+ok((await como(C1, `select * from v_despacho_chofer where despacho_id = $1`, [d2])).rows.length === 1, "la vista del Chofer sigue funcionando con los campos nuevos");
+ok((await db.query(`select count(*)::int n from storage.buckets where id = 'productos'`)).rows[0].n === 1, "bucket privado de fotos de productos");
+
 // --- Eliminación en cascada ---
 await como(A, `delete from orden_compra where id = $1`, [o1]);
 ok((await db.query(`select count(*)::int n from despacho where orden_id = $1`, [o1])).rows[0].n === 0,

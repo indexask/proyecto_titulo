@@ -6,7 +6,7 @@ import '../dominio/orden_compra.dart';
 /// y registro de bultos del despacho (RF-12). Solo Administrador (RLS).
 class OrdenesRepositorio {
   static const _select = '*, responsable:usuario(nombre), '
-      'detalle_orden(*, producto(nombre)), despacho(*)';
+      'detalle_orden(*, producto(nombre, foto_path)), despacho(*)';
 
   Future<List<OrdenCompra>> listar() async {
     final data = await supabase
@@ -26,6 +26,8 @@ class OrdenesRepositorio {
   Future<String> guardar({
     String? id,
     String? numeroOc,
+    String? numeroCotizacion,
+    DateTime? fechaCotizacion,
     required String cliente,
     required String direccionEntrega,
     required double? direccionLat,
@@ -36,6 +38,9 @@ class OrdenesRepositorio {
   }) async {
     final valores = {
       'numero_oc': (numeroOc == null || numeroOc.isEmpty) ? null : numeroOc,
+      'numero_cotizacion':
+          (numeroCotizacion == null || numeroCotizacion.isEmpty) ? null : numeroCotizacion,
+      'fecha_cotizacion': fechaCotizacion == null ? null : fechaIso(fechaCotizacion),
       'cliente': cliente,
       'direccion_entrega': direccionEntrega,
       'direccion_lat': direccionLat,

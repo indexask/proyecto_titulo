@@ -23,6 +23,28 @@ como canal de envío de notificaciones push** (RF-19).
 
 ---
 
+## 0.1 Importación automática de cotizaciones (solicitud del equipo, 2026-11-12)
+
+El Administrador presiona **"Subir cotización"** en Órdenes, elige el PDF y el formulario de la orden queda completado:
+
+| Campo de la cotización | Dónde queda |
+|---|---|
+| Fecha (ej. 12-08-2026) | `orden_compra.fecha_cotizacion` |
+| Solicitado por | `orden_compra.cliente` |
+| Dirección (del cliente, no la de GyG) | `orden_compra.direccion_entrega`; se valida sola con Places |
+| Cotización (ej. 5609-132-COT26) | `orden_compra.numero_cotizacion` (única: no se puede importar dos veces) |
+| Descripción, Unidades, Precio unidad, Total | Una línea de `detalle_orden` por producto. Si el producto existe en el catálogo se reutiliza; si no, se crea al guardar |
+| Foto del producto | `producto.foto_path` (bucket privado `productos` de Supabase Storage) |
+
+- **Sin IA y sin tecnologías nuevas.** La Edge Function `importar-cotizacion` lee la **plantilla propia de GyG** (etiquetas y columnas del PDF) con librerías de lectura de PDF, y extrae la foto embebida (JPEG). El PDF no sale de Supabase. Por eso no se reintroduce Gemini, que usaba el prototipo y está fuera del stack.
+- **Lo que no viene en la cotización:** el **costo de compra** (necesario para el margen, RF-07) se completa solo si el producto ya está en el catálogo; si es nuevo, el formulario lo pide. El **plazo de entrega** se propone desde el texto "N a M días hábiles" (hoy + M días hábiles) y es editable.
+- **Límites:** funciona con la plantilla de cotización de GyG. Si el formato cambia o el PDF es escaneado (sin texto), los campos no encontrados quedan vacíos con un aviso y se completan a mano.
+- **Total:** se usa el **neto** (Subtotal, sin IVA), que coincide con Σ unidades × precio. El total con IVA se muestra como referencia. Si la suma de productos no cuadra con el subtotal, se avisa.
+- **[VALIDAR] para el informe:** extiende RF-05 (registro de adjudicación) y RF-11 (foto en el catálogo). Agrega los campos `numero_cotizacion`, `fecha_cotizacion` y `foto_path`.
+- Pruebas: `lector_test.ts` (fixture con las posiciones reales de la cotización 5609-132-COT26) y `cotizacion_importada_test.dart`. Se verificó de punta a punta con el PDF real: los 8 campos y la foto.
+
+---
+
 ## 1. Qué pasó con el prototipo (`cotizaciones_rutas`)
 
 | Elemento del prototipo | Decisión | Motivo |
@@ -33,7 +55,7 @@ como canal de envío de notificaciones push** (RF-19).
 | Pantalla de mapa con marcadores y trazado | **Se conserva y se mejora** | Dibuja el trazado real de la ruta (polilínea) en vez de líneas rectas |
 | Manejo de secretos (`env/`, `secrets.properties`, Codemagic) | **Se conserva** | Buena práctica (ISO/IEC 27001) |
 | Extracción de PDF con **Google Gemini** | **Se elimina** | Tecnología fuera del stack cerrado (regla 5) y función no especificada |
-| Subida de PDF y foto del producto (Storage) | **Se elimina** | No forma parte de los RF |
+| Subida de PDF y foto del producto (Storage) | **Se elimina, y luego se reintroduce sin IA** | Pedido por el equipo (§0.1): lectura determinista de la plantilla de GyG; la foto va al catálogo |
 | Registro público de cuentas | **Se elimina** | Exactamente 2 usuarios. Cualquiera podía crearse una cuenta |
 | Tabla `cotizaciones` (un ítem, `monto` total) | **Se reemplaza** | No permitía calcular el margen neto (RF-06/07) |
 | Estado en la **ruta** (pendiente/en_curso/completada) | **Se reemplaza** | La especificación exige estado por **despacho**: Pendiente → En Ruta → Entregado |
@@ -78,7 +100,7 @@ dominio no depende de Flutter ni de Supabase, así que se puede probar de forma 
 | RF-02 | Columna `usuario.rol`, función `es_administrador()`, RLS y redirección por rol en `core/router.dart` |
 | RF-03 | Las tablas con datos financieros son **solo del Administrador** (RLS). El Chofer lee únicamente las vistas `v_despacho_chofer`, `v_ruta_chofer` y `v_alerta_chofer`, que no tienen columnas financieras. Está probado en BD y en la copia local del teléfono |
 | RF-04 | `cerrarSesion()`: cierra la sesión y borra los datos guardados en el dispositivo. Avisa si hay cambios sin sincronizar |
-| RF-05 | `OrdenFormPantalla` → `orden_compra` + `detalle_orden` |
+| RF-05 | `OrdenFormPantalla` → `orden_compra` + `detalle_orden`. **Importación automática desde el PDF de la cotización** (ver §0.1) |
 | RF-06 | Costo y precio adjudicado **por línea** (`detalle_orden`). Toman por defecto los del catálogo |
 | RF-07 | Trigger `detalle_orden_margen` → `orden_compra.margen_neto` (fuente oficial) + `calcularMargenNeto` en Dart, que lo muestra al instante mientras se escribe (KPI-03) |
 | RF-08 | `UtilidadPanel`: indicadores y gráfico de barras de utilidad por orden |
@@ -155,9 +177,9 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 
 | Qué | Cómo | Resultado |
 |---|---|---|
-| Reglas de dominio (margen, estados, formatos, polilínea) y lógica offline | `flutter test` | 17 pruebas OK |
-| Migraciones, RLS, vistas, triggers, RPC, alertas, KPI, registro de dispositivos y disparo push, respaldo y restauración del prototipo | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 51 verificaciones OK |
-| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256) y respuestas de FCM | Incluido en `npm test` | 11 pruebas OK |
+| Reglas de dominio (margen, estados, formatos, polilínea, días hábiles, importación) y lógica offline | `flutter test` | 20 pruebas OK |
+| Migraciones, RLS, vistas, triggers, RPC, alertas, KPI, registro de dispositivos y disparo push, respaldo y restauración del prototipo | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 54 verificaciones OK |
+| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones | Incluido en `npm test` | 18 pruebas OK |
 
 ---
 

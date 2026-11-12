@@ -1,7 +1,9 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/errores.dart';
 import '../../../core/formato.dart';
 import '../../../core/widgets/vista_async.dart';
 import '../../logistico_notificaciones/dominio/estado_despacho.dart';
@@ -74,11 +76,55 @@ class OrdenesLista extends ConsumerWidget {
           }),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/admin/ordenes/nueva'),
-        icon: const Icon(Icons.add),
-        label: const Text('Registrar adjudicación'),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'orden-manual',
+            tooltip: 'Registrar manualmente',
+            onPressed: () => context.push('/admin/ordenes/nueva'),
+            child: const Icon(Icons.edit_note),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'subir-cotizacion',
+            onPressed: () => subirCotizacion(context, ref),
+            icon: const Icon(Icons.upload_file),
+            label: const Text('Subir cotización'),
+          ),
+        ],
       ),
     );
+  }
+}
+
+/// Elige el PDF de la cotización, lo lee automáticamente y abre el
+/// formulario de la orden con los datos completados.
+Future<void> subirCotizacion(BuildContext context, WidgetRef ref) async {
+  final archivo = await FilePicker.pickFile(type: FileType.custom, allowedExtensions: ['pdf']);
+  if (archivo == null || !context.mounted) return;
+
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const AlertDialog(
+      content: Row(children: [
+        CircularProgressIndicator(),
+        SizedBox(width: 16),
+        Expanded(child: Text('Leyendo cotización…')),
+      ]),
+    ),
+  );
+  try {
+    final bytes = await archivo.readAsBytes();
+    final datos = await ref.read(cotizacionesRepositorioProvider).importarPdf(bytes);
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    context.push('/admin/ordenes/nueva', extra: datos);
+  } catch (e) {
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    mostrarMensaje(context, 'No se pudo leer la cotización: ${mensajeError(e)}');
   }
 }

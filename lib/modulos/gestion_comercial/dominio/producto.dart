@@ -5,12 +5,14 @@ class Producto {
   final String nombre;
   final num costoCompra;
   final num precioVenta;
+  final String? fotoPath;
 
   const Producto({
     required this.id,
     required this.nombre,
     required this.costoCompra,
     required this.precioVenta,
+    this.fotoPath,
   });
 
   num get margenUnitario => precioVenta - costoCompra;
@@ -20,5 +22,6 @@ class Producto {
         nombre: map['nombre'] as String,
         costoCompra: map['costo_compra'] as num,
         precioVenta: map['precio_venta'] as num,
+        fotoPath: map['foto_path'] as String?,
       );
 }

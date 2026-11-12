@@ -7,6 +7,7 @@ class DetalleOrden implements LineaConMargen {
   final String? id;
   final String productoId;
   final String productoNombre;
+  final String? productoFotoPath;
   @override
   final int cantidad;
   @override
@@ -18,6 +19,7 @@ class DetalleOrden implements LineaConMargen {
     this.id,
     required this.productoId,
     required this.productoNombre,
+    this.productoFotoPath,
     required this.cantidad,
     required this.costoCompra,
     required this.precioVenta,
@@ -29,6 +31,7 @@ class DetalleOrden implements LineaConMargen {
         id: map['id'] as String?,
         productoId: map['producto_id'] as String,
         productoNombre: (map['producto'] as Map<String, dynamic>?)?['nombre'] as String? ?? '—',
+        productoFotoPath: (map['producto'] as Map<String, dynamic>?)?['foto_path'] as String?,
         cantidad: map['cantidad'] as int,
         costoCompra: map['costo_compra'] as num,
         precioVenta: map['precio_venta'] as num,
@@ -74,6 +77,8 @@ class DespachoResumen {
 class OrdenCompra {
   final String id;
   final String? numeroOc;
+  final String? numeroCotizacion;
+  final DateTime? fechaCotizacion;
   final String cliente;
   final String direccionEntrega;
   final double? direccionLat;
@@ -95,6 +100,8 @@ class OrdenCompra {
     required this.margenNeto,
     required this.createdAt,
     this.numeroOc,
+    this.numeroCotizacion,
+    this.fechaCotizacion,
     this.direccionLat,
     this.direccionLng,
     this.fechaHoraEntrega,
@@ -106,7 +113,10 @@ class OrdenCompra {
 
   num get ventaTotal => calcularVentaTotal(detalles);
 
-  String get titulo => numeroOc == null || numeroOc!.isEmpty ? cliente : '$numeroOc · $cliente';
+  String get titulo {
+    final codigo = (numeroOc?.isNotEmpty ?? false) ? numeroOc : numeroCotizacion;
+    return codigo == null || codigo.isEmpty ? cliente : '$codigo · $cliente';
+  }
 
   bool get geocodificada => direccionLat != null && direccionLng != null;
 
@@ -121,6 +131,10 @@ class OrdenCompra {
     return OrdenCompra(
       id: map['id'] as String,
       numeroOc: map['numero_oc'] as String?,
+      numeroCotizacion: map['numero_cotizacion'] as String?,
+      fechaCotizacion: map['fecha_cotizacion'] == null
+          ? null
+          : DateTime.parse(map['fecha_cotizacion'] as String),
       cliente: map['cliente'] as String,
       direccionEntrega: map['direccion_entrega'] as String,
       direccionLat: (map['direccion_lat'] as num?)?.toDouble(),

@@ -37,6 +37,7 @@ supabase secrets set GOOGLE_MAPS_API_KEY=<clave-servidor>   # Routes API + Place
 supabase secrets set FIREBASE_SERVICE_ACCOUNT="$(cat cuenta-servicio.json)"   # push (ver §4)
 supabase functions deploy geocodificar
 supabase functions deploy optimizar-ruta
+supabase functions deploy importar-cotizacion
 supabase functions deploy enviar-alertas   # con verificación JWT (ver paso 4 de abajo)
 ```
 

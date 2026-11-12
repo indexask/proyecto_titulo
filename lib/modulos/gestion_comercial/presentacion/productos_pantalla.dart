@@ -6,6 +6,7 @@ import '../../../core/formato.dart';
 import '../../../core/widgets/vista_async.dart';
 import '../dominio/producto.dart';
 import 'comercial_providers.dart';
+import 'foto_producto.dart';
 
 /// Catálogo de productos y sus costos (RF-11).
 class ProductosLista extends ConsumerWidget {
@@ -50,6 +51,7 @@ class ProductosLista extends ConsumerWidget {
             itemBuilder: (context, i) {
               final p = productos[i];
               return ListTile(
+                leading: FotoProducto(ruta: p.fotoPath),
                 title: Text(p.nombre),
                 subtitle: Text('Costo ${formatoClp(p.costoCompra)} · Precio ${formatoClp(p.precioVenta)}'),
                 trailing: Row(

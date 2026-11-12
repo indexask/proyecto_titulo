@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../datos/cotizaciones_repositorio.dart';
 import '../datos/ordenes_repositorio.dart';
 import '../datos/productos_repositorio.dart';
 import '../dominio/orden_compra.dart';
@@ -20,4 +21,12 @@ final ordenProvider = FutureProvider.autoDispose.family<OrdenCompra, String>((re
 
 final productosProvider = FutureProvider.autoDispose<List<Producto>>((ref) {
   return ref.watch(productosRepositorioProvider).listar();
+});
+
+final cotizacionesRepositorioProvider =
+    Provider<CotizacionesRepositorio>((ref) => CotizacionesRepositorio());
+
+/// URL firmada de la foto de un producto (válida 1 hora).
+final urlFotoProductoProvider = FutureProvider.autoDispose.family<String, String>((ref, ruta) {
+  return ref.watch(productosRepositorioProvider).urlFoto(ruta);
 });

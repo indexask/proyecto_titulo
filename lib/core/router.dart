@@ -8,6 +8,7 @@ import '../modulos/administracion_seguridad/presentacion/panel_administrador.dar
 import '../modulos/administracion_seguridad/presentacion/splash_pantalla.dart';
 import '../modulos/enrutamiento/presentacion/rutas_admin_pantallas.dart';
 import '../modulos/enrutamiento/presentacion/rutas_chofer_pantalla.dart';
+import '../modulos/gestion_comercial/dominio/cotizacion_importada.dart';
 import '../modulos/gestion_comercial/presentacion/orden_detalle_pantalla.dart';
 import '../modulos/gestion_comercial/presentacion/orden_form_pantalla.dart';
 import '../modulos/logistico_notificaciones/presentacion/alertas_pantalla.dart';
@@ -54,7 +55,10 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // --- Administrador (web/escritorio) ---
       GoRoute(path: '/admin', builder: (c, s) => const PanelAdministrador()),
-      GoRoute(path: '/admin/ordenes/nueva', builder: (c, s) => const OrdenFormPantalla()),
+      GoRoute(
+        path: '/admin/ordenes/nueva',
+        builder: (c, s) => OrdenFormPantalla(importada: s.extra as CotizacionImportada?),
+      ),
       GoRoute(
         path: '/admin/ordenes/:id',
         builder: (c, s) => OrdenDetallePantalla(ordenId: s.pathParameters['id']!),

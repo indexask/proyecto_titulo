@@ -8,6 +8,21 @@ antes de reflejarlo en el informe.
 
 ---
 
+## 0. Cambio en el stack documentado (actualizar el informe)
+
+**Decisión del equipo (2026-11-12):** se agrega **Firebase Cloud Messaging (FCM) únicamente
+como canal de envío de notificaciones push** (RF-19).
+
+- FCM **no** es base de datos ni backend. Supabase sigue siendo el BaaS: PostgreSQL, Auth, Edge Functions y CRON.
+- La lógica de **cuándo** alertar (3 días antes y Día Cero) sigue en Supabase (`generar_alertas` + pg_cron). FCM solo transporta el mensaje al teléfono.
+- Motivo: en Android, FCM es prácticamente el único canal de push. No tiene costo.
+
+**Texto sugerido para la tabla de stack del informe** (fila "Notificaciones"):
+> Push notifications mediante **Firebase Cloud Messaging (FCM), utilizado únicamente como canal de
+> envío**. La generación de alertas reside en Supabase (CRON + Edge Functions).
+
+---
+
 ## 1. Qué pasó con el prototipo (`cotizaciones_rutas`)
 
 | Elemento del prototipo | Decisión | Motivo |
@@ -77,7 +92,7 @@ dominio no depende de Flutter ni de Supabase, así que se puede probar de forma 
 | RF-16 | `despacho.fecha_hora_entrega` y `orden_compra.fecha_hora_entrega`, con la **hora real** del cambio aunque se sincronice después |
 | RF-17 | `generar_alertas()`: alerta preventiva a 3 días del plazo |
 | RF-18 | `generar_alertas()`: alerta "Día Cero" |
-| RF-19 | **PENDIENTE**: envío push (ver §6) |
+| RF-19 | Cada hora el CRON ejecuta `generar_alertas()` y luego `disparar_envio_push()`, que llama a la Edge Function `enviar-alertas` (pg_net). Esta envía cada alerta por **FCM** al responsable de la orden y a los Administradores, la marca `push_enviada` y limpia los tokens inválidos. La app registra el token en `dispositivo_push` al iniciar sesión y lo borra al cerrarla. Con la app abierta, la alerta se muestra en pantalla; al tocar la notificación se abre la lista de alertas. Push solo en la app móvil: en la web el Administrador ve las alertas en el panel |
 | RF-20 | Tabla `alerta` + pantalla de alertas (Administrador: todas; Chofer: las suyas) |
 | RF-21 | El Administrador elige los despachos de la jornada y `optimizar-ruta` compila sus direcciones |
 | RF-22 | Edge Functions `optimizar-ruta` (**Routes API**) y `geocodificar` (**Places API**). La clave está solo en el servidor |
@@ -100,6 +115,7 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 | `detalle_orden.costo_compra`, `precio_venta` | El precio adjudicado cambia en cada licitación. Copiarlo a la línea evita que un cambio de catálogo altere el margen de órdenes antiguas |
 | `despacho.confirmado_en_app` | Necesario para medir KPI-07 |
 | `alerta.push_enviada` | Seguimiento de RF-19 |
+| Tabla `dispositivo_push` (token, usuario, plataforma) | Saber a qué teléfonos enviar cada alerta (RF-19) |
 | `ruta.fecha`, `origen_*`, `distancia_km`, `duracion_min`, `polilinea`, `usa_peajes` | Jornada, bodega de salida y datos para mostrar la ruta |
 | Tabla `ruta_parada` | Relación Ruta–Despacho con el orden de visita |
 
@@ -125,6 +141,13 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 - `shared_preferences`: copia local de los datos del Chofer y cola offline (RF-15).
 - `connectivity_plus`: detecta cuando vuelve la conexión para sincronizar (RF-15).
 - `flutter_localizations`: textos del sistema en español.
+- `firebase_core` y `firebase_messaging`: recepción de push vía FCM (ver §0).
+
+### 4.4 Destinatarios y reglas del push
+
+11. Cada alerta se envía al **responsable de la orden** y a **todos los Administradores** que tengan la app instalada en el teléfono.
+12. Una alerta se marca como enviada si llegó al menos a un dispositivo. Si nadie tiene un teléfono registrado, se reintenta en cada ejecución del CRON durante 36 horas y después se descarta, para no enviar avisos ya desfasados. La alerta igual queda registrada y visible en la app (RF-20).
+13. El mensaje push no incluye datos financieros: solo cliente, número de OC y fecha de plazo.
 
 ---
 
@@ -133,13 +156,14 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 | Qué | Cómo | Resultado |
 |---|---|---|
 | Reglas de dominio (margen, estados, formatos, polilínea) y lógica offline | `flutter test` | 17 pruebas OK |
-| Migraciones, RLS, vistas, triggers, RPC, alertas, KPI | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 39 verificaciones OK |
-| Regla de $500 por cada 10 min, costo de ruta y prioridad por plazo | Incluido en `npm test` | 6 pruebas OK |
+| Migraciones, RLS, vistas, triggers, RPC, alertas, KPI, registro de dispositivos y disparo push, respaldo y restauración del prototipo | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 51 verificaciones OK |
+| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256) y respuestas de FCM | Incluido en `npm test` | 11 pruebas OK |
 
 ---
 
 ## 6. Pendiente
 
-1. **RF-19 — Notificaciones push.** Las alertas se generan y se registran (RF-17, 18 y 20), y se ven en la app. Falta **enviarlas al teléfono**. Para eso hay que elegir el proveedor de push, que la especificación no define. Opción habitual en Flutter: Firebase Cloud Messaging (solo para push; la base de datos sigue en Supabase). **Decisión del equipo.**
-2. Desplegar en el proyecto Supabase (ver README).
-3. Migrar de `package:flutter/material.dart` a `material_ui` (aviso de deprecación de Flutter 3.47+; no afecta el funcionamiento).
+1. **Respaldar y desplegar** en el proyecto Supabase (README §1 y §2). El respaldo se hace con `supabase/respaldo` y exige la cadena de conexión de la base, que no está en el repo.
+2. **Crear el proyecto Firebase** y cargar sus claves (README §4). Sin eso, la app funciona, pero no envía push.
+3. **Actualizar el informe:** agregar FCM al stack (§0) y la regla de prioridad por plazo (§4.2 punto 8).
+4. Migrar de `package:flutter/material.dart` a `material_ui` (aviso de deprecación de Flutter 3.47+; no afecta el funcionamiento).

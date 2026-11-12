@@ -63,3 +63,8 @@ supabase/pruebas/package-lock.json
 
 # Artefactos de compilación de Android
 /android/build/
+
+# Respaldos de datos (contienen información real) y dependencias
+supabase/respaldo/respaldos/
+supabase/respaldo/node_modules/
+supabase/respaldo/package-lock.json

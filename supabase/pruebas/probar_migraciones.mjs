@@ -5,6 +5,38 @@ import { PGlite } from "@electric-sql/pglite";
 import { uuid_ossp } from "@electric-sql/pglite/contrib/uuid_ossp";
 import fs from "node:fs";
 import path from "node:path";
+import { respaldar } from "../respaldo/respaldar_prototipo.mjs";
+
+// Antes de la migración que borra el prototipo: carga datos de ejemplo con el
+// esquema antiguo, los respalda y verifica que el SQL generado los restaure.
+async function probarRespaldo() {
+  const U = "00000000-0000-0000-0000-0000000000f1";
+  await db.exec(`
+    insert into auth.users (id, raw_user_meta_data) values ('${U}', '{"full_name":"O''Higgins"}');
+    update public.profiles set role = 'admin' where id = '${U}';
+    insert into public.cotizaciones (id, titulo, cliente, monto, admin_id, direccion_entrega)
+      values ('00000000-0000-0000-0000-0000000000f2', 'Cot. 1', 'Cliente ''A''', 1234567, '${U}', 'Av. 1');
+    insert into public.rutas (id, chofer_id, nombre) values ('00000000-0000-0000-0000-0000000000f3', '${U}', 'Ruta 1');
+    insert into public.puntos_ruta (ruta_id, direccion, lat, lng, cotizacion_id)
+      values ('00000000-0000-0000-0000-0000000000f3', 'Av. 1', -33.4, -70.6, '00000000-0000-0000-0000-0000000000f2');
+  `);
+  const { datos, sql } = await respaldar(db);
+  ok(datos.profiles.length === 1 && datos.cotizaciones.length === 1 && datos.rutas.length === 1 &&
+     datos.puntos_ruta.length === 1, "respaldo del prototipo incluye las 4 tablas");
+
+  await db.exec(`delete from public.puntos_ruta; delete from public.rutas; delete from public.cotizaciones;
+                 delete from public.profiles;`);
+  await db.exec(sql);
+  const r = await db.query(`select c.cliente, c.monto, p.full_name from public.cotizaciones c
+                            join public.profiles p on p.id = c.admin_id`);
+  ok(r.rows.length === 1 && r.rows[0].cliente === "Cliente 'A'" && Number(r.rows[0].monto) === 1234567 &&
+     r.rows[0].full_name === "O'Higgins", "el SQL del respaldo restaura los datos (incluidas comillas)");
+  ok((await db.query(`select count(*)::int n from public.puntos_ruta`)).rows[0].n === 1,
+    "se restauran también rutas y puntos de ruta");
+
+  await db.exec(`delete from public.puntos_ruta; delete from public.rutas; delete from public.cotizaciones;
+                 delete from public.profiles; delete from auth.users;`);
+}
 
 const dirMigraciones = process.argv[2];
 const db = new PGlite({ extensions: { uuid_ossp } });
@@ -33,11 +65,20 @@ await db.exec(`
   create table cron.job (jobname text primary key, schedule text, command text);
   create function cron.schedule(n text, s text, c text) returns bigint language sql as
     $$ insert into cron.job values (n, s, c) on conflict (jobname) do update set schedule = s, command = c returning 1 $$;
+  create schema vault;
+  create table vault.decrypted_secrets (name text primary key, decrypted_secret text);
+  create schema net;
+  create table net.solicitudes (id serial primary key, url text, headers jsonb, body jsonb);
+  create function net.http_post(url text, headers jsonb, body jsonb) returns bigint language sql as
+    $$ insert into net.solicitudes (url, headers, body) values (url, headers, body) returning id $$;
 `);
 
 for (const f of fs.readdirSync(dirMigraciones).filter((f) => f.endsWith(".sql")).sort()) {
+  if (f.startsWith("20261112000000")) await probarRespaldo();
   let sql = fs.readFileSync(path.join(dirMigraciones, f), "utf8");
-  sql = sql.replace(/create extension if not exists pg_cron;/i, "-- pg_cron simulado");
+  sql = sql
+    .replace(/create extension if not exists pg_cron;/i, "-- pg_cron simulado")
+    .replace(/create extension if not exists pg_net;/i, "-- pg_net simulado");
   try {
     await db.exec(sql);
     ok(true, `migración ${f}`);
@@ -196,6 +237,29 @@ console.log("  KPI:", JSON.stringify(kpi));
 ok(Number(kpi.kpi07_confirmadas_en_app) === 100 && Number(kpi.kpi08_ahorro_mes) === 2600, "v_kpi calcula indicadores");
 const kpiChofer = (await como(C1, `select * from v_kpi`)).rows;
 ok(kpiChofer.length === 0, `Chofer no obtiene KPI (${JSON.stringify(kpiChofer)})`);
+
+// --- Push (RF-19): registro de dispositivos y disparo del envío ---
+await como(C1, `select registrar_dispositivo_push('token-c1', 'android')`);
+await como(A, `select registrar_dispositivo_push('token-a', 'ios')`);
+ok((await como(C1, `select * from dispositivo_push`)).rows.length === 1,
+  "cada usuario ve solo sus propios dispositivos");
+await como(C2, `select registrar_dispositivo_push('token-c1', 'android')`);
+ok((await db.query(`select usuario_id from dispositivo_push where token = 'token-c1'`)).rows[0].usuario_id === C2,
+  "si el teléfono cambia de usuario, el token se reasigna");
+ok((await falla(C1, `insert into dispositivo_push (token, usuario_id, plataforma) values ('x', '${C2}', 'android')`)) !== null,
+  "no se pueden registrar tokens a nombre de otro usuario");
+ok((await falla(C1, `select disparar_envio_push()`)) !== null, "un usuario no puede disparar el envío push");
+ok((await db.query(`select disparar_envio_push() r`)).rows[0].r === false,
+  "sin secretos en Vault no se llama a la Edge Function");
+await db.exec(`insert into vault.decrypted_secrets values
+  ('gygtrack_url_proyecto', 'https://abc.supabase.co/'), ('gygtrack_service_role_key', 'clave-servicio')`);
+ok((await db.query(`select disparar_envio_push() r`)).rows[0].r === true, "con secretos se dispara el envío");
+const sol = (await db.query(`select url, headers from net.solicitudes`)).rows[0];
+ok(sol.url === "https://abc.supabase.co/functions/v1/enviar-alertas" &&
+   sol.headers.Authorization === "Bearer clave-servicio", `llama a enviar-alertas con la service key (${sol.url})`);
+const cmd = (await db.query(`select command from cron.job where jobname = 'gygtrack-generar-alertas'`)).rows[0].command;
+ok(cmd.includes("generar_alertas()") && cmd.includes("disparar_envio_push()"),
+  "el CRON genera las alertas y luego dispara el push");
 
 // --- Eliminación en cascada ---
 await como(A, `delete from orden_compra where id = $1`, [o1]);

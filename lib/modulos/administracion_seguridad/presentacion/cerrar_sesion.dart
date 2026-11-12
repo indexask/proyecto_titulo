@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../logistico_notificaciones/presentacion/push_servicio.dart';
 import 'auth_providers.dart';
 
 /// Cierre de sesión seguro (RF-04). Si quedan cambios offline sin
@@ -21,6 +22,9 @@ Future<void> cerrarSesion(BuildContext context, WidgetRef ref, {int cambiosPendi
     ),
   );
   if (confirmado == true) {
+    // El dispositivo deja de recibir push de este usuario (antes de cerrar
+    // la sesión, porque el borrado del token necesita estar autenticado).
+    await ref.read(pushRepositorioProvider).desregistrar();
     await ref.read(authRepositorioProvider).cerrarSesion();
   }
 }

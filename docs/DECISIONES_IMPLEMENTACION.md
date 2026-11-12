@@ -178,7 +178,7 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 | Qué | Cómo | Resultado |
 |---|---|---|
 | Reglas de dominio (margen, estados, formatos, polilínea, días hábiles, importación) y lógica offline | `flutter test` | 20 pruebas OK |
-| Migraciones, RLS, vistas, triggers, RPC, alertas, KPI, registro de dispositivos y disparo push, respaldo y restauración del prototipo | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 54 verificaciones OK |
+| Migraciones, RLS, vistas, triggers, RPC, alertas, KPI, registro de dispositivos y disparo push, respaldo y restauración del prototipo | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 55 verificaciones OK |
 | Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones | Incluido en `npm test` | 18 pruebas OK |
 
 ---

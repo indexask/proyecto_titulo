@@ -1,0 +1,206 @@
+// Prueba las migraciones de GyGTrack sobre PostgreSQL real (PGlite), simulando
+// lo mínimo de Supabase (auth, storage, cron, roles). Uso:
+//   cd supabase/pruebas && npm install && npm test
+import { PGlite } from "@electric-sql/pglite";
+import { uuid_ossp } from "@electric-sql/pglite/contrib/uuid_ossp";
+import fs from "node:fs";
+import path from "node:path";
+
+const dirMigraciones = process.argv[2];
+const db = new PGlite({ extensions: { uuid_ossp } });
+
+let fallos = 0;
+const ok = (cond, msg) => {
+  console.log(`${cond ? "✔" : "✘"} ${msg}`);
+  if (!cond) fallos++;
+};
+
+await db.exec(`
+  create role anon nologin; create role authenticated nologin;
+  grant usage on schema public to anon, authenticated;
+  alter default privileges in schema public grant all on tables to anon, authenticated;
+  alter default privileges in schema public grant all on functions to anon, authenticated;
+  create schema auth;
+  create table auth.users (id uuid primary key, raw_user_meta_data jsonb default '{}');
+  create function auth.uid() returns uuid language sql stable as
+    $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+  create function auth.role() returns text language sql stable as $$ select 'authenticated' $$;
+  grant usage on schema auth to anon, authenticated;
+  create schema storage;
+  create table storage.buckets (id text primary key, name text, public boolean);
+  create table storage.objects (id serial primary key, bucket_id text);
+  create schema cron;
+  create table cron.job (jobname text primary key, schedule text, command text);
+  create function cron.schedule(n text, s text, c text) returns bigint language sql as
+    $$ insert into cron.job values (n, s, c) on conflict (jobname) do update set schedule = s, command = c returning 1 $$;
+`);
+
+for (const f of fs.readdirSync(dirMigraciones).filter((f) => f.endsWith(".sql")).sort()) {
+  let sql = fs.readFileSync(path.join(dirMigraciones, f), "utf8");
+  sql = sql.replace(/create extension if not exists pg_cron;/i, "-- pg_cron simulado");
+  try {
+    await db.exec(sql);
+    ok(true, `migración ${f}`);
+  } catch (e) {
+    ok(false, `migración ${f}: ${e.message}`);
+    process.exit(1);
+  }
+}
+
+const A = "00000000-0000-0000-0000-00000000000a";
+const C1 = "00000000-0000-0000-0000-0000000000c1";
+const C2 = "00000000-0000-0000-0000-0000000000c2";
+
+await db.exec(`
+  insert into auth.users (id, raw_user_meta_data) values
+    ('${A}', '{"nombre":"Javier Gómez"}'), ('${C1}', '{"nombre":"Chofer Uno"}'), ('${C2}', '{"nombre":"Chofer Dos"}');
+  update public.usuario set rol = 'administrador' where id = '${A}';
+`);
+
+// Ejecuta como un usuario autenticado (RLS activo).
+async function como(uid, sql, params) {
+  await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub', '${uid}', false);`);
+  try {
+    return await db.query(sql, params);
+  } finally {
+    await db.exec(`reset role;`);
+  }
+}
+async function falla(uid, sql) {
+  try {
+    await como(uid, sql);
+    return null;
+  } catch (e) {
+    return e.message;
+  }
+}
+
+const usuarios = await db.query(`select nombre, rol from usuario order by nombre`);
+ok(usuarios.rows.length === 3 && usuarios.rows.some((u) => u.rol === "administrador"),
+  "trigger crea usuarios (rol Chofer por defecto)");
+
+// --- Gestión comercial ---
+const prod = await como(A, `insert into producto (nombre, costo_compra, precio_venta)
+  values ('Notebook', 400000, 520000), ('Mouse', 5000, 9000) returning id, nombre`);
+const [nb, mouse] = prod.rows;
+
+const hoy = (await db.query(`select (now() at time zone 'America/Santiago')::date as d`)).rows[0].d;
+const iso = (offset) => {
+  const d = new Date(hoy);
+  d.setUTCDate(d.getUTCDate() + offset);
+  return d.toISOString().slice(0, 10);
+};
+
+const o1 = (await como(A, `insert into orden_compra (numero_oc, cliente, direccion_entrega, direccion_lat, direccion_lng, fecha_comprometida, responsable_id)
+  values ('1234-56-SE26', 'Municipalidad X', 'Calle 1', -33.4, -70.6, $1, '${C1}') returning id`, [iso(2)])).rows[0].id;
+const o2 = (await como(A, `insert into orden_compra (cliente, direccion_entrega, fecha_comprometida, responsable_id)
+  values ('Hospital Y', 'Calle 2', $1, '${C1}') returning id`, [iso(0)])).rows[0].id;
+const o3 = (await como(A, `insert into orden_compra (cliente, direccion_entrega, fecha_comprometida)
+  values ('Liceo Z', 'Calle 3', $1) returning id`, [iso(10)])).rows[0].id;
+
+const desp = await db.query(`select count(*)::int n from despacho where estado = 'pendiente'`);
+ok(desp.rows[0].n === 3, "cada orden crea su despacho en estado Pendiente");
+
+await como(A, `insert into detalle_orden (orden_id, producto_id, cantidad, costo_compra, precio_venta)
+  values ($1, $2, 10, 400000, 510000)`, [o1, nb.id]);
+await como(A, `insert into detalle_orden (orden_id, producto_id, cantidad) values ($1, $2, 20)`, [o1, mouse.id]);
+let margen = (await como(A, `select margen_neto from orden_compra where id = $1`, [o1])).rows[0].margen_neto;
+// 10 × 110.000 + 20 × 4.000 (precio de catálogo por defecto) = 1.180.000
+ok(Number(margen) === 1180000, `margen neto calculado automáticamente (${margen})`);
+
+await como(A, `update detalle_orden set cantidad = 5 where orden_id = $1 and producto_id = $2`, [o1, nb.id]);
+await como(A, `delete from detalle_orden where orden_id = $1 and producto_id = $2`, [o1, mouse.id]);
+margen = (await como(A, `select margen_neto from orden_compra where id = $1`, [o1])).rows[0].margen_neto;
+ok(Number(margen) === 550000, `margen se recalcula al editar/eliminar líneas (${margen})`);
+
+// --- Separación de datos (RBAC) ---
+ok((await como(C1, `select * from orden_compra`)).rows.length === 0, "Chofer NO lee orden_compra (margen)");
+ok((await como(C1, `select * from producto`)).rows.length === 0, "Chofer NO lee producto (costos)");
+ok((await como(C1, `select * from detalle_orden`)).rows.length === 0, "Chofer NO lee detalle_orden (precios)");
+ok((await como(C1, `select * from usuario`)).rows.length === 1, "Chofer solo ve su propio usuario");
+ok((await falla(C1, `insert into producto (nombre, costo_compra, precio_venta) values ('x',1,1)`)) !== null,
+  "Chofer NO puede escribir en producto");
+
+const vista = await como(C1, `select * from v_despacho_chofer order by fecha_comprometida`);
+ok(vista.rows.length === 2, "Chofer ve sus 2 despachos en v_despacho_chofer");
+const columnas = Object.keys(vista.rows[0]);
+ok(!columnas.some((c) => /costo|precio|margen|ahorro/.test(c)), `vista sin columnas financieras: ${columnas.join(", ")}`);
+ok(!JSON.stringify(vista.rows).match(/costo|precio|margen/), "productos embebidos sin precios");
+ok((await como(C2, `select * from v_despacho_chofer`)).rows.length === 0, "otro Chofer no ve despachos ajenos");
+
+// --- Máquina de estados + RPC ---
+const d1 = (await db.query(`select id from despacho where orden_id = $1`, [o1])).rows[0].id;
+const d2 = (await db.query(`select id from despacho where orden_id = $1`, [o2])).rows[0].id;
+const d3 = (await db.query(`select id from despacho where orden_id = $1`, [o3])).rows[0].id;
+
+ok((await falla(C1, `select cambiar_estado_despacho('${d1}', 'entregado')`))?.includes("Transición"),
+  "no permite saltar de Pendiente a Entregado");
+await como(C1, `select cambiar_estado_despacho('${d1}', 'en_ruta')`);
+const rep = await como(C1, `select cambiar_estado_despacho('${d1}', 'en_ruta') r`);
+ok(rep.rows[0].r === "en_ruta", "repetir el mismo cambio es idempotente (cola offline)");
+
+const horaOffline = new Date(Date.now() - 45 * 60 * 1000).toISOString();
+await como(C1, `select cambiar_estado_despacho('${d1}', 'entregado', $1)`, [horaOffline]);
+const ent = (await db.query(`select d.estado, d.fecha_hora_entrega, d.confirmado_en_app, o.fecha_hora_entrega as fo
+  from despacho d join orden_compra o on o.id = d.orden_id where d.id = $1`, [d1])).rows[0];
+ok(ent.estado === "entregado" && ent.confirmado_en_app === true, "entrega confirmada por el Chofer en la app");
+ok(Math.abs(new Date(ent.fecha_hora_entrega) - new Date(horaOffline)) < 1000,
+  "se registra la hora REAL del cambio offline, no la de sincronización");
+ok(+new Date(ent.fo) === +new Date(ent.fecha_hora_entrega), "fecha_hora_entrega se copia a la orden");
+
+const retro = await como(C1, `select cambiar_estado_despacho('${d1}', 'en_ruta') r`);
+ok(retro.rows[0].r === "entregado", "un cambio atrasado no retrocede el estado");
+
+ok((await falla(C2, `select cambiar_estado_despacho('${d2}', 'en_ruta')`))?.includes("sin permiso"),
+  "un Chofer no puede cambiar despachos ajenos");
+ok((await falla(C1, `update despacho set estado = 'en_ruta' where id = '${d2}'`)) !== null ||
+   (await db.query(`select estado from despacho where id = $1`, [d2])).rows[0].estado === "pendiente",
+  "Chofer no puede actualizar la tabla despacho directamente");
+
+// --- Bultos (Administrador) ---
+await como(A, `update despacho set cantidad_bultos = 4 where id = $1`, [d2]);
+ok((await como(C1, `select cantidad_bultos from v_despacho_chofer where despacho_id = $1`, [d2])).rows[0].cantidad_bultos === 4,
+  "Chofer ve los bultos registrados por el Administrador");
+
+// --- Motor de alertas ---
+let n = (await db.query(`select generar_alertas() n`)).rows[0].n;
+const alertas = (await db.query(`select o.cliente, a.tipo from alerta a join orden_compra o on o.id = a.orden_id order by 1`)).rows;
+ok(alertas.length === 1 && alertas[0].cliente === "Hospital Y" && alertas[0].tipo === "dia_cero",
+  `Día Cero para la orden que vence hoy; la entregada no genera alerta (${JSON.stringify(alertas)})`);
+await como(A, `insert into orden_compra (cliente, direccion_entrega, fecha_comprometida) values ('Escuela W', 'Calle 4', $1)`, [iso(3)]);
+n = (await db.query(`select generar_alertas() n`)).rows[0].n;
+ok(n === 1, "alerta preventiva a 3 días del plazo");
+n = (await db.query(`select generar_alertas() n`)).rows[0].n;
+ok(n === 0, "el motor es idempotente (no duplica alertas)");
+ok((await falla(C1, `select generar_alertas()`)) !== null, "un usuario no puede ejecutar el motor de alertas");
+ok((await como(C1, `select * from v_alerta_chofer`)).rows.length === 1, "Chofer ve las alertas de sus órdenes");
+ok((await db.query(`select count(*)::int n from cron.job where jobname = 'gygtrack-generar-alertas'`)).rows[0].n === 1,
+  "CRON programado");
+
+// --- Enrutamiento ---
+const r = (await como(A, `insert into ruta (fecha, chofer_id, origen_direccion, origen_lat, origen_lng, distancia_km, duracion_min, costo_ruta_sin_optimizar, costo_ruta_optimizada)
+  values ($1, '${C1}', 'Bodega', -33.45, -70.66, 42.5, 75, 9800, 7200) returning id, ahorro`, [iso(0)])).rows[0];
+ok(Number(r.ahorro) === 2600, "ahorro = costo sin optimizar − costo optimizado");
+await como(A, `insert into ruta_parada (ruta_id, despacho_id, orden) values ($1, $2, 0), ($1, $3, 1)`, [r.id, d2, d3]);
+const rc = await como(C1, `select * from v_ruta_chofer`);
+ok(rc.rows.length === 1 && !Object.keys(rc.rows[0]).some((c) => /costo|ahorro|peaje/.test(c)),
+  `Chofer ve su ruta sin costos: ${Object.keys(rc.rows[0]).join(", ")}`);
+ok((await como(C1, `select * from ruta`)).rows.length === 0, "Chofer NO lee la tabla ruta (costos)");
+ok((await como(C1, `select * from v_despacho_chofer where despacho_id = $1`, [d3])).rows.length === 1,
+  "Chofer ve despachos de su ruta aunque no sea responsable");
+ok((await como(C2, `select * from v_ruta_chofer`)).rows.length === 0, "otro Chofer no ve la ruta");
+
+// --- KPI ---
+const kpi = (await como(A, `select * from v_kpi`)).rows[0];
+console.log("  KPI:", JSON.stringify(kpi));
+ok(Number(kpi.kpi07_confirmadas_en_app) === 100 && Number(kpi.kpi08_ahorro_mes) === 2600, "v_kpi calcula indicadores");
+const kpiChofer = (await como(C1, `select * from v_kpi`)).rows;
+ok(kpiChofer.length === 0, `Chofer no obtiene KPI (${JSON.stringify(kpiChofer)})`);
+
+// --- Eliminación en cascada ---
+await como(A, `delete from orden_compra where id = $1`, [o1]);
+ok((await db.query(`select count(*)::int n from despacho where orden_id = $1`, [o1])).rows[0].n === 0,
+  "eliminar una orden borra su despacho (CRUD, RF-09)");
+
+console.log(fallos === 0 ? "\nTODO OK" : `\n${fallos} FALLO(S)`);
+process.exit(fallos ? 1 : 0);

@@ -1,0 +1,3 @@
+// Copiar como web/maps_config.js (no se versiona) y poner la clave de
+// Google Maps JavaScript API restringida por referrer HTTP.
+window.GYGTRACK_MAPS_KEY = 'tu-google-maps-js-api-key';

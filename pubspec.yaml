@@ -1,5 +1,5 @@
-name: cotizaciones_rutas
-description: "A new Flutter project."
+name: gygtrack
+description: "GyGTrack: gestión comercial y trazabilidad logística de GyG Comercial."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -38,13 +38,11 @@ dependencies:
   flutter_riverpod: ^3.4.2
   go_router: ^18.0.0
   google_maps_flutter: ^2.18.0
-  geocoding: ^5.0.0
-  geolocator: ^14.0.3
-  file_picker: ^12.1.0
-  image_picker: ^1.2.3
   intl: ^0.20.3
-  url_launcher: ^6.3.2
-
+  shared_preferences: ^2.5.6
+  connectivity_plus: ^7.3.2
+  flutter_localizations:
+    sdk: flutter
 dev_dependencies:
   flutter_test:
     sdk: flutter

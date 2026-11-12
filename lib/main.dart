@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/env.dart';
@@ -16,23 +17,36 @@ void main() async {
 class App extends ConsumerWidget {
   const App({super.key});
 
+  static final _tema = ThemeData(
+    colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1B5E8C)),
+    inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
+  );
+
+  static const _localizaciones = [
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!Env.isConfigured) {
-      return const MaterialApp(home: _MissingEnvScreen());
+      return MaterialApp(theme: _tema, home: const _FaltaConfiguracion());
     }
-
-    final router = ref.watch(routerProvider);
     return MaterialApp.router(
-      title: 'Cotizaciones y Rutas',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo)),
-      routerConfig: router,
+      title: 'GyGTrack',
+      debugShowCheckedModeBanner: false,
+      theme: _tema,
+      locale: const Locale('es', 'CL'),
+      supportedLocales: const [Locale('es', 'CL'), Locale('es')],
+      localizationsDelegates: _localizaciones,
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }
 
-class _MissingEnvScreen extends StatelessWidget {
-  const _MissingEnvScreen();
+class _FaltaConfiguracion extends StatelessWidget {
+  const _FaltaConfiguracion();
 
   @override
   Widget build(BuildContext context) {

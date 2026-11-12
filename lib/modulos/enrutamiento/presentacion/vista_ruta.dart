@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../core/mapas/mapas_disponibles.dart';
 import '../../../core/polilinea.dart';
 import '../../logistico_notificaciones/dominio/estado_despacho.dart';
 import '../../logistico_notificaciones/presentacion/widgets_despacho.dart';
@@ -126,7 +127,9 @@ class _VistaRutaState extends State<VistaRuta> {
         if (widget.ubicacionEnVivo) _panelUbicacion(context),
         Expanded(
           flex: 3,
-          child: Stack(
+          child: !mapasDisponibles
+              ? const _MapaNoDisponible()
+              : Stack(
             children: [
               GoogleMap(
                 initialCameraPosition: CameraPosition(target: origen, zoom: 11),
@@ -275,5 +278,38 @@ class _VistaRutaState extends State<VistaRuta> {
       if (p.longitude > este) este = p.longitude;
     }
     return LatLngBounds(southwest: LatLng(sur, oeste), northeast: LatLng(norte, este));
+  }
+}
+
+/// Reemplazo del mapa cuando la Maps JavaScript API no está cargada (web
+/// sin clave): la ruta y las paradas igual se muestran en la lista.
+class _MapaNoDisponible extends StatelessWidget {
+  const _MapaNoDisponible();
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return ColoredBox(
+      color: tema.colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.map_outlined, size: 48, color: tema.colorScheme.outline),
+              const SizedBox(height: 8),
+              Text('Mapa no disponible', style: tema.textTheme.titleMedium),
+              const SizedBox(height: 4),
+              const Text(
+                'Falta la clave de Google Maps JavaScript API para el panel web '
+                '(web/maps_config.js). La ruta y sus paradas se muestran abajo.',
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

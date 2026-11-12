@@ -5,6 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   costoRecorrido,
+  elegirMejor,
   elegirRecorrido,
   explicarEleccion,
   resumenRecorrido,
@@ -21,17 +22,35 @@ test("resumen de recorrido: km, minutos, TAG y combustible", () => {
   });
 });
 
-test("explica por qué se aceptó o rechazó el TAG", () => {
-  const libre = { distanciaMetros: 20_000, duracionSegundos: 50 * 60, peajesClp: 0 };
+// Caso real de la jornada 12-11-2026 (Maipú → Providencia → La Reina):
+// Google optimizó por tiempo y la ruta "optimizada" salía más cara.
+const ordenPorPlazo = { etiqueta: "Orden por plazo", distanciaMetros: 56_200, duracionSegundos: 82 * 60, peajesClp: 0 };
+const optConTag = { etiqueta: "Optimizada · permite TAG", distanciaMetros: 61_600, duracionSegundos: 77 * 60, peajesClp: 0 };
+const optSinTag = { etiqueta: "Optimizada · evita TAG", distanciaMetros: 60_900, duracionSegundos: 95 * 60, peajesClp: 0 };
+
+test("caso real: 5 min menos no justifican $764 más → se queda el orden por plazo", () => {
+  // Ahorrar 5 min permite pagar hasta $250 extra; la optimizada cuesta ~$763 más (con km redondeados).
+  assert.equal(elegirMejor([ordenPorPlazo, optConTag, optSinTag]), ordenPorPlazo);
+});
+
+test("elegirMejor coincide con la regla de a pares", () => {
+  const casos = [
+    [{ distanciaMetros: 20_000, duracionSegundos: 30 * 60, peajesClp: 900 }, { distanciaMetros: 20_000, duracionSegundos: 50 * 60, peajesClp: 0 }],
+    [{ distanciaMetros: 20_000, duracionSegundos: 30 * 60, peajesClp: 1_000 }, { distanciaMetros: 20_000, duracionSegundos: 50 * 60, peajesClp: 0 }],
+    [{ distanciaMetros: 10_000, duracionSegundos: 600, peajesClp: 0 }, { distanciaMetros: 15_000, duracionSegundos: 900, peajesClp: 0 }],
+  ];
+  for (const [a, b] of casos) assert.equal(elegirMejor([a, b]), elegirRecorrido(a, b));
+});
+
+test("explica la elección frente a la más rápida y la más barata", () => {
   assert.match(
-    explicarEleccion({ distanciaMetros: 20_000, duracionSegundos: 30 * 60, peajesClp: 900 }, libre),
-    /^Se usa TAG: ahorra 20 min por \$900 extra/,
+    explicarEleccion([ordenPorPlazo, optConTag, optSinTag], ordenPorPlazo),
+    /^Se eligió "Orden por plazo"\. "Optimizada · permite TAG" ahorraría 5 min pero cuesta \$763 más, sobre el máximo aceptado \(\$250/,
   );
-  assert.match(
-    explicarEleccion({ distanciaMetros: 20_000, duracionSegundos: 30 * 60, peajesClp: 1_500 }, libre),
-    /^Se evita el TAG: ahorraría 20 min pero cuesta \$1\.500 extra/,
-  );
-  assert.equal(explicarEleccion(libre, libre), "El recorrido óptimo no pasa por autopistas con TAG.");
+  const tagRapido = { etiqueta: "Optimizada · permite TAG", distanciaMetros: 20_000, duracionSegundos: 30 * 60, peajesClp: 900 };
+  const libre = { etiqueta: "Optimizada · evita TAG", distanciaMetros: 20_000, duracionSegundos: 50 * 60, peajesClp: 0 };
+  assert.match(explicarEleccion([tagRapido, libre], tagRapido), /ahorra 20 min frente a "Optimizada · evita TAG" por \$900 más, bajo el máximo aceptado \(\$1\.000/);
+  assert.match(explicarEleccion([libre, { ...libre, etiqueta: "x" }], libre), /Ninguna alternativa pasa por autopistas con TAG/);
 });
 
 test("plazo: lo que vence en la jornada (o ya venció) va primero", () => {

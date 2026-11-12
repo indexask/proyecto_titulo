@@ -80,13 +80,17 @@ class ResumenRecorrido {
       );
 }
 
-/// Comparación que hizo la optimización (RF-22, RF-24): ruta sin optimizar,
-/// optimizada con TAG y optimizada sin TAG, y por qué se eligió la final.
+/// Alternativa elegida por la optimización.
+enum AlternativaRuta { ordenPorPlazo, optimizadaConTag, optimizadaSinTag }
+
+/// Comparación que hizo la optimización (RF-22, RF-24): orden por plazo,
+/// optimizada permitiendo TAG y optimizada evitando TAG, y por qué se eligió
+/// la final (menor costo + $50/min, regla de $500 por cada 10 minutos).
 class DetalleOptimizacion {
   final ResumenRecorrido sinOptimizar;
   final ResumenRecorrido conTag;
   final ResumenRecorrido sinTag;
-  final bool eligioConTag;
+  final AlternativaRuta eleccion;
   final String motivo;
   final int paradasPrioritarias;
 
@@ -94,12 +98,16 @@ class DetalleOptimizacion {
     required this.sinOptimizar,
     required this.conTag,
     required this.sinTag,
-    required this.eligioConTag,
+    required this.eleccion,
     required this.motivo,
     required this.paradasPrioritarias,
   });
 
-  ResumenRecorrido get elegida => eligioConTag ? conTag : sinTag;
+  ResumenRecorrido get elegida => switch (eleccion) {
+        AlternativaRuta.ordenPorPlazo => sinOptimizar,
+        AlternativaRuta.optimizadaConTag => conTag,
+        AlternativaRuta.optimizadaSinTag => sinTag,
+      };
 
   static DetalleOptimizacion? fromMap(Object? datos) {
     if (datos is! Map<String, dynamic>) return null;
@@ -107,7 +115,11 @@ class DetalleOptimizacion {
       sinOptimizar: ResumenRecorrido.fromMap(datos['sinOptimizar'] as Map<String, dynamic>),
       conTag: ResumenRecorrido.fromMap(datos['conTag'] as Map<String, dynamic>),
       sinTag: ResumenRecorrido.fromMap(datos['sinTag'] as Map<String, dynamic>),
-      eligioConTag: datos['elegida'] == 'con_tag',
+      eleccion: switch (datos['elegida']) {
+        'sin_optimizar' => AlternativaRuta.ordenPorPlazo,
+        'con_tag' => AlternativaRuta.optimizadaConTag,
+        _ => AlternativaRuta.optimizadaSinTag,
+      },
       motivo: datos['motivo'] as String? ?? '',
       paradasPrioritarias: (datos['paradasPrioritarias'] as num?)?.toInt() ?? 0,
     );

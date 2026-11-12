@@ -22,7 +22,7 @@ import {
 import { geocodificarDireccion } from "../_shared/places.ts";
 import {
   costoRecorrido,
-  elegirRecorrido,
+  elegirMejor,
   explicarEleccion,
   resumenRecorrido,
   separarPorPlazo,
@@ -123,8 +123,16 @@ servir(async (req) => {
     rutaPriorizada(apiKey, origen, urgentes, resto, true),
   ]);
 
-  // Ambas alternativas respetan el plazo; entre ellas manda la regla de costo.
-  const elegida = elegirRecorrido(conPeajes, sinPeajes);
+  // Las tres alternativas respetan el plazo (lo urgente va primero). Google
+  // optimiza el orden por TIEMPO, así que la "optimizada" puede recorrer más
+  // km; por eso el orden por plazo también compite. Gana la de menor
+  // costo + $50/min (regla de $500 por cada 10 minutos ahorrados).
+  const candidatas = [
+    { clave: "sin_optimizar", etiqueta: "Orden por plazo", ...sinOptimizar },
+    { clave: "con_tag", etiqueta: "Optimizada · permite TAG", ...conPeajes },
+    { clave: "sin_tag", etiqueta: "Optimizada · evita TAG", ...sinPeajes },
+  ];
+  const elegida = elegirMejor(candidatas);
 
   // --- RF-24: costos y ahorro ----------------------------------------------
   const costoSinOptimizar = costoRecorrido(sinOptimizar);
@@ -136,8 +144,8 @@ servir(async (req) => {
     sinOptimizar: resumenRecorrido(sinOptimizar),
     conTag: resumenRecorrido(conPeajes),
     sinTag: resumenRecorrido(sinPeajes),
-    elegida: elegida === conPeajes ? "con_tag" : "sin_tag",
-    motivo: explicarEleccion(conPeajes, sinPeajes),
+    elegida: elegida.clave,
+    motivo: explicarEleccion(candidatas, elegida),
     paradasPrioritarias: urgentes.length,
   };
 

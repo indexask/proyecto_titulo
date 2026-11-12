@@ -147,7 +147,7 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 2. **Qué ve el Chofer:** los despachos de las órdenes donde es **responsable** y los de las **rutas que tiene asignadas**.
 3. **Alerta preventiva:** se emite cuando faltan **entre 1 y 3 días** (normalmente a los 3). Así no se quedan sin alerta las órdenes registradas con menos de 3 días de plazo (KPI-06). Las órdenes ya entregadas no generan alertas. El CRON corre **cada hora** y es idempotente. "Hoy" se calcula en hora de Chile.
 4. **Ruta "sin optimizar"** (línea base del ahorro): las mismas paradas ordenadas por plazo, que es como se arman hoy los repartos.
-5. **Regla de $500 por cada 10 min:** se calcula la ruta optimizada **con peajes** y **sin peajes**. La más rápida se acepta solo si su costo adicional es menor a $500 × (minutos ahorrados / 10). Si además es más barata, se elige siempre.
+5. **Regla de $500 por cada 10 min:** se comparan **tres** alternativas que respetan el plazo: el **orden por plazo** (sin optimizar), la **optimizada permitiendo TAG** y la **optimizada evitando TAG**. "Aceptar un costo adicional menor a $500 por cada 10 minutos ahorrados" equivale a elegir la de menor **costo + $50 por minuto**; en empate gana la más lenta. Hace falta comparar también el orden por plazo porque Google optimiza el orden por **tiempo**: en la prueba real del 12-11-2026 (Maipú → Providencia → La Reina), la ruta "optimizada" ahorraba 5 min pero recorría 5,4 km más (+$764). Como 5 min solo justifican $250, se mantuvo el orden por plazo. La tabla del Administrador muestra las tres alternativas y el motivo en palabras.
 6. **Costo de una ruta** = km ÷ 9 km/L × $1.272/L + peajes (TAG, estimación de Routes API).
 7. **Viaje redondo:** la ruta sale de la bodega y vuelve a ella.
 8. **"Optimizar según plazos" — el plazo manda sobre la distancia** (decisión del equipo, 2026-11-12): primero se cumple el plazo y después se optimiza.
@@ -181,7 +181,7 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 |---|---|---|
 | Reglas de dominio (margen, estados, formatos, polilínea, días hábiles, importación) y lógica offline | `flutter test` | 22 pruebas OK |
 | Migraciones, RLS, vistas, triggers, RPC, alertas, KPI, registro de dispositivos y disparo push, respaldo y restauración del prototipo | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 57 verificaciones OK |
-| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones, resumen y motivo de la optimización | Incluido en `npm test` | 22 pruebas OK |
+| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones, resumen, elección entre 3 alternativas y motivo de la optimización | Incluido en `npm test` | 24 pruebas OK |
 
 ---
 

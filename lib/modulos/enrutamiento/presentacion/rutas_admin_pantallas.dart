@@ -158,7 +158,7 @@ class _CostosRuta extends StatelessWidget {
           dato('Duración', '${ruta.duracionMin ?? '—'} min'),
           dato('Peajes (TAG)', ruta.usaPeajes ? 'Sí' : 'No'),
           dato('Costo sin optimizar', formatoClp(ruta.costoSinOptimizar)),
-          dato('Costo optimizado', formatoClp(ruta.costoOptimizada)),
+          dato('Costo ruta elegida', formatoClp(ruta.costoOptimizada)),
           dato('Ahorro estimado', formatoClp(ruta.ahorro)),
         ],
       ),
@@ -178,15 +178,17 @@ class _ComparacionOptimizacion extends StatelessWidget {
     final tema = Theme.of(context);
     final negrita = tema.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold);
 
-    DataColumn columna(String titulo, {bool elegida = false}) => DataColumn(
+    final e = detalle.eleccion;
+    DataColumn columna(String titulo, AlternativaRuta alt) => DataColumn(
           numeric: true,
-          label: Text(elegida ? '$titulo ✓' : titulo, style: elegida ? negrita : null),
+          label: Text(e == alt ? '$titulo ✓' : titulo, style: e == alt ? negrita : null),
         );
+    DataCell celda(String texto, AlternativaRuta alt) => DataCell(Text(texto, style: e == alt ? negrita : null));
     DataRow fila(String etiqueta, String Function(ResumenRecorrido r) valor) => DataRow(cells: [
           DataCell(Text(etiqueta)),
-          DataCell(Text(valor(detalle.sinOptimizar))),
-          DataCell(Text(valor(detalle.conTag), style: detalle.eligioConTag ? negrita : null)),
-          DataCell(Text(valor(detalle.sinTag), style: detalle.eligioConTag ? null : negrita)),
+          celda(valor(detalle.sinOptimizar), AlternativaRuta.ordenPorPlazo),
+          celda(valor(detalle.conTag), AlternativaRuta.optimizadaConTag),
+          celda(valor(detalle.sinTag), AlternativaRuta.optimizadaSinTag),
         ]);
 
     return ExpansionTile(
@@ -199,14 +201,14 @@ class _ComparacionOptimizacion extends StatelessWidget {
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
-            headingRowHeight: 36,
+            headingRowHeight: 48,
             dataRowMinHeight: 32,
             dataRowMaxHeight: 36,
             columns: [
               const DataColumn(label: Text('')),
-              columna('Sin optimizar'),
-              columna('Con TAG', elegida: detalle.eligioConTag),
-              columna('Sin TAG', elegida: !detalle.eligioConTag),
+              columna('Orden por plazo', AlternativaRuta.ordenPorPlazo),
+              columna('Optimizada\npermite TAG', AlternativaRuta.optimizadaConTag),
+              columna('Optimizada\nevita TAG', AlternativaRuta.optimizadaSinTag),
             ],
             rows: [
               fila('Tiempo', (r) => '${r.duracionMin} min'),

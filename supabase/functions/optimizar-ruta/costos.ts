@@ -36,27 +36,51 @@ export function resumenRecorrido(r: Recorrido) {
 }
 
 /**
- * Explica, en palabras, por qué la regla de $500 por cada 10 minutos eligió
- * la ruta con TAG o la ruta sin TAG.
+ * La regla "aceptar un costo adicional < $500 por cada 10 minutos ahorrados"
+ * equivale a elegir la alternativa con menor costo + $50 por minuto. Así se
+ * puede aplicar a cualquier número de alternativas (orden por plazo,
+ * optimizada con TAG, optimizada sin TAG). En empate gana la más lenta, igual
+ * que en la regla de a pares (el costo adicional debe ser MENOR al límite).
  */
-export function explicarEleccion(conTag: Recorrido, sinTag: Recorrido): string {
-  const elegida = elegirRecorrido(conTag, sinTag);
-  const minutos = Math.round((sinTag.duracionSegundos - conTag.duracionSegundos) / 60);
-  const extra = costoRecorrido(conTag) - costoRecorrido(sinTag);
-  const limite = Math.round(COSTO_MAXIMO_POR_10_MIN * (minutos / 10));
-  const clp = (n: number) => `$${Math.abs(n).toLocaleString("es-CL")}`;
+export function costoConTiempo(r: Recorrido): number {
+  return costoRecorrido(r) + (COSTO_MAXIMO_POR_10_MIN / 10) * (r.duracionSegundos / 60);
+}
 
-  if (conTag.peajesClp === 0 && sinTag.peajesClp === 0) {
-    return "El recorrido óptimo no pasa por autopistas con TAG.";
+export function elegirMejor<T extends Recorrido>(candidatas: T[]): T {
+  return candidatas.reduce((mejor, c) => {
+    const dc = costoConTiempo(c), dm = costoConTiempo(mejor);
+    if (dc < dm - 1e-9) return c;
+    if (Math.abs(dc - dm) <= 1e-9 && c.duracionSegundos > mejor.duracionSegundos) return c;
+    return mejor;
+  });
+}
+
+const clp = (n: number) => `$${Math.round(Math.abs(n)).toLocaleString("es-CL")}`;
+
+/**
+ * Explica, en palabras, por qué se eligió la ruta final frente a la
+ * alternativa más rápida y la más barata.
+ */
+export function explicarEleccion<T extends Recorrido & { etiqueta: string }>(candidatas: T[], elegida: T): string {
+  const sinTag = candidatas.every((c) => c.peajesClp === 0) ? " Ninguna alternativa pasa por autopistas con TAG." : "";
+  const masRapida = candidatas.reduce((a, b) => (b.duracionSegundos < a.duracionSegundos ? b : a));
+  const masBarata = candidatas.reduce((a, b) => (costoRecorrido(b) < costoRecorrido(a) ? b : a));
+
+  if (elegida === masRapida && elegida === masBarata) {
+    return `Se eligió "${elegida.etiqueta}": es la más rápida y la más barata.${sinTag}`;
   }
-  if (elegida === conTag) {
-    return extra <= 0
-      ? `Se usa TAG: es más rápida (${minutos} min menos) y no cuesta más.`
-      : `Se usa TAG: ahorra ${minutos} min por ${clp(extra)} extra, menos que el máximo aceptado (${clp(limite)} = $500 por cada 10 min).`;
+  if (elegida !== masRapida) {
+    const minutos = Math.round((elegida.duracionSegundos - masRapida.duracionSegundos) / 60);
+    const extra = costoRecorrido(masRapida) - costoRecorrido(elegida);
+    const limite = COSTO_MAXIMO_POR_10_MIN * (minutos / 10);
+    return `Se eligió "${elegida.etiqueta}". "${masRapida.etiqueta}" ahorraría ${minutos} min pero cuesta ${clp(extra)} más, ` +
+      `sobre el máximo aceptado (${clp(limite)} = $500 por cada 10 min).${sinTag}`;
   }
-  return minutos <= 0
-    ? "Se evita el TAG: la ruta con TAG no ahorra tiempo."
-    : `Se evita el TAG: ahorraría ${minutos} min pero cuesta ${clp(extra)} extra, más que el máximo aceptado (${clp(limite)} = $500 por cada 10 min).`;
+  const minutos = Math.round((masBarata.duracionSegundos - elegida.duracionSegundos) / 60);
+  const extra = costoRecorrido(elegida) - costoRecorrido(masBarata);
+  const limite = COSTO_MAXIMO_POR_10_MIN * (minutos / 10);
+  return `Se eligió "${elegida.etiqueta}": ahorra ${minutos} min frente a "${masBarata.etiqueta}" por ${clp(extra)} más, ` +
+    `bajo el máximo aceptado (${clp(limite)} = $500 por cada 10 min).${sinTag}`;
 }
 
 /**

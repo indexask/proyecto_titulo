@@ -36,12 +36,12 @@ void main() {
       'sinOptimizar': r(58.2, 95, 2100),
       'conTag': r(45.3, 71, 1830),
       'sinTag': r(49.0, 92, 0),
-      'elegida': 'con_tag',
+      'elegida': 'sin_optimizar',
       'motivo': 'Se usa TAG: ahorra 21 min…',
       'paradasPrioritarias': 1,
     })!;
-    expect(d.eligioConTag, isTrue);
-    expect(d.elegida.duracionMin, 71);
+    expect(d.eleccion, AlternativaRuta.ordenPorPlazo);
+    expect(d.elegida.duracionMin, 95);
     expect(d.sinOptimizar.distanciaKm, 58.2);
     expect(d.paradasPrioritarias, 1);
     expect(DetalleOptimizacion.fromMap(null), isNull);

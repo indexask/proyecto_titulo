@@ -179,9 +179,17 @@ class _ComparacionOptimizacion extends StatelessWidget {
     final negrita = tema.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold);
 
     final e = detalle.eleccion;
+    // El "✓" como carácter se dibuja con otra fuente en web y desborda la
+    // columna; se usa un ícono.
     DataColumn columna(String titulo, AlternativaRuta alt) => DataColumn(
           numeric: true,
-          label: Text(e == alt ? '$titulo ✓' : titulo, style: e == alt ? negrita : null),
+          label: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text(titulo, textAlign: TextAlign.end, style: e == alt ? negrita : null),
+            if (e == alt) ...[
+              const SizedBox(width: 4),
+              Icon(Icons.check_circle, size: 16, color: tema.colorScheme.primary),
+            ],
+          ]),
         );
     DataCell celda(String texto, AlternativaRuta alt) => DataCell(Text(texto, style: e == alt ? negrita : null));
     DataRow fila(String etiqueta, String Function(ResumenRecorrido r) valor) => DataRow(cells: [

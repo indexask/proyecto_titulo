@@ -58,6 +58,7 @@ final rutasChoferProvider = FutureProvider.autoDispose<List<Ruta>>((ref) async {
       distanciaKm: datos['distancia_km'] as num?,
       duracionMin: datos['duracion_min'] as int?,
       polilinea: datos['polilinea'] as String?,
+      usaPeajes: datos['usa_peajes'] as bool? ?? false,
       paradas: paradas,
     );
   }).toList();

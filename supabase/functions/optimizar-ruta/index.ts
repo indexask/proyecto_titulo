@@ -19,7 +19,15 @@ import {
   json,
   servir,
 } from "../_shared/comun.ts";
-import { costoRecorrido, elegirRecorrido, Recorrido, separarPorPlazo } from "./costos.ts";
+import { geocodificarDireccion } from "../_shared/places.ts";
+import {
+  costoRecorrido,
+  elegirRecorrido,
+  explicarEleccion,
+  resumenRecorrido,
+  separarPorPlazo,
+} from "./costos.ts";
+import type { Recorrido } from "./costos.ts";
 
 interface Punto {
   lat: number;
@@ -62,18 +70,32 @@ servir(async (req) => {
   // --- RF-21: compilar direcciones de la jornada ---------------------------
   const { data: filas, error } = await supabase
     .from("despacho")
-    .select("id, estado, orden_compra(cliente, direccion_lat, direccion_lng, fecha_comprometida)")
+    .select("id, estado, orden_compra(id, cliente, direccion_entrega, direccion_lat, direccion_lng, fecha_comprometida)")
     .in("id", despachoIds);
   if (error) throw new HttpError(500, error.message);
+
+  const apiKey = googleMapsApiKey();
+
+  // Las direcciones aún sin validar se geocodifican ahora (Places) y se
+  // guardan en la orden.
+  // deno-lint-ignore no-explicit-any
+  for (const f of (filas ?? []) as any[]) {
+    const o = f.orden_compra;
+    if (o.direccion_lat != null && o.direccion_lng != null) continue;
+    const lugar = await geocodificarDireccion(apiKey, o.direccion_entrega);
+    o.direccion_lat = lugar.lat;
+    o.direccion_lng = lugar.lng;
+    await supabase
+      .from("orden_compra")
+      .update({ direccion_entrega: lugar.direccion, direccion_lat: lugar.lat, direccion_lng: lugar.lng })
+      .eq("id", o.id);
+  }
 
   // deno-lint-ignore no-explicit-any
   const paradas: Parada[] = (filas ?? []).map((f: any) => {
     const o = f.orden_compra;
     if (f.estado === "entregado") {
       throw new HttpError(400, `El despacho de ${o.cliente} ya fue entregado`);
-    }
-    if (o.direccion_lat == null || o.direccion_lng == null) {
-      throw new HttpError(400, `La orden de ${o.cliente} no tiene la dirección geocodificada`);
     }
     return {
       despachoId: f.id,
@@ -95,7 +117,6 @@ servir(async (req) => {
   const { urgentes, resto, vencidas } = separarPorPlazo(paradas, fecha);
 
   // --- RF-22: Google Routes API --------------------------------------------
-  const apiKey = googleMapsApiKey();
   const [sinOptimizar, conPeajes, sinPeajes] = await Promise.all([
     calcularRuta(apiKey, origen, origen, paradas, { optimizar: false, evitarPeajes: false }),
     rutaPriorizada(apiKey, origen, urgentes, resto, false),
@@ -108,6 +129,17 @@ servir(async (req) => {
   // --- RF-24: costos y ahorro ----------------------------------------------
   const costoSinOptimizar = costoRecorrido(sinOptimizar);
   const costoOptimizada = costoRecorrido(elegida);
+
+  // Comparación completa para el Administrador: tiempo, km, TAG y combustible
+  // de cada alternativa, y por qué se eligió la ruta final.
+  const detalleOptimizacion = {
+    sinOptimizar: resumenRecorrido(sinOptimizar),
+    conTag: resumenRecorrido(conPeajes),
+    sinTag: resumenRecorrido(sinPeajes),
+    elegida: elegida === conPeajes ? "con_tag" : "sin_tag",
+    motivo: explicarEleccion(conPeajes, sinPeajes),
+    paradasPrioritarias: urgentes.length,
+  };
 
   const { data: ruta, error: errRuta } = await supabase
     .from("ruta")
@@ -123,6 +155,7 @@ servir(async (req) => {
       usa_peajes: elegida.usaPeajes,
       costo_ruta_sin_optimizar: costoSinOptimizar,
       costo_ruta_optimizada: costoOptimizada,
+      detalle_optimizacion: detalleOptimizacion,
     })
     .select("id")
     .single();

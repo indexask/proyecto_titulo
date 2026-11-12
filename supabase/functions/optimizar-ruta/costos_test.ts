@@ -3,7 +3,36 @@
 // o con Node ≥ 23:  node --test supabase/functions/optimizar-ruta/costos_test.ts
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { costoRecorrido, elegirRecorrido, separarPorPlazo } from "./costos.ts";
+import {
+  costoRecorrido,
+  elegirRecorrido,
+  explicarEleccion,
+  resumenRecorrido,
+  separarPorPlazo,
+} from "./costos.ts";
+
+test("resumen de recorrido: km, minutos, TAG y combustible", () => {
+  assert.deepEqual(resumenRecorrido({ distanciaMetros: 45_300, duracionSegundos: 4_250, peajesClp: 1_830.4 }), {
+    distanciaKm: 45.3,
+    duracionMin: 71,
+    peajesClp: 1_830,
+    combustibleClp: 6_402, // 45,3 / 9 × 1.272
+    costoClp: 8_233,
+  });
+});
+
+test("explica por qué se aceptó o rechazó el TAG", () => {
+  const libre = { distanciaMetros: 20_000, duracionSegundos: 50 * 60, peajesClp: 0 };
+  assert.match(
+    explicarEleccion({ distanciaMetros: 20_000, duracionSegundos: 30 * 60, peajesClp: 900 }, libre),
+    /^Se usa TAG: ahorra 20 min por \$900 extra/,
+  );
+  assert.match(
+    explicarEleccion({ distanciaMetros: 20_000, duracionSegundos: 30 * 60, peajesClp: 1_500 }, libre),
+    /^Se evita el TAG: ahorraría 20 min pero cuesta \$1\.500 extra/,
+  );
+  assert.equal(explicarEleccion(libre, libre), "El recorrido óptimo no pasa por autopistas con TAG.");
+});
 
 test("plazo: lo que vence en la jornada (o ya venció) va primero", () => {
   const paradas = [

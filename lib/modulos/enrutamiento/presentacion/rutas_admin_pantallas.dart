@@ -120,7 +120,13 @@ class RutaAdminPantalla extends ConsumerWidget {
         onReintentar: () => ref.invalidate(rutaAdminProvider(rutaId)),
         child: async.value == null
             ? const SizedBox.shrink()
-            : VistaRuta(ruta: async.value!, encabezado: _CostosRuta(ruta: async.value!)),
+            : VistaRuta(
+                ruta: async.value!,
+                encabezado: Column(children: [
+                  _CostosRuta(ruta: async.value!),
+                  if (async.value!.detalle != null) _ComparacionOptimizacion(detalle: async.value!.detalle!),
+                ]),
+              ),
       ),
     );
   }
@@ -156,6 +162,68 @@ class _CostosRuta extends StatelessWidget {
           dato('Ahorro estimado', formatoClp(ruta.ahorro)),
         ],
       ),
+    );
+  }
+}
+
+/// Comparación de la optimización: tiempo, km, TAG y combustible de cada
+/// alternativa, y el motivo de la elección (regla de $500 por 10 min).
+class _ComparacionOptimizacion extends StatelessWidget {
+  final DetalleOptimizacion detalle;
+
+  const _ComparacionOptimizacion({required this.detalle});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final negrita = tema.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold);
+
+    DataColumn columna(String titulo, {bool elegida = false}) => DataColumn(
+          numeric: true,
+          label: Text(elegida ? '$titulo ✓' : titulo, style: elegida ? negrita : null),
+        );
+    DataRow fila(String etiqueta, String Function(ResumenRecorrido r) valor) => DataRow(cells: [
+          DataCell(Text(etiqueta)),
+          DataCell(Text(valor(detalle.sinOptimizar))),
+          DataCell(Text(valor(detalle.conTag), style: detalle.eligioConTag ? negrita : null)),
+          DataCell(Text(valor(detalle.sinTag), style: detalle.eligioConTag ? null : negrita)),
+        ]);
+
+    return ExpansionTile(
+      initiallyExpanded: true,
+      dense: true,
+      leading: const Icon(Icons.compare_arrows),
+      title: const Text('Optimización: tiempo, km y TAG'),
+      subtitle: Text(detalle.motivo),
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            headingRowHeight: 36,
+            dataRowMinHeight: 32,
+            dataRowMaxHeight: 36,
+            columns: [
+              const DataColumn(label: Text('')),
+              columna('Sin optimizar'),
+              columna('Con TAG', elegida: detalle.eligioConTag),
+              columna('Sin TAG', elegida: !detalle.eligioConTag),
+            ],
+            rows: [
+              fila('Tiempo', (r) => '${r.duracionMin} min'),
+              fila('Distancia', (r) => '${r.distanciaKm} km'),
+              fila('Peajes (TAG)', (r) => formatoClp(r.peajesClp)),
+              fila('Combustible', (r) => formatoClp(r.combustibleClp)),
+              fila('Costo total', (r) => formatoClp(r.costoClp)),
+            ],
+          ),
+        ),
+        if (detalle.paradasPrioritarias > 0)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Text('${detalle.paradasPrioritarias} parada(s) vencen en la jornada y se visitan primero.',
+                style: tema.textTheme.bodySmall),
+          ),
+      ],
     );
   }
 }
@@ -273,7 +341,7 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
                   _seleccion
                     ..clear()
                     ..addAll(candidatas
-                        .where((o) => o.responsableId == v && o.geocodificada)
+                        .where((o) => o.responsableId == v)
                         .map((o) => o.despacho!.id));
                 }
               }),
@@ -302,14 +370,13 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
             for (final o in candidatas)
               CheckboxListTile(
                 value: _seleccion.contains(o.despacho!.id),
-                onChanged: !o.geocodificada
-                    ? null
-                    : (v) => setState(() => v == true
-                        ? _seleccion.add(o.despacho!.id)
-                        : _seleccion.remove(o.despacho!.id)),
+                // Las direcciones sin validar se validan al calcular la ruta.
+                onChanged: (v) => setState(() => v == true
+                    ? _seleccion.add(o.despacho!.id)
+                    : _seleccion.remove(o.despacho!.id)),
                 title: Text(o.titulo),
                 subtitle: Text('${o.direccionEntrega}\nPlazo ${formatoFecha(o.fechaComprometida)}'
-                    '${o.geocodificada ? '' : ' · dirección sin validar'}'),
+                    '${o.geocodificada ? '' : ' · se validará al calcular'}'),
                 isThreeLine: true,
               ),
             const SizedBox(height: 16),

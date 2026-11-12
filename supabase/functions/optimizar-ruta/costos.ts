@@ -14,10 +14,49 @@ export interface Recorrido {
   peajesClp: number;
 }
 
-/** Costo = combustible (km / 9 km/L × $1.272/L) + peajes (TAG). */
+/** Combustible = km / 9 km/L × $1.272/L. */
+export function costoCombustible(r: Recorrido): number {
+  return Math.round((r.distanciaMetros / 1000 / RENDIMIENTO_KM_POR_LITRO) * PRECIO_DIESEL_CLP_POR_LITRO);
+}
+
+/** Costo = combustible + peajes (TAG). */
 export function costoRecorrido(r: Recorrido): number {
-  const litros = r.distanciaMetros / 1000 / RENDIMIENTO_KM_POR_LITRO;
-  return Math.round(litros * PRECIO_DIESEL_CLP_POR_LITRO + r.peajesClp);
+  return Math.round((r.distanciaMetros / 1000 / RENDIMIENTO_KM_POR_LITRO) * PRECIO_DIESEL_CLP_POR_LITRO + r.peajesClp);
+}
+
+/** Resumen de un recorrido para mostrar la comparación (tiempo, km, TAG, combustible). */
+export function resumenRecorrido(r: Recorrido) {
+  return {
+    distanciaKm: Math.round(r.distanciaMetros / 100) / 10,
+    duracionMin: Math.round(r.duracionSegundos / 60),
+    peajesClp: Math.round(r.peajesClp),
+    combustibleClp: costoCombustible(r),
+    costoClp: costoRecorrido(r),
+  };
+}
+
+/**
+ * Explica, en palabras, por qué la regla de $500 por cada 10 minutos eligió
+ * la ruta con TAG o la ruta sin TAG.
+ */
+export function explicarEleccion(conTag: Recorrido, sinTag: Recorrido): string {
+  const elegida = elegirRecorrido(conTag, sinTag);
+  const minutos = Math.round((sinTag.duracionSegundos - conTag.duracionSegundos) / 60);
+  const extra = costoRecorrido(conTag) - costoRecorrido(sinTag);
+  const limite = Math.round(COSTO_MAXIMO_POR_10_MIN * (minutos / 10));
+  const clp = (n: number) => `$${Math.abs(n).toLocaleString("es-CL")}`;
+
+  if (conTag.peajesClp === 0 && sinTag.peajesClp === 0) {
+    return "El recorrido óptimo no pasa por autopistas con TAG.";
+  }
+  if (elegida === conTag) {
+    return extra <= 0
+      ? `Se usa TAG: es más rápida (${minutos} min menos) y no cuesta más.`
+      : `Se usa TAG: ahorra ${minutos} min por ${clp(extra)} extra, menos que el máximo aceptado (${clp(limite)} = $500 por cada 10 min).`;
+  }
+  return minutos <= 0
+    ? "Se evita el TAG: la ruta con TAG no ahorra tiempo."
+    : `Se evita el TAG: ahorraría ${minutos} min pero cuesta ${clp(extra)} extra, más que el máximo aceptado (${clp(limite)} = $500 por cada 10 min).`;
 }
 
 /**

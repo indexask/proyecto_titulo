@@ -116,10 +116,10 @@ dominio no depende de Flutter ni de Supabase, así que se puede probar de forma 
 | RF-18 | `generar_alertas()`: alerta "Día Cero" |
 | RF-19 | Cada hora el CRON ejecuta `generar_alertas()` y luego `disparar_envio_push()`, que llama a la Edge Function `enviar-alertas` (pg_net). Esta envía cada alerta por **FCM** al responsable de la orden y a los Administradores, la marca `push_enviada` y limpia los tokens inválidos. La app registra el token en `dispositivo_push` al iniciar sesión y lo borra al cerrarla. Con la app abierta, la alerta se muestra en pantalla; al tocar la notificación se abre la lista de alertas. Push solo en la app móvil: en la web el Administrador ve las alertas en el panel |
 | RF-20 | Tabla `alerta` + pantalla de alertas (Administrador: todas; Chofer: las suyas) |
-| RF-21 | El Administrador elige los despachos de la jornada y `optimizar-ruta` compila sus direcciones |
+| RF-21 | El Administrador elige los despachos de la jornada y `optimizar-ruta` compila sus direcciones. Las direcciones que aún no estaban validadas se geocodifican en ese momento (Places) y quedan guardadas en la orden |
 | RF-22 | Edge Functions `optimizar-ruta` (**Routes API**) y `geocodificar` (**Places API**). La clave está solo en el servidor |
-| RF-23 | `VistaRuta`: mapa con el trazado y las paradas en orden. El Chofer solo visualiza |
-| RF-24 | `ruta.costo_ruta_sin_optimizar`, `costo_ruta_optimizada` y `ahorro` (columna calculada) |
+| RF-23 | `VistaRuta`: mapa con el trazado y las paradas en orden. El Chofer solo visualiza. **Ubicación del Chofer en tiempo real** (geolocator): punto en el mapa, precisión, "centrar en mí / seguir", próxima parada y distancia en línea recta. La ubicación no se envía ni se guarda en el servidor |
+| RF-24 | `ruta.costo_ruta_sin_optimizar`, `costo_ruta_optimizada` y `ahorro` (columna calculada). `ruta.detalle_optimizacion` guarda la comparación **tiempo / km / TAG / combustible / costo** de la ruta sin optimizar, con TAG y sin TAG, más el motivo de la elección. Solo la ve el Administrador; el Chofer solo ve si la ruta usa TAG (sí/no) |
 
 Indicadores: la vista `v_kpi` calcula KPI-01, 02, 04, 05, 06, 07 y 08 (solo Administrador).
 KPI-03 se mide en la app (el margen aparece mientras se escribe).
@@ -164,6 +164,8 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 - `connectivity_plus`: detecta cuando vuelve la conexión para sincronizar (RF-15).
 - `flutter_localizations`: textos del sistema en español.
 - `firebase_core` y `firebase_messaging`: recepción de push vía FCM (ver §0).
+- `geolocator`: ubicación del Chofer en tiempo real en el mapa de su ruta (RF-23).
+- `file_picker`: elegir el PDF de la cotización (§0.1).
 
 ### 4.4 Destinatarios y reglas del push
 
@@ -177,9 +179,9 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 
 | Qué | Cómo | Resultado |
 |---|---|---|
-| Reglas de dominio (margen, estados, formatos, polilínea, días hábiles, importación) y lógica offline | `flutter test` | 20 pruebas OK |
-| Migraciones, RLS, vistas, triggers, RPC, alertas, KPI, registro de dispositivos y disparo push, respaldo y restauración del prototipo | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 55 verificaciones OK |
-| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones | Incluido en `npm test` | 18 pruebas OK |
+| Reglas de dominio (margen, estados, formatos, polilínea, días hábiles, importación) y lógica offline | `flutter test` | 22 pruebas OK |
+| Migraciones, RLS, vistas, triggers, RPC, alertas, KPI, registro de dispositivos y disparo push, respaldo y restauración del prototipo | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 57 verificaciones OK |
+| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones, resumen y motivo de la optimización | Incluido en `npm test` | 22 pruebas OK |
 
 ---
 

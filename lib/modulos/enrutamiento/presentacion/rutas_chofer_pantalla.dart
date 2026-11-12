@@ -77,6 +77,7 @@ class RutaChoferPantalla extends ConsumerWidget {
             : VistaRuta(
                 ruta: ruta,
                 encabezado: _ResumenRuta(ruta: ruta),
+                ubicacionEnVivo: true,
                 onParadaTap: (p) => context.push('/chofer/despachos/${p.despachoId}'),
               ),
       ),
@@ -97,7 +98,7 @@ class _ResumenRuta extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       child: Text(
         'Ruta optimizada: ${ruta.distanciaKm ?? '—'} km · ${ruta.duracionMin ?? '—'} min · '
-        '${ruta.paradas.length} paradas',
+        '${ruta.paradas.length} paradas · ${ruta.usaPeajes ? 'usa autopistas con TAG' : 'sin TAG'}',
         textAlign: TextAlign.center,
       ),
     );

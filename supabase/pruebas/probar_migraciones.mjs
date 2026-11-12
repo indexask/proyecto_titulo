@@ -224,8 +224,14 @@ const r = (await como(A, `insert into ruta (fecha, chofer_id, origen_direccion, 
 ok(Number(r.ahorro) === 2600, "ahorro = costo sin optimizar − costo optimizado");
 await como(A, `insert into ruta_parada (ruta_id, despacho_id, orden) values ($1, $2, 0), ($1, $3, 1)`, [r.id, d2, d3]);
 const rc = await como(C1, `select * from v_ruta_chofer`);
-ok(rc.rows.length === 1 && !Object.keys(rc.rows[0]).some((c) => /costo|ahorro|peaje/.test(c)),
+// usa_peajes (sí/no) es operativo: avisa que la ruta pasa por autopistas.
+// Montos de peaje, costos, ahorro y el detalle de optimización NO se exponen.
+const colsRuta = Object.keys(rc.rows[0]).filter((c) => c !== "usa_peajes");
+ok(rc.rows.length === 1 && !colsRuta.some((c) => /costo|ahorro|peaje|detalle|combustible/.test(c)),
   `Chofer ve su ruta sin costos: ${Object.keys(rc.rows[0]).join(", ")}`);
+await como(A, `update ruta set detalle_optimizacion = '{"conTag":{"peajesClp":1830}}' where id = $1`, [r.id]);
+ok(!JSON.stringify((await como(C1, `select * from v_ruta_chofer`)).rows).includes("1830"),
+  "el detalle de optimización (montos de TAG) no llega al Chofer");
 ok((await como(C1, `select * from ruta`)).rows.length === 0, "Chofer NO lee la tabla ruta (costos)");
 ok((await como(C1, `select * from v_despacho_chofer where despacho_id = $1`, [d3])).rows.length === 1,
   "Chofer ve despachos de su ruta aunque no sea responsable");

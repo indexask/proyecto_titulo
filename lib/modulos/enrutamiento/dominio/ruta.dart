@@ -34,6 +34,9 @@ class Ruta {
   final String? polilinea;
   final List<ParadaRuta> paradas;
 
+  /// La ruta pasa por autopistas con TAG (dato operativo, sin montos).
+  final bool usaPeajes;
+
   const Ruta({
     required this.id,
     required this.fecha,
@@ -44,17 +47,81 @@ class Ruta {
     this.distanciaKm,
     this.duracionMin,
     this.polilinea,
+    this.usaPeajes = false,
   });
+
+  /// Primera parada aún no entregada (la próxima a visitar).
+  ParadaRuta? get proximaParada =>
+      paradas.where((p) => p.estado != EstadoDespacho.entregado).firstOrNull;
+}
+
+/// Tiempo, km, TAG y combustible de una alternativa de recorrido.
+class ResumenRecorrido {
+  final num distanciaKm;
+  final int duracionMin;
+  final num peajesClp;
+  final num combustibleClp;
+  final num costoClp;
+
+  const ResumenRecorrido({
+    required this.distanciaKm,
+    required this.duracionMin,
+    required this.peajesClp,
+    required this.combustibleClp,
+    required this.costoClp,
+  });
+
+  factory ResumenRecorrido.fromMap(Map<String, dynamic> m) => ResumenRecorrido(
+        distanciaKm: m['distanciaKm'] as num,
+        duracionMin: (m['duracionMin'] as num).toInt(),
+        peajesClp: m['peajesClp'] as num,
+        combustibleClp: m['combustibleClp'] as num,
+        costoClp: m['costoClp'] as num,
+      );
+}
+
+/// Comparación que hizo la optimización (RF-22, RF-24): ruta sin optimizar,
+/// optimizada con TAG y optimizada sin TAG, y por qué se eligió la final.
+class DetalleOptimizacion {
+  final ResumenRecorrido sinOptimizar;
+  final ResumenRecorrido conTag;
+  final ResumenRecorrido sinTag;
+  final bool eligioConTag;
+  final String motivo;
+  final int paradasPrioritarias;
+
+  const DetalleOptimizacion({
+    required this.sinOptimizar,
+    required this.conTag,
+    required this.sinTag,
+    required this.eligioConTag,
+    required this.motivo,
+    required this.paradasPrioritarias,
+  });
+
+  ResumenRecorrido get elegida => eligioConTag ? conTag : sinTag;
+
+  static DetalleOptimizacion? fromMap(Object? datos) {
+    if (datos is! Map<String, dynamic>) return null;
+    return DetalleOptimizacion(
+      sinOptimizar: ResumenRecorrido.fromMap(datos['sinOptimizar'] as Map<String, dynamic>),
+      conTag: ResumenRecorrido.fromMap(datos['conTag'] as Map<String, dynamic>),
+      sinTag: ResumenRecorrido.fromMap(datos['sinTag'] as Map<String, dynamic>),
+      eligioConTag: datos['elegida'] == 'con_tag',
+      motivo: datos['motivo'] as String? ?? '',
+      paradasPrioritarias: (datos['paradasPrioritarias'] as num?)?.toInt() ?? 0,
+    );
+  }
 }
 
 /// Vista completa del Administrador: agrega costos y ahorro (RF-24).
 class RutaAdmin extends Ruta {
   final String? choferId;
   final String? choferNombre;
-  final bool usaPeajes;
   final num? costoSinOptimizar;
   final num? costoOptimizada;
   final num? ahorro;
+  final DetalleOptimizacion? detalle;
 
   const RutaAdmin({
     required super.id,
@@ -66,12 +133,13 @@ class RutaAdmin extends Ruta {
     super.distanciaKm,
     super.duracionMin,
     super.polilinea,
+    super.usaPeajes,
     this.choferId,
     this.choferNombre,
-    this.usaPeajes = false,
     this.costoSinOptimizar,
     this.costoOptimizada,
     this.ahorro,
+    this.detalle,
   });
 
   factory RutaAdmin.fromMap(Map<String, dynamic> map) {
@@ -106,6 +174,7 @@ class RutaAdmin extends Ruta {
       costoSinOptimizar: map['costo_ruta_sin_optimizar'] as num?,
       costoOptimizada: map['costo_ruta_optimizada'] as num?,
       ahorro: map['ahorro'] as num?,
+      detalle: DetalleOptimizacion.fromMap(map['detalle_optimizacion']),
     );
   }
 }

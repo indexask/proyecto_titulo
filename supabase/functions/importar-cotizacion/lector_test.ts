@@ -81,6 +81,16 @@ test("un PDF que no es cotización devuelve campos vacíos con advertencias", ()
   assert.ok(d.advertencias.length >= 4);
 });
 
+test("número de cotización con distinto largo (1147293-222-COT26)", () => {
+  const otra = COTIZACION_REAL.map((i) => (i.texto === "5609-132-COT26" ? { ...i, texto: "1147293-222-COT26" } : i));
+  assert.equal(leerCotizacion(otra).numeroCotizacion, "1147293-222-COT26");
+});
+
+test("no confunde el N° interno, la fecha ni el RUT con el número de cotización", () => {
+  const sinId = COTIZACION_REAL.filter((i) => i.texto !== "5609-132-COT26");
+  assert.equal(leerCotizacion(sinId).numeroCotizacion, null); // quedan NºFG-RM-9022, 12-08-2026, 77.817.781-1
+});
+
 test("montos en formato chileno", () => {
   assert.equal(parsearMonto("$259.697"), 259697);
   assert.equal(parsearMonto("$1.234.567"), 1234567);

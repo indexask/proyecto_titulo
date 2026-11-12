@@ -108,8 +108,9 @@ export function leerCotizacion(items: ItemTexto[]): DatosCotizacion {
     ? direcciones.filter((d) => d.y < solicitado.fila.y).sort((a, b) => b.y - a.y)[0]
     : direcciones[direcciones.length - 1];
 
-  // --- ID de la cotización (formato Mercado Público: 5609-132-COT26) ----------
-  const mId = todoElTexto.match(/\b\d{2,6}-\d{1,6}-[A-Z]{2,5}\d{2}\b/);
+  // --- ID de la cotización (formato Mercado Público: <números>-<números>-<letras><año>,
+  // ej. 5609-132-COT26 o 1147293-222-COT26; el largo de cada parte varía) ------
+  const mId = todoElTexto.match(/\b\d+-\d+-[A-Z]{2,6}\d{0,4}\b/);
   const numeroCotizacion = mId ? mId[0] : null;
 
   // --- Tabla de productos ---------------------------------------------------

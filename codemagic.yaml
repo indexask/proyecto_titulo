@@ -1,0 +1,53 @@
+workflows:
+  ios-workflow:
+    name: iOS - Cotizaciones y Rutas
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      groups:
+        # Crear este grupo en Codemagic > Teams > Environment variables con:
+        # SUPABASE_URL, SUPABASE_ANON_KEY, MAPS_API_KEY
+        - app_secrets
+      ios_signing:
+        # Configurar en Codemagic > App settings > iOS code signing una vez
+        # exista la cuenta Apple Developer Program. Sin esto, el workflow
+        # queda listo pero el paso de archivo/firma fallará.
+        distribution_type: ad_hoc
+        bundle_identifier: com.proyectotitulo.cotizaciones_rutas
+    scripts:
+      - name: Generar env/dev.json desde las variables de Codemagic
+        script: |
+          mkdir -p env
+          cat > env/dev.json <<EOF
+          {
+            "SUPABASE_URL": "$SUPABASE_URL",
+            "SUPABASE_ANON_KEY": "$SUPABASE_ANON_KEY"
+          }
+          EOF
+      - name: Generar Secrets.xcconfig
+        script: |
+          echo "MAPS_API_KEY = $MAPS_API_KEY" > ios/Flutter/Secrets.xcconfig
+      - name: Instalar dependencias Flutter
+        script: flutter packages pub get
+      - name: Instalar CocoaPods
+        script: |
+          cd ios && pod install
+      - name: Flutter build ipa
+        script: |
+          flutter build ipa --release \
+            --dart-define-from-file=env/dev.json \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - flutter_drive.log
+    publishing:
+      # Descomentar y configurar cuando haya cuenta Apple Developer Program.
+      # app_store_connect:
+      #   auth: integration
+      #   submit_to_testflight: true
+      email:
+        recipients:
+          - yo.felipe.aburido@gmail.com

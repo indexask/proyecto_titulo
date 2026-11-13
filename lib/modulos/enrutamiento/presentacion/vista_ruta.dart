@@ -61,6 +61,12 @@ class _VistaRutaState extends State<VistaRuta> {
   IconosMapa? _iconos;
   late ModoCamara _modo = widget.enRuta ? ModoCamara.tramo : ModoCamara.rutaCompleta;
 
+  // En web, Google Maps puede quedar gris tras cambiar de tamaño, al volver a
+  // la pestaña o al actualizarse los datos. Se "refresca" en esos casos.
+  Size? _tamanoMapa;
+  Timer? _refresco;
+  late final AppLifecycleListener _ciclo;
+
   Ruta get ruta => widget.ruta;
   LatLng get _origen => LatLng(ruta.origenLat, ruta.origenLng);
   LatLng? get _yo => _posicion == null ? null : LatLng(_posicion!.latitude, _posicion!.longitude);
@@ -69,14 +75,37 @@ class _VistaRutaState extends State<VistaRuta> {
       ? decodificarPolilinea(ruta.polilinea!).map((c) => LatLng(c.$1, c.$2)).toList()
       : [_origen, ..._puntosParadas, _origen];
 
-  List<LatLng> get _puntosParadas =>
-      [for (final p in ruta.paradas) if (p.lat != null && p.lng != null) LatLng(p.lat!, p.lng!)];
+  List<LatLng> get _puntosParadas => [
+    for (final p in ruta.paradas)
+      if (p.lat != null && p.lng != null) LatLng(p.lat!, p.lng!),
+  ];
 
   @override
   void initState() {
     super.initState();
+    _ciclo = AppLifecycleListener(onResume: _programarRefresco, onShow: _programarRefresco);
     _prepararIconos();
     if (widget.ubicacionEnVivo) _activarUbicacion();
+  }
+
+  /// Agrupa varios pedidos de refresco seguidos en uno solo.
+  void _programarRefresco() {
+    _refresco?.cancel();
+    _refresco = Timer(const Duration(milliseconds: 350), _refrescarMapa);
+  }
+
+  /// Reaplica la cámara y la desplaza un píxel ida y vuelta: obliga a Google
+  /// Maps a redibujar con el tamaño actual.
+  Future<void> _refrescarMapa() async {
+    final mapa = _mapa;
+    if (!mounted || mapa == null) return;
+    await _aplicarCamara();
+    try {
+      await mapa.moveCamera(CameraUpdate.scrollBy(1, 0));
+      await mapa.moveCamera(CameraUpdate.scrollBy(-1, 0));
+    } catch (_) {
+      // Mapa sin tamaño todavía; el próximo cambio lo vuelve a intentar.
+    }
   }
 
   @override
@@ -93,10 +122,14 @@ class _VistaRutaState extends State<VistaRuta> {
     if (anterior.ruta.proximaParada?.despachoId != ruta.proximaParada?.despachoId && _modo == ModoCamara.tramo) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _aplicarCamara(animar: true));
     }
+    // Cualquier cambio de datos: se asegura que el mapa quede dibujado.
+    _programarRefresco();
   }
 
   @override
   void dispose() {
+    _refresco?.cancel();
+    _ciclo.dispose();
     _suscripcion?.cancel();
     super.dispose();
   }
@@ -113,14 +146,17 @@ class _VistaRutaState extends State<VistaRuta> {
     if (estado != EstadoUbicacion.activa) return;
     await _suscripcion?.cancel();
     var primera = true;
-    _suscripcion = _ubicacion.posiciones().listen((p) {
-      if (!mounted) return;
-      setState(() => _posicion = p);
-      if (_modo != ModoCamara.rutaCompleta) _aplicarCamara(animar: !primera);
-      primera = false;
-    }, onError: (_) {
-      if (mounted) setState(() => _estado = EstadoUbicacion.gpsApagado);
-    });
+    _suscripcion = _ubicacion.posiciones().listen(
+      (p) {
+        if (!mounted) return;
+        setState(() => _posicion = p);
+        if (_modo != ModoCamara.rutaCompleta) _aplicarCamara(animar: !primera);
+        primera = false;
+      },
+      onError: (_) {
+        if (mounted) setState(() => _estado = EstadoUbicacion.gpsApagado);
+      },
+    );
   }
 
   /// Mueve la cámara según el modo actual.
@@ -143,8 +179,7 @@ class _VistaRutaState extends State<VistaRuta> {
           destino = CameraUpdate.newLatLngBounds(_limites([_origen, ..._puntosParadas, ..._trazado]), 48);
         }
       case ModoCamara.rutaCompleta:
-        destino = CameraUpdate.newLatLngBounds(
-            _limites([_origen, ..._puntosParadas, ..._trazado, ?yo]), 48);
+        destino = CameraUpdate.newLatLngBounds(_limites([_origen, ..._puntosParadas, ..._trazado, ?yo]), 48);
     }
     if (destino == null) return;
     try {
@@ -164,10 +199,7 @@ class _VistaRutaState extends State<VistaRuta> {
       if (!mounted) return;
       await _aplicarCamara();
     }
-    try {
-      await mapa.moveCamera(CameraUpdate.scrollBy(1, 0));
-      await mapa.moveCamera(CameraUpdate.scrollBy(-1, 0));
-    } catch (_) {}
+    await _refrescarMapa();
   }
 
   void _cambiarModo(ModoCamara modo) {
@@ -200,7 +232,10 @@ class _VistaRutaState extends State<VistaRuta> {
             icon: iconos?.parada(p.orden + 1, p.estado) ?? BitmapDescriptor.defaultMarker,
             anchor: anclaje,
             zIndexInt: p.despachoId == proxima?.despachoId ? 5 : 1,
-            infoWindow: InfoWindow(title: '${p.orden + 1}. ${p.cliente}', snippet: '${p.estado.etiqueta} · ${p.direccion}'),
+            infoWindow: InfoWindow(
+              title: '${p.orden + 1}. ${p.cliente}',
+              snippet: '${p.estado.etiqueta} · ${p.direccion}',
+            ),
           ),
       if (yo != null)
         Marker(
@@ -249,43 +284,54 @@ class _VistaRutaState extends State<VistaRuta> {
           flex: 3,
           child: !mapasDisponibles
               ? const _MapaNoDisponible()
-              : Stack(
-                  children: [
-                    GoogleMap(
-                      initialCameraPosition: CameraPosition(target: _origen, zoom: 11),
-                      markers: marcadores,
-                      circles: {
-                        if (yo != null && _posicion!.accuracy > 0)
-                          Circle(
-                            circleId: const CircleId('precision'),
-                            center: yo,
-                            radius: _posicion!.accuracy,
-                            fillColor: colores.primary.withValues(alpha: 0.12),
-                            strokeColor: colores.primary.withValues(alpha: 0.4),
-                            strokeWidth: 1,
+              : LayoutBuilder(
+                  builder: (context, restricciones) {
+                    // Si el mapa cambia de tamaño (p. ej. una barra se acorta),
+                    // se refresca para que no quede gris.
+                    final tamano = restricciones.biggest;
+                    if (_tamanoMapa != tamano) {
+                      _tamanoMapa = tamano;
+                      WidgetsBinding.instance.addPostFrameCallback((_) => _programarRefresco());
+                    }
+                    return Stack(
+                      children: [
+                        GoogleMap(
+                          initialCameraPosition: CameraPosition(target: _origen, zoom: 11),
+                          markers: marcadores,
+                          circles: {
+                            if (yo != null && _posicion!.accuracy > 0)
+                              Circle(
+                                circleId: const CircleId('precision'),
+                                center: yo,
+                                radius: _posicion!.accuracy,
+                                fillColor: colores.primary.withValues(alpha: 0.12),
+                                strokeColor: colores.primary.withValues(alpha: 0.4),
+                                strokeWidth: 1,
+                              ),
+                          },
+                          polylines: lineas,
+                          myLocationButtonEnabled: false,
+                          zoomControlsEnabled: false,
+                          onMapCreated: _alCrearMapa,
+                        ),
+                        Positioned(
+                          right: 12,
+                          bottom: 12,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              botonModo(ModoCamara.rutaCompleta, Icons.zoom_out_map, 'Ver toda la ruta'),
+                              if (widget.ubicacionEnVivo && yo != null) ...[
+                                if (proxima != null)
+                                  botonModo(ModoCamara.tramo, Icons.near_me, 'Ver tramo a la próxima parada'),
+                                botonModo(ModoCamara.seguirme, Icons.my_location, 'Seguir mi ubicación'),
+                              ],
+                            ],
                           ),
-                      },
-                      polylines: lineas,
-                      myLocationButtonEnabled: false,
-                      zoomControlsEnabled: false,
-                      onMapCreated: _alCrearMapa,
-                    ),
-                    Positioned(
-                      right: 12,
-                      bottom: 12,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          botonModo(ModoCamara.rutaCompleta, Icons.zoom_out_map, 'Ver toda la ruta'),
-                          if (widget.ubicacionEnVivo && yo != null) ...[
-                            if (proxima != null)
-                              botonModo(ModoCamara.tramo, Icons.near_me, 'Ver tramo a la próxima parada'),
-                            botonModo(ModoCamara.seguirme, Icons.my_location, 'Seguir mi ubicación'),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
+                        ),
+                      ],
+                    );
+                  },
                 ),
         ),
         Expanded(
@@ -329,12 +375,12 @@ class _VistaRutaState extends State<VistaRuta> {
       final (texto, accion, onTap) = switch (_estado!) {
         EstadoUbicacion.gpsApagado => ('Activa el GPS para verte en el mapa', 'Reintentar', _activarUbicacion),
         EstadoUbicacion.permisoBloqueado => (
-            'Permite el acceso a la ubicación en los ajustes',
-            'Ajustes',
-            () async {
-              await _ubicacion.abrirAjustes();
-            }
-          ),
+          'Permite el acceso a la ubicación en los ajustes',
+          'Ajustes',
+          () async {
+            await _ubicacion.abrirAjustes();
+          },
+        ),
         _ => ('Permite el acceso a tu ubicación para verte en el mapa', 'Permitir', _activarUbicacion),
       };
       return Material(
@@ -359,14 +405,18 @@ class _VistaRutaState extends State<VistaRuta> {
       child: ListTile(
         dense: true,
         leading: Icon(proxima == null ? Icons.flag : Icons.navigation),
-        title: Text(proxima == null
-            ? 'Todas las entregas de esta ruta están completas'
-            : 'Próxima parada: ${proxima.orden + 1}. ${proxima.cliente}'),
+        title: Text(
+          proxima == null
+              ? 'Todas las entregas de esta ruta están completas'
+              : 'Próxima parada: ${proxima.orden + 1}. ${proxima.cliente}',
+        ),
         subtitle: proxima == null
             ? null
-            : Text(distancia == null
-                ? (_posicion == null ? 'Obteniendo tu ubicación…' : proxima.direccion)
-                : 'A $distancia en línea recta · ${proxima.direccion}'),
+            : Text(
+                distancia == null
+                    ? (_posicion == null ? 'Obteniendo tu ubicación…' : proxima.direccion)
+                    : 'A $distancia en línea recta · ${proxima.direccion}',
+              ),
       ),
     );
   }

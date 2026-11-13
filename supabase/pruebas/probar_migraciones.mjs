@@ -237,6 +237,36 @@ ok((await como(C1, `select * from v_despacho_chofer where despacho_id = $1`, [d3
   "Chofer ve despachos de su ruta aunque no sea responsable");
 ok((await como(C2, `select * from v_ruta_chofer`)).rows.length === 0, "otro Chofer no ve la ruta");
 
+// --- Cambiar la alternativa de la ruta (menos tiempo / plata / km) ---
+const nuevaOrden = async (cliente) => {
+  const id = (await como(A, `insert into orden_compra (cliente, direccion_entrega, fecha_comprometida) values ($1, 'Calle', $2) returning id`,
+    [cliente, iso(5)])).rows[0].id;
+  return (await db.query(`select id from despacho where orden_id = $1`, [id])).rows[0].id;
+};
+const [da, db_] = [await nuevaOrden("Alt A"), await nuevaOrden("Alt B")];
+const alt = (ids, km, min, costo, pol) => ({ polilinea: pol, despachoIds: ids, usaPeajes: costo > 20000, distanciaKm: km,
+  duracionMin: min, costoClp: costo, peajes: { totalClp: costo > 20000 ? 5000 : 0, cruces: [] } });
+const detalleAlt = { elegida: "sin_tag", recomendada: "sin_tag", motivo: "recomendada", alternativas: {
+  sin_optimizar: alt([da, db_], 65.9, 97, 18580, "plazo"), con_tag: alt([db_, da], 68.6, 88, 21479, "contag"),
+  sin_tag: alt([da, db_], 63.1, 106, 14946, "sintag") } };
+const ra = (await como(A, `insert into ruta (fecha, chofer_id, origen_direccion, origen_lat, origen_lng, costo_ruta_sin_optimizar, costo_ruta_optimizada, detalle_optimizacion)
+  values ($1, '${C1}', 'Bodega', -33.45, -70.66, 18580, 14946, $2) returning id`, [iso(0), JSON.stringify(detalleAlt)])).rows[0].id;
+await como(A, `insert into ruta_parada (ruta_id, despacho_id, orden) values ($1, $2, 0), ($1, $3, 1)`, [ra, da, db_]);
+await como(A, `select elegir_alternativa_ruta($1, 'con_tag', 'menos_tiempo', 'por tiempo')`, [ra]);
+const rAlt = (await como(A, `select polilinea, duracion_min, usa_peajes, ahorro, detalle_optimizacion d from ruta where id = $1`, [ra])).rows[0];
+const ordenAlt = (await como(A, `select despacho_id from ruta_parada where ruta_id = $1 order by orden`, [ra])).rows.map((x) => x.despacho_id);
+ok(rAlt.polilinea === "contag" && rAlt.duracion_min === 88 && rAlt.usa_peajes && Number(rAlt.ahorro) === 18580 - 21479 &&
+  rAlt.d.elegida === "con_tag" && rAlt.d.criterio === "menos_tiempo" && rAlt.d.recomendada === "sin_tag" &&
+  ordenAlt[0] === db_ && ordenAlt[1] === da, "cambiar a 'menos tiempo' aplica trazado, orden, TAG y costo");
+ok((await falla(C1, `select elegir_alternativa_ruta('${ra}', 'sin_tag', 'equilibrada')`)) !== null,
+  "el Chofer no puede cambiar la alternativa");
+await db.query(`update despacho set estado = 'en_ruta' where id = $1`, [da]);
+ok(((await falla(A, `select elegir_alternativa_ruta('${ra}', 'sin_tag', 'equilibrada')`)) ?? "").includes("ya comenzó"),
+  "no se cambia la alternativa si la ruta ya comenzó");
+await como(A, `delete from ruta where id = $1`, [ra]);
+// Limpieza: se borran las órdenes de prueba (el despacho no puede volver a "pendiente").
+await como(A, `delete from orden_compra where id in (select orden_id from despacho where id in ($1, $2))`, [da, db_]);
+
 // --- KPI ---
 const kpi = (await como(A, `select * from v_kpi`)).rows[0];
 console.log("  KPI:", JSON.stringify(kpi));

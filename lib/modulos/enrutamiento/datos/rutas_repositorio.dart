@@ -61,6 +61,23 @@ class RutasRepositorio {
   Future<void> asignarChofer(String rutaId, String? choferId) =>
       supabase.from('ruta').update({'chofer_id': choferId}).eq('id', rutaId);
 
+  /// Aplica otra de las alternativas calculadas (trazado, orden de paradas,
+  /// km, tiempo, TAG y costo) según el criterio elegido. Atómico en la base
+  /// (RPC elegir_alternativa_ruta); se rechaza si la ruta ya comenzó.
+  Future<void> elegirAlternativa({
+    required String rutaId,
+    required AlternativaRuta alternativa,
+    required CriterioRuta criterio,
+    String? motivo,
+  }) async {
+    await supabase.rpc('elegir_alternativa_ruta', params: {
+        'p_ruta_id': rutaId,
+        'p_alternativa': alternativa.codigo,
+        'p_criterio': criterio.codigo,
+        'p_motivo': motivo,
+      });
+  }
+
   Future<void> eliminar(String id) => supabase.from('ruta').delete().eq('id', id);
 
   // --- Chofer (vista sin costos ni ahorro) ---------------------------------

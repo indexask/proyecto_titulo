@@ -190,6 +190,13 @@ servir(async (req) => {
       calcularRuta(apiKey, origen, secuencia(sinTag.orden), true, peajes),
     ]);
 
+    const detallePeajes = (r: { peajesClp: number; cruces: unknown }) => ({
+      categoria: peajes.categoria,
+      horaSalida,
+      totalClp: Math.round(r.peajesClp),
+      cruces: r.cruces,
+      fuente: "Pórticos: OpenStreetMap. Tarifas: MOP Peajes Tarifas 2026.",
+    });
     const candidatas = [
       { clave: "sin_optimizar", etiqueta: "Orden por plazo", ...sinOptimizar },
       { clave: "con_tag", etiqueta: "Optimizada · permite TAG", ...optConTag },
@@ -208,6 +215,7 @@ servir(async (req) => {
       sinTag: resumenRecorrido(optSinTag),
       elegida: elegida.clave,
       motivo: explicarEleccion(candidatas, elegida),
+      motivoRecomendada: explicarEleccion(candidatas, elegida),
       paradasPrioritarias: urgentesLote.length,
       algoritmo: {
         nombre: "Vecino Más Cercano + 2-opt sobre Route Matrix",
@@ -218,13 +226,19 @@ servir(async (req) => {
       },
       vrp: { choferes: choferIds.length, rutas: lotes.length, lote: indiceLote + 1 },
       // Detalle TAG de la ruta elegida (geocercas de pórticos, tarifas MOP 2026).
-      peajes: {
-        categoria: peajes.categoria,
-        horaSalida,
-        totalClp: Math.round(elegida.peajesClp),
-        cruces: elegida.cruces,
-        fuente: "Pórticos: OpenStreetMap. Tarifas: MOP Peajes Tarifas 2026.",
-      },
+      peajes: detallePeajes(elegida),
+      // Recomendación del sistema (equilibrio tiempo/plata: costo + $50/min).
+      recomendada: elegida.clave,
+      criterio: "equilibrada",
+      // Las 3 alternativas completas, para que el Administrador pueda cambiar
+      // entre menos tiempo, menos plata o menos km sin volver a calcular.
+      alternativas: Object.fromEntries(candidatas.map((c) => [c.clave, {
+        polilinea: c.polilinea,
+        despachoIds: c.secuencia.map((p) => p.despachoId),
+        usaPeajes: c.usaPeajes,
+        peajes: detallePeajes(c),
+        ...resumenRecorrido(c),
+      }])),
     };
 
     const { data: ruta, error: errRuta } = await supabase

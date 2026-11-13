@@ -156,7 +156,37 @@ class PeajesRuta {
 }
 
 /// Alternativa elegida por la optimización.
-enum AlternativaRuta { ordenPorPlazo, optimizadaConTag, optimizadaSinTag }
+enum AlternativaRuta {
+  ordenPorPlazo('sin_optimizar', 'Orden por plazo'),
+  optimizadaConTag('con_tag', 'Optimizada · permite TAG'),
+  optimizadaSinTag('sin_tag', 'Optimizada · evita TAG');
+
+  final String codigo;
+  final String etiqueta;
+
+  const AlternativaRuta(this.codigo, this.etiqueta);
+
+  static AlternativaRuta desdeCodigo(Object? codigo) =>
+      values.firstWhere((a) => a.codigo == codigo, orElse: () => optimizadaSinTag);
+}
+
+/// Criterio con que el Administrador elige entre las alternativas. La
+/// recomendación del sistema es la equilibrada: menor costo + $50 por minuto
+/// (regla de $500 por cada 10 minutos, confirmada por el equipo).
+enum CriterioRuta {
+  equilibrada('equilibrada', 'Recomendada (equilibrada)'),
+  menosTiempo('menos_tiempo', 'Menos tiempo'),
+  menosPlata('menos_plata', 'Menos plata'),
+  menosKm('menos_km', 'Menos km');
+
+  final String codigo;
+  final String etiqueta;
+
+  const CriterioRuta(this.codigo, this.etiqueta);
+
+  static CriterioRuta desdeCodigo(Object? codigo) =>
+      values.firstWhere((c) => c.codigo == codigo, orElse: () => equilibrada);
+}
 
 /// Comparación que hizo la optimización (RF-22, RF-24): orden por plazo,
 /// optimizada permitiendo TAG y optimizada evitando TAG, y por qué se eligió
@@ -183,6 +213,19 @@ class DetalleOptimizacion {
   /// Pórticos TAG de la ruta elegida.
   final PeajesRuta? peajes;
 
+  /// Alternativa que recomienda el sistema (equilibrio tiempo/plata).
+  final AlternativaRuta recomendada;
+
+  /// Criterio con que quedó elegida la ruta.
+  final CriterioRuta criterio;
+
+  /// Motivo de la recomendación (se restaura al volver a "equilibrada").
+  final String? motivoRecomendada;
+
+  /// Si se guardaron las 3 alternativas completas (rutas calculadas desde
+  /// el 2026-11-13); sin ellas no se puede cambiar sin recalcular.
+  final bool tieneAlternativas;
+
   const DetalleOptimizacion({
     required this.sinOptimizar,
     required this.conTag,
@@ -196,7 +239,41 @@ class DetalleOptimizacion {
     this.lote,
     this.totalRutas,
     this.peajes,
-  });
+    AlternativaRuta? recomendada,
+    this.criterio = CriterioRuta.equilibrada,
+    this.motivoRecomendada,
+    this.tieneAlternativas = false,
+  }) : recomendada = recomendada ?? eleccion;
+
+  ResumenRecorrido resumen(AlternativaRuta a) => switch (a) {
+        AlternativaRuta.ordenPorPlazo => sinOptimizar,
+        AlternativaRuta.optimizadaConTag => conTag,
+        AlternativaRuta.optimizadaSinTag => sinTag,
+      };
+
+  /// Alternativa que corresponde a cada criterio. En empate gana la
+  /// recomendada y luego la de menor costo + $50/min.
+  AlternativaRuta alternativaPara(CriterioRuta c) {
+    if (c == CriterioRuta.equilibrada) return recomendada;
+    num valor(AlternativaRuta a) {
+      final r = resumen(a);
+      return switch (c) {
+        CriterioRuta.menosTiempo => r.duracionMin,
+        CriterioRuta.menosPlata => r.costoClp,
+        CriterioRuta.menosKm => r.distanciaKm,
+        CriterioRuta.equilibrada => r.costoClp + 50 * r.duracionMin,
+      };
+    }
+    num equilibrio(AlternativaRuta a) => resumen(a).costoClp + 50 * resumen(a).duracionMin;
+    final orden = [...AlternativaRuta.values]..sort((a, b) {
+        final d = valor(a).compareTo(valor(b));
+        if (d != 0) return d;
+        if (a == recomendada) return -1;
+        if (b == recomendada) return 1;
+        return equilibrio(a).compareTo(equilibrio(b));
+      });
+    return orden.first;
+  }
 
   ResumenRecorrido get elegida => switch (eleccion) {
         AlternativaRuta.ordenPorPlazo => sinOptimizar,
@@ -222,11 +299,11 @@ class DetalleOptimizacion {
       sinOptimizar: ResumenRecorrido.fromMap(datos['sinOptimizar'] as Map<String, dynamic>),
       conTag: ResumenRecorrido.fromMap(datos['conTag'] as Map<String, dynamic>),
       sinTag: ResumenRecorrido.fromMap(datos['sinTag'] as Map<String, dynamic>),
-      eleccion: switch (datos['elegida']) {
-        'sin_optimizar' => AlternativaRuta.ordenPorPlazo,
-        'con_tag' => AlternativaRuta.optimizadaConTag,
-        _ => AlternativaRuta.optimizadaSinTag,
-      },
+      eleccion: AlternativaRuta.desdeCodigo(datos['elegida']),
+      recomendada: datos['recomendada'] == null ? null : AlternativaRuta.desdeCodigo(datos['recomendada']),
+      criterio: CriterioRuta.desdeCodigo(datos['criterio']),
+      motivoRecomendada: datos['motivoRecomendada'] as String?,
+      tieneAlternativas: datos['alternativas'] is Map,
       motivo: datos['motivo'] as String? ?? '',
       paradasPrioritarias: (datos['paradasPrioritarias'] as num?)?.toInt() ?? 0,
     );

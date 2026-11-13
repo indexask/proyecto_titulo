@@ -103,6 +103,27 @@ Pruebas: `peajes_test.ts` (7): geocerca por sentido, radio de 35 m, TBFP/TBP/TS 
 
 ---
 
+## 0.4 Elegir el criterio de optimización (solicitud del equipo, 2026-11-13)
+
+En el detalle de la ruta, el Administrador elige **Optimizar por**:
+- **Recomendada (equilibrada):** es la que propone el sistema. Busca el menor costo más $50 por minuto, que equivale a la regla de $500 por cada 10 minutos.
+- **Menos tiempo.**
+- **Menos plata:** combustible más TAG.
+- **Menos km.**
+
+Cada criterio elige entre las 3 alternativas que ya calcula `optimizar-ruta`: orden por plazo, optimizada permitiendo TAG y optimizada evitando TAG. En empate gana la recomendada.
+
+- **Datos:** `detalle_optimizacion.alternativas` guarda, por alternativa, el trazado, el orden de las paradas, si usa TAG, el desglose de pórticos y el resumen de tiempo, km y costo. También se guardan `recomendada`, `criterio` y `motivoRecomendada`.
+- **Cambio atómico:** la función `elegir_alternativa_ruta` (migración `20261114000100`) actualiza en una sola operación el trazado, km, tiempo, TAG, el costo optimizado (y con él el ahorro) y el orden de `ruta_parada`.
+  - Solo la puede usar el Administrador.
+  - Se rechaza si algún despacho de la ruta ya salió de "pendiente". Así no se cambia el orden con el Chofer en camino.
+- **Rutas antiguas:** las calculadas antes de este cambio no tienen las alternativas guardadas. Para cambiarlas hay que volver a calcularlas.
+- **Ahorro:** si el Administrador elige una alternativa más cara que la ruta sin optimizar, el ahorro de KPI-08 puede quedar negativo. Eso es lo esperado.
+
+Pruebas: `criterio_ruta_test.dart` (criterio → alternativa, empates, rutas antiguas). La base comprueba el cambio completo, que el Chofer no puede usarlo y el bloqueo cuando la ruta ya comenzó.
+
+---
+
 ## 1. Qué pasó con el prototipo (`cotizaciones_rutas`)
 
 | Elemento del prototipo | Decisión | Motivo |

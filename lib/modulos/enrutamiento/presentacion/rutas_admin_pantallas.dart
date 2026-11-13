@@ -125,7 +125,7 @@ class RutaAdminPantalla extends ConsumerWidget {
                 encabezado: Column(children: [
                   _ChoferRuta(ruta: async.value!),
                   _CostosRuta(ruta: async.value!),
-                  if (async.value!.detalle != null) _ComparacionOptimizacion(detalle: async.value!.detalle!),
+                  if (async.value!.detalle != null) _ComparacionOptimizacion(ruta: async.value!, detalle: async.value!.detalle!),
                 ]),
               ),
       ),
@@ -238,9 +238,10 @@ class _CostosRuta extends StatelessWidget {
 /// Comparación de la optimización: tiempo, km, TAG y combustible de cada
 /// alternativa, y el motivo de la elección (regla de $500 por 10 min).
 class _ComparacionOptimizacion extends StatelessWidget {
+  final RutaAdmin ruta;
   final DetalleOptimizacion detalle;
 
-  const _ComparacionOptimizacion({required this.detalle});
+  const _ComparacionOptimizacion({required this.ruta, required this.detalle});
 
   @override
   Widget build(BuildContext context) {
@@ -275,6 +276,7 @@ class _ComparacionOptimizacion extends StatelessWidget {
       title: const Text('Optimización: tiempo, km y TAG'),
       subtitle: Text(detalle.motivo),
       children: [
+        _SelectorCriterio(ruta: ruta, detalle: detalle),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
@@ -321,6 +323,94 @@ class _ComparacionOptimizacion extends StatelessWidget {
         if (detalle.peajes != null) _DetallePeajes(peajes: detalle.peajes!),
         const SizedBox(height: 8),
       ],
+    );
+  }
+}
+
+/// Permite cambiar la ruta entre menos tiempo, menos plata o menos km. La
+/// recomendada por el sistema es la equilibrada (costo + $50/min).
+class _SelectorCriterio extends ConsumerStatefulWidget {
+  final RutaAdmin ruta;
+  final DetalleOptimizacion detalle;
+
+  const _SelectorCriterio({required this.ruta, required this.detalle});
+
+  @override
+  ConsumerState<_SelectorCriterio> createState() => _SelectorCriterioState();
+}
+
+class _SelectorCriterioState extends ConsumerState<_SelectorCriterio> {
+  bool _aplicando = false;
+
+  Future<void> _elegir(CriterioRuta c) async {
+    final d = widget.detalle;
+    final alt = d.alternativaPara(c);
+    final r = d.resumen(alt);
+    final motivo = c == CriterioRuta.equilibrada
+        ? d.motivoRecomendada
+        : 'Elegida por el Administrador: ${c.etiqueta.toLowerCase()} → "${alt.etiqueta}" '
+            '(${r.duracionMin} min, ${r.distanciaKm} km, ${formatoClp(r.costoClp)}). '
+            'La recomendada (equilibrada) es "${d.recomendada.etiqueta}".';
+    setState(() => _aplicando = true);
+    try {
+      await ref.read(rutasRepositorioProvider).elegirAlternativa(
+            rutaId: widget.ruta.id,
+            alternativa: alt,
+            criterio: c,
+            motivo: motivo,
+          );
+      ref.invalidate(rutaAdminProvider(widget.ruta.id));
+      ref.invalidate(rutasAdminProvider);
+      if (mounted) mostrarMensaje(context, 'Ruta actualizada: ${alt.etiqueta}.');
+    } catch (e) {
+      if (mounted) mostrarMensaje(context, mensajeError(e));
+    } finally {
+      if (mounted) setState(() => _aplicando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final d = widget.detalle;
+    final tema = Theme.of(context);
+    final comenzada = widget.ruta.estado != EstadoRuta.porIniciar;
+    final habilitado = d.tieneAlternativas && !comenzada && !_aplicando;
+    final aviso = !d.tieneAlternativas
+        ? 'Esta ruta se calculó antes de guardar las alternativas: elimínala y vuelve a calcularla para poder cambiarla.'
+        : comenzada
+            ? 'La ruta ya comenzó: no se puede cambiar la optimización.'
+            : null;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Text('Optimizar por', style: tema.textTheme.labelLarge),
+          if (_aplicando) ...[
+            const SizedBox(width: 8),
+            const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+          ],
+        ]),
+        const SizedBox(height: 6),
+        Wrap(spacing: 8, runSpacing: 6, children: [
+          for (final c in CriterioRuta.values)
+            Tooltip(
+              message: '→ ${d.alternativaPara(c).etiqueta}',
+              child: ChoiceChip(
+                avatar: c == CriterioRuta.equilibrada ? const Icon(Icons.recommend, size: 18) : null,
+                label: Text(c.etiqueta),
+                selected: d.criterio == c,
+                onSelected: habilitado && d.criterio != c ? (_) => _elegir(c) : null,
+              ),
+            ),
+        ]),
+        const SizedBox(height: 4),
+        Text(
+          aviso ??
+              'La recomendada equilibra tiempo y plata: acepta pagar más solo si ahorra al menos 10 min por cada \$500.',
+          style: tema.textTheme.bodySmall,
+        ),
+      ]),
     );
   }
 }

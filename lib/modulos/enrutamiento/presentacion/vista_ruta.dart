@@ -283,9 +283,16 @@ class _VistaRutaState extends State<VistaRuta> {
       );
     }
 
-    return Column(
+    return LayoutBuilder(builder: (context, pantalla) => Column(
       children: [
-        ?widget.encabezado,
+        // El encabezado (costos, comparación, desglose TAG) puede crecer al
+        // expandirse: se limita al 45 % del alto y se desplaza por dentro,
+        // para que nunca empuje el mapa fuera de la pantalla.
+        if (widget.encabezado != null)
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: pantalla.maxHeight * 0.45),
+            child: Scrollbar(child: SingleChildScrollView(child: widget.encabezado)),
+          ),
         if (widget.ubicacionEnVivo) _panelUbicacion(context),
         Expanded(
           flex: 3,
@@ -370,7 +377,7 @@ class _VistaRutaState extends State<VistaRuta> {
           ),
         ),
       ],
-    );
+    ));
   }
 
   /// Próxima parada y distancia, o aviso si la ubicación no está disponible.

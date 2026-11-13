@@ -10,6 +10,7 @@ import '../../logistico_notificaciones/dominio/estado_despacho.dart';
 import '../../logistico_notificaciones/presentacion/widgets_despacho.dart';
 import '../datos/ubicacion_repositorio.dart';
 import '../dominio/ruta.dart';
+import 'iconos_mapa.dart';
 
 /// Mapa geolocalizado de la ruta optimizada + lista de paradas en orden
 /// (RF-23). Solo visualización: el Chofer no puede editar la ruta.
@@ -43,13 +44,45 @@ class _VistaRutaState extends State<VistaRuta> {
   Position? _posicion;
   EstadoUbicacion? _estado;
   bool _seguir = false;
+  IconosMapa? _iconos;
 
   Ruta get ruta => widget.ruta;
 
   @override
   void initState() {
     super.initState();
+    _prepararIconos();
     if (widget.ubicacionEnVivo) _activarUbicacion();
+  }
+
+  @override
+  void didUpdateWidget(VistaRuta anterior) {
+    super.didUpdateWidget(anterior);
+    // Si cambia el estado de alguna parada, se redibujan sus íconos.
+    final antes = anterior.ruta.paradas.map((p) => p.estado).toList();
+    final ahora = ruta.paradas.map((p) => p.estado).toList();
+    if (antes.length != ahora.length || !List.generate(antes.length, (i) => antes[i] == ahora[i]).every((x) => x)) {
+      _prepararIconos();
+    }
+  }
+
+  Future<void> _prepararIconos() async {
+    final iconos = await IconosMapa.crear(ruta.paradas.map((p) => (numero: p.orden + 1, estado: p.estado)));
+    if (mounted) setState(() => _iconos = iconos);
+  }
+
+  /// Encuadra la ruta completa. En web, Google Maps a veces no dibuja nada
+  /// hasta que la cámara se mueve, así que se repite mientras termina de cargar.
+  Future<void> _encuadrar(GoogleMapController controlador, List<LatLng> puntos) async {
+    for (final espera in const [400, 1200, 2500]) {
+      await Future<void>.delayed(Duration(milliseconds: espera));
+      if (!mounted || _seguir) return;
+      try {
+        await controlador.moveCamera(CameraUpdate.newLatLngBounds(_limites(puntos), 48));
+      } catch (_) {
+        // El mapa aún no tiene tamaño; se reintenta.
+      }
+    }
   }
 
   @override
@@ -86,30 +119,31 @@ class _VistaRutaState extends State<VistaRuta> {
     final paradasConUbicacion = ruta.paradas.where((p) => p.lat != null && p.lng != null).toList();
     final yo = _posicion == null ? null : LatLng(_posicion!.latitude, _posicion!.longitude);
 
+    final iconos = _iconos;
+    const centrado = Offset(0.5, 0.5);
     final marcadores = <Marker>{
       Marker(
         markerId: const MarkerId('origen'),
         position: origen,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-        infoWindow: InfoWindow(title: 'Bodega (salida)', snippet: ruta.origenDireccion),
+        icon: iconos?.bodega ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+        anchor: iconos == null ? const Offset(0.5, 1) : centrado,
+        infoWindow: InfoWindow(title: 'Bodega (salida y regreso)', snippet: ruta.origenDireccion),
       ),
       for (final p in paradasConUbicacion)
         Marker(
           markerId: MarkerId(p.despachoId),
           position: LatLng(p.lat!, p.lng!),
-          icon: BitmapDescriptor.defaultMarkerWithHue(switch (p.estado) {
-            EstadoDespacho.entregado => BitmapDescriptor.hueAzure,
-            EstadoDespacho.enRuta => BitmapDescriptor.hueOrange,
-            EstadoDespacho.pendiente => BitmapDescriptor.hueRed,
-          }),
-          infoWindow: InfoWindow(title: '${p.orden + 1}. ${p.cliente}', snippet: p.direccion),
+          icon: iconos?.parada(p.orden + 1, p.estado) ?? BitmapDescriptor.defaultMarker,
+          anchor: iconos == null ? const Offset(0.5, 1) : centrado,
+          infoWindow: InfoWindow(title: '${p.orden + 1}. ${p.cliente}', snippet: '${p.estado.etiqueta} · ${p.direccion}'),
         ),
       if (yo != null)
         Marker(
           markerId: const MarkerId('yo'),
           position: yo,
           zIndexInt: 10,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
+          icon: iconos?.ubicacion ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          anchor: iconos == null ? const Offset(0.5, 1) : centrado,
           infoWindow: const InfoWindow(title: 'Tu ubicación'),
         ),
     };
@@ -158,14 +192,9 @@ class _VistaRutaState extends State<VistaRuta> {
                 onCameraMoveStarted: () {
                   if (_seguir) setState(() => _seguir = false);
                 },
-                onMapCreated: (controlador) async {
+                onMapCreated: (controlador) {
                   _mapa = controlador;
-                  await Future<void>.delayed(const Duration(milliseconds: 300));
-                  try {
-                    await controlador.animateCamera(CameraUpdate.newLatLngBounds(_limites(todos), 48));
-                  } catch (_) {
-                    // El mapa aún no tiene tamaño; se mantiene la cámara inicial.
-                  }
+                  _encuadrar(controlador, todos);
                 },
               ),
               if (widget.ubicacionEnVivo && yo != null)
@@ -198,7 +227,11 @@ class _VistaRutaState extends State<VistaRuta> {
               for (final p in ruta.paradas)
                 ListTile(
                   dense: true,
-                  leading: CircleAvatar(child: Text('${p.orden + 1}')),
+                  leading: CircleAvatar(
+                    backgroundColor: IconosMapa.colorEstado(p.estado),
+                    foregroundColor: Colors.white,
+                    child: Text('${p.orden + 1}'),
+                  ),
                   title: Text(p.cliente),
                   subtitle: Text(p.direccion),
                   trailing: ChipEstado(p.estado),

@@ -6,11 +6,23 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/mapas/mapas_disponibles.dart';
 import '../../../core/polilinea.dart';
-import '../../logistico_notificaciones/dominio/estado_despacho.dart';
 import '../../logistico_notificaciones/presentacion/widgets_despacho.dart';
 import '../datos/ubicacion_repositorio.dart';
 import '../dominio/ruta.dart';
 import 'iconos_mapa.dart';
+
+/// Qué muestra la cámara del mapa.
+enum ModoCamara {
+  /// Toda la ruta (bodega y paradas).
+  rutaCompleta,
+
+  /// El tramo actual: la ubicación del Chofer y la próxima parada. Se
+  /// actualiza solo al moverse y al pasar a la siguiente parada.
+  tramo,
+
+  /// Centrado en el Chofer, siguiéndolo.
+  seguirme,
+}
 
 /// Mapa geolocalizado de la ruta optimizada + lista de paradas en orden
 /// (RF-23). Solo visualización: el Chofer no puede editar la ruta.
@@ -18,12 +30,14 @@ import 'iconos_mapa.dart';
 /// costos con [encabezado].
 ///
 /// Con [ubicacionEnVivo], muestra la posición del Chofer en tiempo real, la
-/// próxima parada y la distancia hasta ella.
+/// próxima parada y la distancia hasta ella. Con [enRuta], la cámara enfoca
+/// el tramo actual (ubicación → próxima parada).
 class VistaRuta extends StatefulWidget {
   final Ruta ruta;
   final Widget? encabezado;
   final void Function(ParadaRuta parada)? onParadaTap;
   final bool ubicacionEnVivo;
+  final bool enRuta;
 
   const VistaRuta({
     super.key,
@@ -31,6 +45,7 @@ class VistaRuta extends StatefulWidget {
     this.encabezado,
     this.onParadaTap,
     this.ubicacionEnVivo = false,
+    this.enRuta = false,
   });
 
   @override
@@ -43,10 +58,19 @@ class _VistaRutaState extends State<VistaRuta> {
   StreamSubscription<Position>? _suscripcion;
   Position? _posicion;
   EstadoUbicacion? _estado;
-  bool _seguir = false;
   IconosMapa? _iconos;
+  late ModoCamara _modo = widget.enRuta ? ModoCamara.tramo : ModoCamara.rutaCompleta;
 
   Ruta get ruta => widget.ruta;
+  LatLng get _origen => LatLng(ruta.origenLat, ruta.origenLng);
+  LatLng? get _yo => _posicion == null ? null : LatLng(_posicion!.latitude, _posicion!.longitude);
+
+  List<LatLng> get _trazado => (ruta.polilinea?.isNotEmpty ?? false)
+      ? decodificarPolilinea(ruta.polilinea!).map((c) => LatLng(c.$1, c.$2)).toList()
+      : [_origen, ..._puntosParadas, _origen];
+
+  List<LatLng> get _puntosParadas =>
+      [for (final p in ruta.paradas) if (p.lat != null && p.lng != null) LatLng(p.lat!, p.lng!)];
 
   @override
   void initState() {
@@ -58,30 +82,16 @@ class _VistaRutaState extends State<VistaRuta> {
   @override
   void didUpdateWidget(VistaRuta anterior) {
     super.didUpdateWidget(anterior);
-    // Si cambia el estado de alguna parada, se redibujan sus íconos.
     final antes = anterior.ruta.paradas.map((p) => p.estado).toList();
     final ahora = ruta.paradas.map((p) => p.estado).toList();
-    if (antes.length != ahora.length || !List.generate(antes.length, (i) => antes[i] == ahora[i]).every((x) => x)) {
-      _prepararIconos();
-    }
-  }
+    final cambioEstados =
+        antes.length != ahora.length || [for (var i = 0; i < antes.length; i++) antes[i] != ahora[i]].any((x) => x);
+    if (cambioEstados) _prepararIconos();
 
-  Future<void> _prepararIconos() async {
-    final iconos = await IconosMapa.crear(ruta.paradas.map((p) => (numero: p.orden + 1, estado: p.estado)));
-    if (mounted) setState(() => _iconos = iconos);
-  }
-
-  /// Encuadra la ruta completa. En web, Google Maps a veces no dibuja nada
-  /// hasta que la cámara se mueve, así que se repite mientras termina de cargar.
-  Future<void> _encuadrar(GoogleMapController controlador, List<LatLng> puntos) async {
-    for (final espera in const [400, 1200, 2500]) {
-      await Future<void>.delayed(Duration(milliseconds: espera));
-      if (!mounted || _seguir) return;
-      try {
-        await controlador.moveCamera(CameraUpdate.newLatLngBounds(_limites(puntos), 48));
-      } catch (_) {
-        // El mapa aún no tiene tamaño; se reintenta.
-      }
+    // Al iniciar la ruta, o al pasar a la siguiente parada, se enfoca el tramo.
+    if (widget.enRuta && !anterior.enRuta) _modo = ModoCamara.tramo;
+    if (anterior.ruta.proximaParada?.despachoId != ruta.proximaParada?.despachoId && _modo == ModoCamara.tramo) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _aplicarCamara(animar: true));
     }
   }
 
@@ -91,69 +101,145 @@ class _VistaRutaState extends State<VistaRuta> {
     super.dispose();
   }
 
+  Future<void> _prepararIconos() async {
+    final iconos = await IconosMapa.crear(ruta.paradas.map((p) => (numero: p.orden + 1, estado: p.estado)));
+    if (mounted) setState(() => _iconos = iconos);
+  }
+
   Future<void> _activarUbicacion() async {
     final estado = await _ubicacion.solicitarPermiso();
     if (!mounted) return;
     setState(() => _estado = estado);
     if (estado != EstadoUbicacion.activa) return;
     await _suscripcion?.cancel();
+    var primera = true;
     _suscripcion = _ubicacion.posiciones().listen((p) {
       if (!mounted) return;
       setState(() => _posicion = p);
-      if (_seguir) _mapa?.animateCamera(CameraUpdate.newLatLng(LatLng(p.latitude, p.longitude)));
+      if (_modo != ModoCamara.rutaCompleta) _aplicarCamara(animar: !primera);
+      primera = false;
     }, onError: (_) {
       if (mounted) setState(() => _estado = EstadoUbicacion.gpsApagado);
     });
   }
 
-  void _centrarEnMi() {
-    final p = _posicion;
-    if (p == null) return;
-    setState(() => _seguir = true);
-    _mapa?.animateCamera(CameraUpdate.newLatLngZoom(LatLng(p.latitude, p.longitude), 15));
+  /// Mueve la cámara según el modo actual.
+  Future<void> _aplicarCamara({bool animar = false}) async {
+    final mapa = _mapa;
+    if (mapa == null) return;
+    final yo = _yo;
+    final proxima = ruta.proximaParada;
+
+    CameraUpdate? destino;
+    switch (_modo) {
+      case ModoCamara.seguirme:
+        if (yo != null) destino = CameraUpdate.newLatLngZoom(yo, 16);
+      case ModoCamara.tramo:
+        if (yo != null && proxima?.lat != null && proxima?.lng != null) {
+          destino = CameraUpdate.newLatLngBounds(_limites([yo, LatLng(proxima!.lat!, proxima.lng!)]), 80);
+        } else if (proxima?.lat != null) {
+          destino = CameraUpdate.newLatLngZoom(LatLng(proxima!.lat!, proxima.lng!), 14);
+        } else {
+          destino = CameraUpdate.newLatLngBounds(_limites([_origen, ..._puntosParadas, ..._trazado]), 48);
+        }
+      case ModoCamara.rutaCompleta:
+        destino = CameraUpdate.newLatLngBounds(
+            _limites([_origen, ..._puntosParadas, ..._trazado, ?yo]), 48);
+    }
+    if (destino == null) return;
+    try {
+      animar ? await mapa.animateCamera(destino) : await mapa.moveCamera(destino);
+    } catch (_) {
+      // El mapa aún no tiene tamaño; el siguiente intento lo corrige.
+    }
+  }
+
+  /// Al crear el mapa: en web, Google Maps a veces queda gris hasta que la
+  /// cámara se mueve, así que se aplica la cámara varias veces y se hace un
+  /// pequeño desplazamiento final para forzar el dibujo.
+  Future<void> _alCrearMapa(GoogleMapController mapa) async {
+    _mapa = mapa;
+    for (final espera in const [300, 900, 2000]) {
+      await Future<void>.delayed(Duration(milliseconds: espera));
+      if (!mounted) return;
+      await _aplicarCamara();
+    }
+    try {
+      await mapa.moveCamera(CameraUpdate.scrollBy(1, 0));
+      await mapa.moveCamera(CameraUpdate.scrollBy(-1, 0));
+    } catch (_) {}
+  }
+
+  void _cambiarModo(ModoCamara modo) {
+    setState(() => _modo = modo);
+    _aplicarCamara(animar: true);
   }
 
   @override
   Widget build(BuildContext context) {
-    final origen = LatLng(ruta.origenLat, ruta.origenLng);
-    final paradasConUbicacion = ruta.paradas.where((p) => p.lat != null && p.lng != null).toList();
-    final yo = _posicion == null ? null : LatLng(_posicion!.latitude, _posicion!.longitude);
-
+    final colores = Theme.of(context).colorScheme;
+    final yo = _yo;
     final iconos = _iconos;
     const centrado = Offset(0.5, 0.5);
+    final anclaje = iconos == null ? const Offset(0.5, 1) : centrado;
+    final proxima = ruta.proximaParada;
+
     final marcadores = <Marker>{
       Marker(
         markerId: const MarkerId('origen'),
-        position: origen,
+        position: _origen,
         icon: iconos?.bodega ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-        anchor: iconos == null ? const Offset(0.5, 1) : centrado,
+        anchor: anclaje,
         infoWindow: InfoWindow(title: 'Bodega (salida y regreso)', snippet: ruta.origenDireccion),
       ),
-      for (final p in paradasConUbicacion)
-        Marker(
-          markerId: MarkerId(p.despachoId),
-          position: LatLng(p.lat!, p.lng!),
-          icon: iconos?.parada(p.orden + 1, p.estado) ?? BitmapDescriptor.defaultMarker,
-          anchor: iconos == null ? const Offset(0.5, 1) : centrado,
-          infoWindow: InfoWindow(title: '${p.orden + 1}. ${p.cliente}', snippet: '${p.estado.etiqueta} · ${p.direccion}'),
-        ),
+      for (final p in ruta.paradas)
+        if (p.lat != null && p.lng != null)
+          Marker(
+            markerId: MarkerId(p.despachoId),
+            position: LatLng(p.lat!, p.lng!),
+            icon: iconos?.parada(p.orden + 1, p.estado) ?? BitmapDescriptor.defaultMarker,
+            anchor: anclaje,
+            zIndexInt: p.despachoId == proxima?.despachoId ? 5 : 1,
+            infoWindow: InfoWindow(title: '${p.orden + 1}. ${p.cliente}', snippet: '${p.estado.etiqueta} · ${p.direccion}'),
+          ),
       if (yo != null)
         Marker(
           markerId: const MarkerId('yo'),
           position: yo,
           zIndexInt: 10,
           icon: iconos?.ubicacion ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-          anchor: iconos == null ? const Offset(0.5, 1) : centrado,
+          anchor: anclaje,
           infoWindow: const InfoWindow(title: 'Tu ubicación'),
         ),
     };
 
-    final trazado = (ruta.polilinea?.isNotEmpty ?? false)
-        ? decodificarPolilinea(ruta.polilinea!).map((c) => LatLng(c.$1, c.$2)).toList()
-        : [origen, ...paradasConUbicacion.map((p) => LatLng(p.lat!, p.lng!)), origen];
+    final lineas = <Polyline>{
+      Polyline(polylineId: const PolylineId('ruta'), points: _trazado, color: colores.primary, width: 5),
+      // En ruta: línea punteada de la ubicación actual a la próxima parada.
+      if (widget.enRuta && yo != null && proxima?.lat != null && proxima?.lng != null)
+        Polyline(
+          polylineId: const PolylineId('tramo'),
+          points: [yo, LatLng(proxima!.lat!, proxima.lng!)],
+          color: Colors.orange.shade700,
+          width: 4,
+          patterns: [PatternItem.dash(20), PatternItem.gap(12)],
+        ),
+    };
 
-    final todos = [origen, ...paradasConUbicacion.map((p) => LatLng(p.lat!, p.lng!)), ...trazado];
-    final colores = Theme.of(context).colorScheme;
+    Widget botonModo(ModoCamara modo, IconData icono, String ayuda) {
+      final activo = _modo == modo;
+      return Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: FloatingActionButton.small(
+          heroTag: 'camara-${modo.name}',
+          tooltip: ayuda,
+          backgroundColor: activo ? colores.primary : null,
+          foregroundColor: activo ? colores.onPrimary : null,
+          onPressed: () => _cambiarModo(modo),
+          child: Icon(icono),
+        ),
+      );
+    }
 
     return Column(
       children: [
@@ -164,54 +250,43 @@ class _VistaRutaState extends State<VistaRuta> {
           child: !mapasDisponibles
               ? const _MapaNoDisponible()
               : Stack(
-            children: [
-              GoogleMap(
-                initialCameraPosition: CameraPosition(target: origen, zoom: 11),
-                markers: marcadores,
-                circles: {
-                  if (yo != null && _posicion!.accuracy > 0)
-                    Circle(
-                      circleId: const CircleId('precision'),
-                      center: yo,
-                      radius: _posicion!.accuracy,
-                      fillColor: colores.primary.withValues(alpha: 0.12),
-                      strokeColor: colores.primary.withValues(alpha: 0.4),
-                      strokeWidth: 1,
+                  children: [
+                    GoogleMap(
+                      initialCameraPosition: CameraPosition(target: _origen, zoom: 11),
+                      markers: marcadores,
+                      circles: {
+                        if (yo != null && _posicion!.accuracy > 0)
+                          Circle(
+                            circleId: const CircleId('precision'),
+                            center: yo,
+                            radius: _posicion!.accuracy,
+                            fillColor: colores.primary.withValues(alpha: 0.12),
+                            strokeColor: colores.primary.withValues(alpha: 0.4),
+                            strokeWidth: 1,
+                          ),
+                      },
+                      polylines: lineas,
+                      myLocationButtonEnabled: false,
+                      zoomControlsEnabled: false,
+                      onMapCreated: _alCrearMapa,
                     ),
-                },
-                polylines: {
-                  Polyline(
-                    polylineId: const PolylineId('ruta'),
-                    points: trazado,
-                    color: colores.primary,
-                    width: 5,
-                  ),
-                },
-                myLocationButtonEnabled: false,
-                // Si el Chofer mueve el mapa con el dedo, deja de seguirlo.
-                onCameraMoveStarted: () {
-                  if (_seguir) setState(() => _seguir = false);
-                },
-                onMapCreated: (controlador) {
-                  _mapa = controlador;
-                  _encuadrar(controlador, todos);
-                },
-              ),
-              if (widget.ubicacionEnVivo && yo != null)
-                Positioned(
-                  right: 12,
-                  bottom: 12,
-                  child: FloatingActionButton.small(
-                    heroTag: 'centrar-en-mi',
-                    tooltip: _seguir ? 'Siguiendo tu ubicación' : 'Centrar en mi ubicación',
-                    backgroundColor: _seguir ? colores.primary : null,
-                    foregroundColor: _seguir ? colores.onPrimary : null,
-                    onPressed: _centrarEnMi,
-                    child: const Icon(Icons.my_location),
-                  ),
+                    Positioned(
+                      right: 12,
+                      bottom: 12,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          botonModo(ModoCamara.rutaCompleta, Icons.zoom_out_map, 'Ver toda la ruta'),
+                          if (widget.ubicacionEnVivo && yo != null) ...[
+                            if (proxima != null)
+                              botonModo(ModoCamara.tramo, Icons.near_me, 'Ver tramo a la próxima parada'),
+                            botonModo(ModoCamara.seguirme, Icons.my_location, 'Seguir mi ubicación'),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-            ],
-          ),
         ),
         Expanded(
           flex: 2,
@@ -227,6 +302,7 @@ class _VistaRutaState extends State<VistaRuta> {
               for (final p in ruta.paradas)
                 ListTile(
                   dense: true,
+                  selected: p.despachoId == proxima?.despachoId,
                   leading: CircleAvatar(
                     backgroundColor: IconosMapa.colorEstado(p.estado),
                     foregroundColor: Colors.white,
@@ -235,13 +311,7 @@ class _VistaRutaState extends State<VistaRuta> {
                   title: Text(p.cliente),
                   subtitle: Text(p.direccion),
                   trailing: ChipEstado(p.estado),
-                  onTap: () {
-                    if (p.lat != null && p.lng != null) {
-                      setState(() => _seguir = false);
-                      _mapa?.animateCamera(CameraUpdate.newLatLngZoom(LatLng(p.lat!, p.lng!), 15));
-                    }
-                    widget.onParadaTap?.call(p);
-                  },
+                  onTap: () => widget.onParadaTap?.call(p),
                 ),
             ],
           ),

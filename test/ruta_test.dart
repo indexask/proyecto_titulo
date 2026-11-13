@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gygtrack/modulos/enrutamiento/datos/navegacion_repositorio.dart';
 import 'package:gygtrack/modulos/enrutamiento/dominio/ruta.dart';
 import 'package:gygtrack/modulos/logistico_notificaciones/dominio/estado_despacho.dart';
 
@@ -45,5 +46,17 @@ void main() {
     expect(d.sinOptimizar.distanciaKm, 58.2);
     expect(d.paradasPrioritarias, 1);
     expect(DetalleOptimizacion.fromMap(null), isNull);
+  });
+
+  test('la navegación abre Google Maps en modo auto hacia la parada', () {
+    final url = NavegacionRepositorio.urlNavegacion(-33.4378, -70.6155);
+    expect(url.host, 'www.google.com');
+    expect(url.path, '/maps/dir/');
+    expect(url.queryParameters, {
+      'api': '1',
+      'destination': '-33.4378,-70.6155',
+      'travelmode': 'driving',
+      'dir_action': 'navigate',
+    });
   });
 }

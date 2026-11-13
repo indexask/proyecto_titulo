@@ -7,6 +7,7 @@ import '../../../core/formato.dart';
 import '../../../core/widgets/vista_async.dart';
 import '../../logistico_notificaciones/dominio/estado_despacho.dart';
 import '../../logistico_notificaciones/presentacion/logistico_providers.dart';
+import '../datos/navegacion_repositorio.dart';
 import '../dominio/ruta.dart';
 import 'enrutamiento_providers.dart';
 import 'vista_ruta.dart';
@@ -71,16 +72,20 @@ class RutaChoferPantalla extends ConsumerWidget {
     final ruta = async.value?.where((r) => r.id == rutaId).firstOrNull;
     return Scaffold(
       appBar: AppBar(title: Text(ruta == null ? 'Ruta' : 'Ruta del ${formatoFecha(ruta.fecha)}')),
+      // Al actualizar un estado los datos se recargan; si ya hay datos se
+      // siguen mostrando, para no destruir y recrear el mapa (quedaba gris).
       body: VistaAsync(
-        cargando: async.isLoading,
-        error: async.error,
+        cargando: async.isLoading && !async.hasValue,
+        error: async.hasValue ? null : async.error,
         onReintentar: () => ref.invalidate(rutasChoferProvider),
         child: ruta == null
             ? const Center(child: Text('Ruta no encontrada'))
             : VistaRuta(
+                key: ValueKey('ruta-$rutaId'),
                 ruta: ruta,
                 encabezado: _ResumenRuta(ruta: ruta),
                 ubicacionEnVivo: true,
+                enRuta: ruta.paradas.any((p) => p.estado == EstadoDespacho.enRuta),
                 onParadaTap: (p) => context.push('/chofer/despachos/${p.despachoId}'),
               ),
       ),
@@ -90,8 +95,11 @@ class RutaChoferPantalla extends ConsumerWidget {
 }
 
 /// Acciones del Chofer sobre su ruta (RF-14, RF-16), con el mismo enfoque
-/// offline-first de los despachos (RF-15): iniciar la ruta y confirmar la
-/// entrega de cada parada en orden.
+/// offline-first de los despachos (RF-15).
+///
+/// Flujo: "Iniciar ruta" → navegación (Google Maps) a la parada 1 →
+/// "Confirmar entrega" → navegación automática a la siguiente → … →
+/// "Volver a bodega".
 class _AccionesRuta extends ConsumerStatefulWidget {
   final Ruta ruta;
 
@@ -102,31 +110,42 @@ class _AccionesRuta extends ConsumerStatefulWidget {
 }
 
 class _AccionesRutaState extends ConsumerState<_AccionesRuta> {
+  final _navegacion = NavegacionRepositorio();
   bool _guardando = false;
 
-  Future<void> _cambiar(List<ParadaRuta> paradas, EstadoDespacho nuevo) async {
+  Future<bool> _cambiar(List<ParadaRuta> paradas, EstadoDespacho nuevo) async {
     setState(() => _guardando = true);
     final notificador = ref.read(despachosChoferProvider.notifier);
     try {
       for (final p in paradas) {
         await notificador.cambiarEstado(p.despachoId, nuevo);
       }
-      final sinConexion = ref.read(despachosChoferProvider).value?.sinConexion ?? false;
-      if (mounted) {
-        mostrarMensaje(
-          context,
-          sinConexion
-              ? 'Guardado en el teléfono. Se sincronizará al recuperar la conexión.'
-              : nuevo == EstadoDespacho.enRuta
-                  ? 'Ruta iniciada'
-                  : 'Entrega confirmada',
-        );
+      if ((ref.read(despachosChoferProvider).value?.sinConexion ?? false) && mounted) {
+        mostrarMensaje(context, 'Guardado en el teléfono. Se sincronizará al recuperar la conexión.');
       }
+      return true;
     } catch (e) {
       if (mounted) mostrarMensaje(context, mensajeError(e));
+      return false;
     } finally {
       if (mounted) setState(() => _guardando = false);
     }
+  }
+
+  Future<void> _navegarA(double? lat, double? lng, String destino) async {
+    if (lat == null || lng == null) {
+      mostrarMensaje(context, 'La dirección de $destino no tiene ubicación en el mapa');
+      return;
+    }
+    final ok = await _navegacion.navegarA(lat, lng);
+    if (!ok && mounted) mostrarMensaje(context, 'No se pudo abrir Google Maps');
+  }
+
+  Future<void> _iniciarRuta(List<ParadaRuta> pendientes) async {
+    if (!await _cambiar(pendientes, EstadoDespacho.enRuta) || !mounted) return;
+    final primera = widget.ruta.paradas.first;
+    mostrarMensaje(context, 'Ruta iniciada. Navegando a ${primera.orden + 1}. ${primera.cliente}');
+    await _navegarA(primera.lat, primera.lng, primera.cliente);
   }
 
   Future<void> _confirmarEntrega(ParadaRuta p) async {
@@ -141,40 +160,67 @@ class _AccionesRutaState extends ConsumerState<_AccionesRuta> {
         ],
       ),
     );
-    if (ok == true) await _cambiar([p], EstadoDespacho.entregado);
+    if (ok != true || !await _cambiar([p], EstadoDespacho.entregado) || !mounted) return;
+
+    // Siguiente parada en el orden de la ruta, o regreso a bodega.
+    final siguiente = widget.ruta.paradas
+        .where((x) => x.orden > p.orden && x.estado != EstadoDespacho.entregado)
+        .firstOrNull;
+    if (siguiente != null) {
+      mostrarMensaje(context, 'Entrega confirmada. Navegando a ${siguiente.orden + 1}. ${siguiente.cliente}');
+      await _navegarA(siguiente.lat, siguiente.lng, siguiente.cliente);
+    } else {
+      mostrarMensaje(context, 'Entregas completadas. Puedes volver a la bodega.');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final pendientes = widget.ruta.paradas.where((p) => p.estado == EstadoDespacho.pendiente).toList();
-    final proxima = widget.ruta.proximaParada;
+    final ruta = widget.ruta;
+    final pendientes = ruta.paradas.where((p) => p.estado == EstadoDespacho.pendiente).toList();
+    final proxima = ruta.proximaParada;
 
-    final Widget boton;
-    if (pendientes.isNotEmpty) {
-      boton = FilledButton.icon(
-        onPressed: _guardando ? null : () => _cambiar(pendientes, EstadoDespacho.enRuta),
-        icon: const Icon(Icons.local_shipping),
+    final Widget contenido;
+    if (_guardando) {
+      contenido = const Center(child: CircularProgressIndicator());
+    } else if (pendientes.isNotEmpty) {
+      contenido = FilledButton.icon(
+        onPressed: () => _iniciarRuta(pendientes),
+        icon: const Icon(Icons.play_arrow),
         label: Text('Iniciar ruta (${pendientes.length} parada${pendientes.length == 1 ? '' : 's'})'),
       );
     } else if (proxima != null) {
-      boton = FilledButton.icon(
-        onPressed: _guardando ? null : () => _confirmarEntrega(proxima),
-        icon: const Icon(Icons.check),
-        label: Text('Confirmar entrega · ${proxima.orden + 1}. ${proxima.cliente}', overflow: TextOverflow.ellipsis),
-      );
+      contenido = Row(children: [
+        OutlinedButton.icon(
+          onPressed: () => _navegarA(proxima.lat, proxima.lng, proxima.cliente),
+          icon: const Icon(Icons.navigation),
+          label: const Text('Navegar'),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: () => _confirmarEntrega(proxima),
+            icon: const Icon(Icons.check),
+            label: Text('Confirmar entrega · ${proxima.orden + 1}. ${proxima.cliente}',
+                overflow: TextOverflow.ellipsis),
+          ),
+        ),
+      ]);
     } else {
-      boton = const FilledButton.tonal(onPressed: null, child: Text('Ruta completada ✔'));
+      contenido = Row(children: [
+        const Expanded(child: Text('Ruta completada ✔', textAlign: TextAlign.center)),
+        FilledButton.icon(
+          onPressed: () => _navegarA(ruta.origenLat, ruta.origenLng, 'la bodega'),
+          icon: const Icon(Icons.warehouse),
+          label: const Text('Volver a bodega'),
+        ),
+      ]);
     }
 
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: SizedBox(
-          height: 52,
-          child: _guardando
-              ? const Center(child: CircularProgressIndicator())
-              : SizedBox(width: double.infinity, child: boton),
-        ),
+        child: SizedBox(height: 52, width: double.infinity, child: contenido),
       ),
     );
   }

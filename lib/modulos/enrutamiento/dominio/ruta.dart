@@ -100,6 +100,61 @@ class ResumenRecorrido {
       );
 }
 
+/// Paso estimado por un pórtico TAG (geocerca + tarifa MOP 2026).
+class CrucePortico {
+  final String concesion;
+  final String codigo;
+  final String tramo;
+  final String hora;
+  final String tarifa; // TBFP, TBP, TS o POR KM
+  final num monto;
+
+  const CrucePortico({
+    required this.concesion,
+    required this.codigo,
+    required this.tramo,
+    required this.hora,
+    required this.tarifa,
+    required this.monto,
+  });
+
+  factory CrucePortico.fromMap(Map<String, dynamic> m) => CrucePortico(
+        concesion: m['concesion'] as String,
+        codigo: m['codigo'] as String,
+        tramo: m['tramo'] as String,
+        hora: m['hora'] as String,
+        tarifa: m['tarifa'] as String,
+        monto: m['monto'] as num,
+      );
+}
+
+/// TAG estimado de la ruta elegida.
+class PeajesRuta {
+  final String categoria;
+  final String horaSalida;
+  final num totalClp;
+  final List<CrucePortico> cruces;
+
+  const PeajesRuta({
+    required this.categoria,
+    required this.horaSalida,
+    required this.totalClp,
+    required this.cruces,
+  });
+
+  static PeajesRuta? fromMap(Object? datos) {
+    if (datos is! Map<String, dynamic>) return null;
+    return PeajesRuta(
+      categoria: datos['categoria']?.toString() ?? '1',
+      horaSalida: datos['horaSalida'] as String? ?? '',
+      totalClp: datos['totalClp'] as num? ?? 0,
+      cruces: ((datos['cruces'] as List?) ?? const [])
+          .map((c) => CrucePortico.fromMap(c as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
 /// Alternativa elegida por la optimización.
 enum AlternativaRuta { ordenPorPlazo, optimizadaConTag, optimizadaSinTag }
 
@@ -125,6 +180,9 @@ class DetalleOptimizacion {
   final int? lote;
   final int? totalRutas;
 
+  /// Pórticos TAG de la ruta elegida.
+  final PeajesRuta? peajes;
+
   const DetalleOptimizacion({
     required this.sinOptimizar,
     required this.conTag,
@@ -137,6 +195,7 @@ class DetalleOptimizacion {
     this.mejora2optPct,
     this.lote,
     this.totalRutas,
+    this.peajes,
   });
 
   ResumenRecorrido get elegida => switch (eleccion) {
@@ -159,6 +218,7 @@ class DetalleOptimizacion {
           : null,
       lote: (vrp?['lote'] as num?)?.toInt(),
       totalRutas: (vrp?['rutas'] as num?)?.toInt(),
+      peajes: PeajesRuta.fromMap(datos['peajes']),
       sinOptimizar: ResumenRecorrido.fromMap(datos['sinOptimizar'] as Map<String, dynamic>),
       conTag: ResumenRecorrido.fromMap(datos['conTag'] as Map<String, dynamic>),
       sinTag: ResumenRecorrido.fromMap(datos['sinTag'] as Map<String, dynamic>),

@@ -62,6 +62,30 @@ Por cada lote se mantiene la comparación de 3 alternativas con el trazado real 
 
 Pruebas: `vrp_test.ts` (7): vecino más cercano, 2-opt elimina cruces, 2-opt nunca empeora en 30 casos aleatorios, prioridad por plazo, reparto VRP por zonas, un chofer y más choferes que paradas.
 
+
+## 0.3 Costo TAG por geocercas de pórticos (solicitud del equipo, 2026-11-13)
+
+Google Routes **no tiene tarifas de autopistas chilenas** (devolvía $0 incluso en rutas por Costanera Norte o Vespucio). Por eso el TAG se estima con un sistema propio:
+
+1. **Pórticos en la base de datos (tabla `portico`, PostgreSQL/Supabase).** Hay 114 pórticos de 8 concesiones: Autopista Central, Costanera Norte, Vespucio Norte, Vespucio Sur, Túnel San Cristóbal, Américo Vespucio Oriente, Acceso Nororiente y Acceso Vial AMB.
+   - **Ubicación y sentido de cobro:** OpenStreetMap (`highway=toll_gantry` y la calzada de un sentido donde está cada pórtico), © colaboradores de OpenStreetMap, licencia ODbL.
+   - **Tarifas y horarios:** PDF oficiales **MOP / DGC "Peajes Tarifas 2026"** entregados por el equipo, transcritos en `supabase/datos/tag/tarifas_2026.json`.
+   - La migración se genera con `supabase/datos/tag/generar_porticos.mjs`, que empareja cada pórtico con su tarifa por concesión, código y tramo; en Costanera Norte el mismo código cobra distinto según el sentido. Para actualizar las tarifas de un año nuevo se edita el JSON y se vuelve a generar.
+2. **Ruta:** la polilínea real de cada alternativa (Routes API).
+3. **Intersección:** la ruta cruza un pórtico si pasa a **menos de 35 m y en el mismo sentido** (±60°). Verificado con los 114 pórticos reales: cada uno se detecta en su calzada y nunca se cobra el de la calzada contraria.
+4. **Cálculo dinámico:** hora de paso = **hora de salida** (nuevo campo, por defecto 09:00) + tiempo proporcional a la distancia recorrida. Se aplica la tarifa **TBFP / TBP / TS** del pórtico según el día (laboral, sábado o domingo) y la hora. Américo Vespucio Oriente cobra **por km** entre el primer y el último pórtico de la pasada.
+
+El TAG estimado entra al costo de cada alternativa (con y sin TAG, y el orden por plazo) y a la regla de $500 por cada 10 minutos. El detalle de la ruta muestra cada pórtico con su hora, tarifa y monto.
+
+**[VALIDAR] para el informe:**
+- **Categoría del vehículo:** se usa la **Categoría 1** (autos y camionetas) para el JAC Sunray 2018. Si las concesionarias lo clasifican como Categoría 2 (buses y camiones), los montos se duplican (constante `CATEGORIA_TAG`).
+- Las ventanas horarias se transcribieron de las tablas de los PDF. Sábados, domingos y festivos usan TBFP, salvo los pórticos con ventanas propias (Autopista Central y Túnel San Cristóbal). Los festivos no se distinguen.
+- La hora de paso no incluye el tiempo detenido en cada entrega.
+- **Fuera de alcance:** rutas interurbanas sin tarifa en los PDF entregados (Ruta 5 Norte, Ruta 68, Ruta 78, Acceso Sur, Los Libertadores). Acceso Nororiente usa la tarifa normal, porque su horario punta no figura en el PDF.
+- La matriz del motor VRP (Vecino Más Cercano + 2-opt) no incluye el TAG, porque Route Matrix no entrega trazados; el TAG se considera en la comparación final de alternativas.
+
+Pruebas: `peajes_test.ts` (7): geocerca por sentido, radio de 35 m, TBFP/TBP/TS según hora, ida y vuelta, cobro por km. Verificación con los 114 pórticos reales. La base comprueba que la tabla se carga y que el Chofer no puede leerla.
+
 ---
 
 ## 1. Qué pasó con el prototipo (`cotizaciones_rutas`)
@@ -201,7 +225,7 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 |---|---|---|
 | Reglas de dominio (margen, estados, formatos, polilínea, días hábiles, importación) y lógica offline | `flutter test` | 28 pruebas OK |
 | Migraciones, RLS, vistas, triggers, RPC, alertas, KPI, registro de dispositivos y disparo push, respaldo y restauración del prototipo | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 57 verificaciones OK |
-| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones (incluidas varias fotos por posición), resumen, elección entre 3 alternativas, motivo de la optimización y motor VRP + Vecino Más Cercano + 2-opt | Incluido en `npm test` | 34 pruebas OK |
+| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones (incluidas varias fotos por posición), resumen, elección entre 3 alternativas, motivo de la optimización, motor VRP + Vecino Más Cercano + 2-opt y TAG por geocercas | Incluido en `npm test` | 41 pruebas OK |
 
 ---
 

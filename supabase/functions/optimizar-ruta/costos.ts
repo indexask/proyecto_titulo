@@ -8,6 +8,16 @@ export const PRECIO_DIESEL_CLP_POR_LITRO = 1272;
 /** Regla de desvío: se acepta pagar menos de $500 por cada 10 minutos ahorrados. */
 export const COSTO_MAXIMO_POR_10_MIN = 500;
 
+/**
+ * Categoría TAG del vehículo (MOP): "1" autos y camionetas, "2" buses y
+ * camiones. JAC Sunray 2018 (furgón) [VALIDAR: confirmar la categoría con la
+ * que lo clasifican las concesionarias].
+ */
+export const CATEGORIA_TAG = "1";
+
+/** Hora de salida de la bodega si no se indica (HH:MM). */
+export const HORA_SALIDA_POR_DEFECTO = "09:00";
+
 export interface Recorrido {
   distanciaMetros: number;
   duracionSegundos: number;

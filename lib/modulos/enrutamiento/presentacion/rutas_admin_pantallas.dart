@@ -249,7 +249,57 @@ class _ComparacionOptimizacion extends StatelessWidget {
             child: Text('Reparto VRP: ruta ${detalle.lote} de ${detalle.totalRutas} calculadas en conjunto.',
                 style: tema.textTheme.bodySmall),
           ),
+        if (detalle.peajes != null) _DetallePeajes(peajes: detalle.peajes!),
         const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+/// Pórticos TAG que cruza la ruta elegida, con hora estimada de paso y
+/// tarifa aplicada (geocercas sobre pórticos OSM + tarifas MOP 2026).
+class _DetallePeajes extends StatelessWidget {
+  final PeajesRuta peajes;
+
+  const _DetallePeajes({required this.peajes});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final titulo = peajes.cruces.isEmpty
+        ? 'TAG estimado: \$0 (la ruta elegida no cruza pórticos)'
+        : 'TAG estimado: ${formatoClp(peajes.totalClp)} · ${peajes.cruces.length} pórtico(s)';
+    return ExpansionTile(
+      dense: true,
+      leading: const Icon(Icons.toll),
+      title: Text(titulo),
+      subtitle: Text('Salida ${peajes.horaSalida} · categoría ${peajes.categoria} · tarifas MOP 2026',
+          style: tema.textTheme.bodySmall),
+      children: [
+        for (final c in peajes.cruces)
+          ListTile(
+            dense: true,
+            visualDensity: VisualDensity.compact,
+            leading: Text(c.hora, style: tema.textTheme.labelLarge),
+            title: Text('${c.concesion} · ${c.codigo}'),
+            subtitle: Text(c.tramo),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(formatoClp(c.monto), style: tema.textTheme.titleSmall),
+                Text(c.tarifa, style: tema.textTheme.bodySmall),
+              ],
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Text(
+            'Estimación: la hora de paso se calcula según la distancia recorrida desde la salida '
+            '(no incluye el tiempo en cada entrega).',
+            style: tema.textTheme.bodySmall,
+          ),
+        ),
       ],
     );
   }
@@ -263,10 +313,15 @@ class RutaFormPantalla extends ConsumerStatefulWidget {
   ConsumerState<RutaFormPantalla> createState() => _RutaFormPantallaState();
 }
 
+String _textoHora(TimeOfDay h) =>
+    '${h.hour.toString().padLeft(2, '0')}:${h.minute.toString().padLeft(2, '0')}';
+
 class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
   final _origenCtrl = TextEditingController();
   DireccionGeocodificada? _origen;
   DateTime _fecha = hoy();
+  // Hora de salida de la bodega: define la tarifa TAG (TBFP/TBP/TS) de cada pórtico.
+  TimeOfDay _salida = const TimeOfDay(hour: 9, minute: 0);
   final _choferes = <String>{}; // en el orden en que se eligieron
   final _seleccion = <String>{};
   bool _geocodificando = false;
@@ -302,6 +357,7 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
     try {
       final creadas = await ref.read(rutasRepositorioProvider).crearOptimizada(
             fecha: _fecha,
+            horaSalida: _textoHora(_salida),
             choferIds: _choferes.toList(),
             origenDireccion: _origen!.direccion,
             origenLat: _origen!.lat,
@@ -359,6 +415,17 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
                   lastDate: hoy().add(const Duration(days: 365)),
                 );
                 if (f != null) setState(() => _fecha = f);
+              },
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.schedule),
+              title: Text('Hora de salida de bodega: ${_textoHora(_salida)}'),
+              subtitle: const Text('Define la tarifa TAG estimada (fuera de punta, punta o saturación)'),
+              trailing: const Icon(Icons.edit),
+              onTap: () async {
+                final h = await showTimePicker(context: context, initialTime: _salida);
+                if (h != null) setState(() => _salida = h);
               },
             ),
             Text('Choferes disponibles', style: Theme.of(context).textTheme.titleSmall),

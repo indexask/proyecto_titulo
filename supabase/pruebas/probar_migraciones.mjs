@@ -274,6 +274,13 @@ ok((await falla(A, `insert into orden_compra (cliente, direccion_entrega, fecha_
 ok((await como(C1, `select * from v_despacho_chofer where despacho_id = $1`, [d2])).rows.length === 1, "la vista del Chofer sigue funcionando con los campos nuevos");
 ok((await db.query(`select count(*)::int n from storage.buckets where id = 'productos'`)).rows[0].n === 1, "bucket privado de fotos de productos");
 
+// --- Pórticos TAG ---
+const nPort = (await db.query(`select count(*)::int n, count(distinct concesion)::int c from portico`)).rows[0];
+ok(nPort.n === 114 && nPort.c === 8, `pórticos TAG cargados (${nPort.n} de ${nPort.c} concesiones)`);
+const pa13 = (await db.query(`select tarifas from portico where codigo = 'PA13'`)).rows[0];
+ok(Number(pa13.tarifas["1"].ts) === 545.6, "tarifa TS de PA13 (MOP 2026) cargada");
+ok((await como(C1, `select * from portico`)).rows.length === 0, "el Chofer no lee la tabla de pórticos (tarifas)");
+
 // --- Eliminación en cascada ---
 await como(A, `delete from orden_compra where id = $1`, [o1]);
 ok((await db.query(`select count(*)::int n from despacho where orden_id = $1`, [o1])).rows[0].n === 0,

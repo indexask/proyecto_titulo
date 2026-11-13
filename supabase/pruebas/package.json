@@ -1,9 +1,9 @@
-﻿{
+{
   "name": "gygtrack-pruebas-bd",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node probar_migraciones.mjs ../migrations && node --test ../functions/optimizar-ruta/costos_test.ts ../functions/optimizar-ruta/vrp_test.ts ../functions/enviar-alertas/mensajes_test.ts ../functions/enviar-alertas/fcm_test.ts ../functions/importar-cotizacion/lector_test.ts"
+    "test": "node probar_migraciones.mjs ../migrations && node --test ../functions/optimizar-ruta/costos_test.ts ../functions/optimizar-ruta/vrp_test.ts ../functions/optimizar-ruta/peajes_test.ts ../functions/enviar-alertas/mensajes_test.ts ../functions/enviar-alertas/fcm_test.ts ../functions/importar-cotizacion/lector_test.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16"

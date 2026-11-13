@@ -38,9 +38,11 @@ class RutasRepositorio {
     required double origenLat,
     required double origenLng,
     required List<String> despachoIds,
+    String horaSalida = '09:00',
   }) async {
     final res = await supabase.functions.invoke('optimizar-ruta', body: {
       'fecha': fechaIso(fecha),
+      'horaSalida': horaSalida,
       'choferIds': choferIds,
       'origen': {'direccion': origenDireccion, 'lat': origenLat, 'lng': origenLng},
       'despachoIds': despachoIds,

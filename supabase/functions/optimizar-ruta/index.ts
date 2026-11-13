@@ -19,18 +19,30 @@
 import { clienteAdministrador, googleMapsApiKey, HttpError, json, servir } from "../_shared/comun.ts";
 import { geocodificarDireccion } from "../_shared/places.ts";
 import {
+  CATEGORIA_TAG,
   COSTO_MAXIMO_POR_10_MIN,
   costoRecorrido,
   elegirMejor,
   explicarEleccion,
+  HORA_SALIDA_POR_DEFECTO,
   PRECIO_DIESEL_CLP_POR_LITRO,
   RENDIMIENTO_KM_POR_LITRO,
   resumenRecorrido,
   separarPorPlazo,
 } from "./costos.ts";
 import type { Recorrido } from "./costos.ts";
+import { decodificarPolilinea, estimarPeajes } from "./peajes.ts";
+import type { CrucePortico, Portico } from "./peajes.ts";
 import { asignarLotes, ordenarLote } from "./vrp.ts";
 import type { MatrizCostos } from "./vrp.ts";
+
+/** Datos para estimar el TAG por geocercas de pórticos. */
+interface ContextoPeajes {
+  porticos: Portico[];
+  diaSemana: number; // 0 = domingo
+  salidaMinutos: number;
+  categoria: string;
+}
 
 interface Punto {
   lat: number;
@@ -47,6 +59,8 @@ interface ResultadoRuta extends Recorrido {
   polilinea: string;
   secuencia: Parada[];
   usaPeajes: boolean;
+  /** Pórticos TAG que cruza la ruta, con hora estimada y tarifa. */
+  cruces: CrucePortico[];
 }
 
 // Route Matrix admite 625 elementos: (paradas + bodega)² ≤ 625.
@@ -61,9 +75,11 @@ servir(async (req) => {
     choferIds?: string[];
     origen?: Punto & { direccion: string };
     despachoIds?: string[];
+    horaSalida?: string; // HH:MM
   };
 
   const { fecha, origen, despachoIds } = body;
+  const horaSalida = /^\d{2}:\d{2}$/.test(body.horaSalida ?? "") ? body.horaSalida! : HORA_SALIDA_POR_DEFECTO;
   const choferIds: (string | null)[] = body.choferIds?.length
     ? body.choferIds
     : [body.choferId ?? null];
@@ -82,6 +98,24 @@ servir(async (req) => {
   if (error) throw new HttpError(500, error.message);
 
   const apiKey = googleMapsApiKey();
+
+  // Pórticos TAG (ubicación OSM + tarifas MOP) para estimar los peajes.
+  const { data: filasPorticos, error: errPorticos } = await supabase
+    .from("portico")
+    .select("concesion, codigo, tramo, lat, lng, rumbo, km, por_km, tarifas, horario")
+    .eq("activo", true);
+  if (errPorticos) throw new HttpError(500, errPorticos.message);
+  const [hh, mm] = horaSalida.split(":").map(Number);
+  const peajes: ContextoPeajes = {
+    // deno-lint-ignore no-explicit-any
+    porticos: (filasPorticos ?? []).map((p: any) => ({
+      concesion: p.concesion, codigo: p.codigo, tramo: p.tramo, lat: p.lat, lng: p.lng,
+      rumbo: p.rumbo, km: Number(p.km), porKm: p.por_km, tarifas: p.tarifas, horario: p.horario,
+    })),
+    diaSemana: new Date(`${fecha}T12:00:00Z`).getUTCDay(),
+    salidaMinutos: hh * 60 + mm,
+    categoria: CATEGORIA_TAG,
+  };
 
   // deno-lint-ignore no-explicit-any
   for (const f of (filas ?? []) as any[]) {
@@ -151,9 +185,9 @@ servir(async (req) => {
 
     // Trazado real por calles de cada alternativa (orden fijo).
     const [sinOptimizar, optConTag, optSinTag] = await Promise.all([
-      calcularRuta(apiKey, origen, ordenPorPlazo, false),
-      calcularRuta(apiKey, origen, secuencia(conTag.orden), false),
-      calcularRuta(apiKey, origen, secuencia(sinTag.orden), true),
+      calcularRuta(apiKey, origen, ordenPorPlazo, false, peajes),
+      calcularRuta(apiKey, origen, secuencia(conTag.orden), false, peajes),
+      calcularRuta(apiKey, origen, secuencia(sinTag.orden), true, peajes),
     ]);
 
     const candidatas = [
@@ -183,6 +217,14 @@ servir(async (req) => {
         mejoras2opt: motor.mejoras2opt,
       },
       vrp: { choferes: choferIds.length, rutas: lotes.length, lote: indiceLote + 1 },
+      // Detalle TAG de la ruta elegida (geocercas de pórticos, tarifas MOP 2026).
+      peajes: {
+        categoria: peajes.categoria,
+        horaSalida,
+        totalClp: Math.round(elegida.peajesClp),
+        cruces: elegida.cruces,
+        fuente: "Pórticos: OpenStreetMap. Tarifas: MOP Peajes Tarifas 2026.",
+      },
     };
 
     const { data: ruta, error: errRuta } = await supabase
@@ -281,7 +323,13 @@ async function calcularMatriz(apiKey: string, puntos: Punto[], evitarPeajes: boo
 }
 
 /** Recorrido real por calles en un orden fijo: bodega → paradas → bodega. */
-async function calcularRuta(apiKey: string, origen: Punto, paradas: Parada[], evitarPeajes: boolean): Promise<ResultadoRuta> {
+async function calcularRuta(
+  apiKey: string,
+  origen: Punto,
+  paradas: Parada[],
+  evitarPeajes: boolean,
+  peajes: ContextoPeajes,
+): Promise<ResultadoRuta> {
   const punto = (p: Punto) => ({ location: { latLng: { latitude: p.lat, longitude: p.lng } } });
   const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
     method: "POST",
@@ -311,18 +359,27 @@ async function calcularRuta(apiKey: string, origen: Punto, paradas: Parada[], ev
   const r = (await res.json()).routes?.[0];
   if (!r) throw new HttpError(502, "Routes API no devolvió rutas");
 
-  const peajesClp = (r.travelAdvisory?.tollInfo?.estimatedPrice ?? [])
-    // deno-lint-ignore no-explicit-any
-    .filter((m: any) => m.currencyCode === "CLP")
-    // deno-lint-ignore no-explicit-any
-    .reduce((s: number, m: any) => s + Number(m.units ?? 0) + (m.nanos ?? 0) / 1e9, 0);
+  const distanciaMetros = r.distanceMeters ?? 0;
+  const duracionSegundos = parseInt(String(r.duration ?? "0s").replace("s", ""), 10);
+  const polilinea = r.polyline?.encodedPolyline ?? "";
+
+  // TAG: Google no tiene tarifas de autopistas chilenas (devuelve $0), así que
+  // se estima con las geocercas de los pórticos y las tarifas MOP 2026.
+  const { totalClp, cruces } = estimarPeajes(decodificarPolilinea(polilinea), peajes.porticos, {
+    distanciaM: distanciaMetros,
+    duracionS: duracionSegundos,
+    diaSemana: peajes.diaSemana,
+    salidaMinutos: peajes.salidaMinutos,
+    categoria: peajes.categoria,
+  });
 
   return {
-    distanciaMetros: r.distanceMeters ?? 0,
-    duracionSegundos: parseInt(String(r.duration ?? "0s").replace("s", ""), 10),
-    peajesClp,
-    polilinea: r.polyline?.encodedPolyline ?? "",
+    distanciaMetros,
+    duracionSegundos,
+    peajesClp: totalClp,
+    polilinea,
     secuencia: paradas,
-    usaPeajes: peajesClp > 0,
+    usaPeajes: cruces.length > 0,
+    cruces,
   };
 }

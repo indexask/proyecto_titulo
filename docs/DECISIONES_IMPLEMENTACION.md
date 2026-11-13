@@ -67,12 +67,22 @@ Pruebas: `vrp_test.ts` (7): vecino más cercano, 2-opt elimina cruces, 2-opt nun
 
 Google Routes **no tiene tarifas de autopistas chilenas** (devolvía $0 incluso en rutas por Costanera Norte o Vespucio). Por eso el TAG se estima con un sistema propio:
 
-1. **Pórticos en la base de datos (tabla `portico`, PostgreSQL/Supabase).** Hay 114 pórticos de 8 concesiones: Autopista Central, Costanera Norte, Vespucio Norte, Vespucio Sur, Túnel San Cristóbal, Américo Vespucio Oriente, Acceso Nororiente y Acceso Vial AMB.
+1. **Pórticos en la base de datos (tabla `portico`, PostgreSQL/Supabase).** Hay **161 puntos de cobro**:
+   - **114 pórticos urbanos de 8 concesiones:** Autopista Central, Costanera Norte, Vespucio Norte, Vespucio Sur, Túnel San Cristóbal, Américo Vespucio Oriente, Acceso Nororiente y Acceso Vial AMB.
+   - **47 peajes interurbanos de los accesos a Santiago** (agregados el 2026-11-13 con los PDF que entregó el equipo). Abarcan 25 plazas o pórticos, con un punto por sentido de cobro:
+     - **Autopista Los Libertadores:** Chacabuco, Las Canteras y San José.
+     - **Ruta 68:** Lo Prado, Zapata y Troncal Sur.
+     - **Ruta 78:** T1 a T10.
+     - **Ruta 5 Sur:** Angostura, Río Maipo, Gabriela y Tocornal.
+     - **Ruta 5 Norte:** Lo Marcoleta, Buenaventura, La Montaña, Lo Pinto, Lampa, Pichidangui y Túnel El Melón.
+     - Las tarifas están en `supabase/datos/tag/tarifas_interurbanas_2026.json`, la ubicación en `osm_peajes_interurbanos.json` y la migración es `20261114000000_peajes_interurbanos.sql`.
+     - Una plaza suele tener varios nodos en el mismo sentido (casetas y pórtico free flow). Se deja **uno por sentido** para no cobrar dos veces la pasada.
+     - Las plazas que están en una calzada de doble sentido (Chacabuco y San José) cobran en ambos sentidos.
    - **Ubicación y sentido de cobro:** OpenStreetMap (`highway=toll_gantry` y la calzada de un sentido donde está cada pórtico), © colaboradores de OpenStreetMap, licencia ODbL.
    - **Tarifas y horarios:** PDF oficiales **MOP / DGC "Peajes Tarifas 2026"** entregados por el equipo, transcritos en `supabase/datos/tag/tarifas_2026.json`.
    - La migración se genera con `supabase/datos/tag/generar_porticos.mjs`, que empareja cada pórtico con su tarifa por concesión, código y tramo; en Costanera Norte el mismo código cobra distinto según el sentido. Para actualizar las tarifas de un año nuevo se edita el JSON y se vuelve a generar.
 2. **Ruta:** la polilínea real de cada alternativa (Routes API).
-3. **Intersección:** la ruta cruza un pórtico si pasa a **menos de 35 m y en el mismo sentido** (±60°). Verificado con los 114 pórticos reales: cada uno se detecta en su calzada y nunca se cobra el de la calzada contraria.
+3. **Intersección:** la ruta cruza un pórtico si pasa a **menos de 35 m y en el mismo sentido** (±60°). Verificado con los 161 puntos reales: cada uno se detecta en su calzada, nunca se cobra el de la calzada contraria y ninguna plaza se cobra dos veces.
 4. **Cálculo dinámico:** hora de paso = **hora de salida** (nuevo campo, por defecto 09:00) + tiempo proporcional a la distancia recorrida. Se aplica la tarifa **TBFP / TBP / TS** del pórtico según el día (laboral, sábado o domingo) y la hora. Américo Vespucio Oriente cobra **por km** entre el primer y el último pórtico de la pasada.
 
 El TAG estimado entra al costo de cada alternativa (con y sin TAG, y el orden por plazo) y a la regla de $500 por cada 10 minutos. El detalle de la ruta muestra cada pórtico con su hora, tarifa y monto.
@@ -81,10 +91,15 @@ El TAG estimado entra al costo de cada alternativa (con y sin TAG, y el orden po
 - **Categoría del vehículo:** se usa la **Categoría 1** (autos y camionetas) para el JAC Sunray 2018. Si las concesionarias lo clasifican como Categoría 2 (buses y camiones), los montos se duplican (constante `CATEGORIA_TAG`).
 - Las ventanas horarias se transcribieron de las tablas de los PDF. Sábados, domingos y festivos usan TBFP, salvo los pórticos con ventanas propias (Autopista Central y Túnel San Cristóbal). Los festivos no se distinguen.
 - La hora de paso no incluye el tiempo detenido en cada entrega.
-- **Fuera de alcance:** rutas interurbanas sin tarifa en los PDF entregados (Ruta 5 Norte, Ruta 68, Ruta 78, Acceso Sur, Los Libertadores). Acceso Nororiente usa la tarifa normal, porque su horario punta no figura en el PDF.
+- Acceso Nororiente usa la tarifa normal, porque su horario punta no figura en el PDF.
+- **Peajes interurbanos:**
+  - **Ruta 68 (Lo Prado, Zapata) y Ruta 5 Norte (Lo Marcoleta a Lo Pinto):** los PDF traen tarifa punta pero no su horario. Se estiman con la tarifa normal.
+  - **Ruta 78:** la tarifa punta solo rige en temporada alta (20 de diciembre a 10 de marzo) y en fines de semana largos, así que tampoco se modela.
+  - **Las Canteras y San José:** usan la columna "Las Canteras / San José" ($1.400 con TAG). El PDF da $2.800 para la troncal Las Canteras, pero solo para usuarios sin TAG.
+  - **Por definir:** las laterales que en OpenStreetMap no tienen nombre (Lateral Ruta 5 Sur, laterales de Ruta 68, San Luis/Chicureo), porque no se puede ubicar el punto de cobro con certeza.
 - La matriz del motor VRP (Vecino Más Cercano + 2-opt) no incluye el TAG, porque Route Matrix no entrega trazados; el TAG se considera en la comparación final de alternativas.
 
-Pruebas: `peajes_test.ts` (7): geocerca por sentido, radio de 35 m, TBFP/TBP/TS según hora, ida y vuelta, cobro por km. Verificación con los 114 pórticos reales. La base comprueba que la tabla se carga y que el Chofer no puede leerla.
+Pruebas: `peajes_test.ts` (7): geocerca por sentido, radio de 35 m, TBFP/TBP/TS según hora, ida y vuelta, cobro por km. Verificación con los 161 puntos reales. La base comprueba que se cargan 161 puntos de 13 concesiones, que Angostura tiene un punto por sentido ($3.800 en categoría 1), que Chacabuco cobra en ambos sentidos y que el Chofer no puede leer la tabla.
 
 ---
 
@@ -159,10 +174,10 @@ dominio no depende de Flutter ni de Supabase, así que se puede probar de forma 
 | RF-18 | `generar_alertas()`: alerta "Día Cero" |
 | RF-19 | Cada hora el CRON ejecuta `generar_alertas()` y luego `disparar_envio_push()`, que llama a la Edge Function `enviar-alertas` (pg_net). Esta envía cada alerta por **FCM** al responsable de la orden y a los Administradores, la marca `push_enviada` y limpia los tokens inválidos. La app registra el token en `dispositivo_push` al iniciar sesión y lo borra al cerrarla. Con la app abierta, la alerta se muestra en pantalla; al tocar la notificación se abre la lista de alertas. Push solo en la app móvil: en la web el Administrador ve las alertas en el panel |
 | RF-20 | Tabla `alerta` + pantalla de alertas (Administrador: todas; Chofer: las suyas) |
-| RF-21 | El Administrador elige los despachos de la jornada y `optimizar-ruta` compila sus direcciones. Las direcciones que aún no estaban validadas se geocodifican en ese momento (Places) y quedan guardadas en la orden |
+| RF-21 | El Administrador elige los despachos de la jornada y `optimizar-ruta` compila sus direcciones. Las direcciones que aún no estaban validadas se geocodifican en ese momento (Places) y quedan guardadas en la orden. Si la ruta se creó sin chofer, el Administrador puede **asignarlo o cambiarlo después** desde el detalle de la ruta (`ruta.chofer_id`); la ruta aparece entonces en "Mi jornada" de ese Chofer |
 | RF-22 | Edge Functions `optimizar-ruta` (**Routes API**) y `geocodificar` (**Places API**). La clave está solo en el servidor |
 | RF-23 | `VistaRuta`: mapa con el trazado y las paradas en orden. El Chofer solo visualiza. **Ubicación del Chofer en tiempo real** (geolocator): punto en el mapa, precisión, "centrar en mí / seguir", próxima parada y distancia en línea recta. La ubicación no se envía ni se guarda en el servidor. **Flujo en ruta:** "Iniciar ruta" (pendientes → En Ruta) abre la **navegación de Google Maps** a la parada 1; "Confirmar entrega" abre automáticamente la navegación a la siguiente; al final, "Volver a bodega". Se usan enlaces de Google Maps (sin costo ni clave). No se modifica la ruta. Cámara con tres modos: tramo actual (ubicación → próxima parada), ruta completa y seguirme |
-| RF-24 | `ruta.costo_ruta_sin_optimizar`, `costo_ruta_optimizada` y `ahorro` (columna calculada). `ruta.detalle_optimizacion` guarda la comparación **tiempo / km / TAG / combustible / costo** de la ruta sin optimizar, con TAG y sin TAG, más el motivo de la elección. Solo la ve el Administrador; el Chofer solo ve si la ruta usa TAG (sí/no) |
+| RF-24 | `ruta.costo_ruta_sin_optimizar`, `costo_ruta_optimizada` y `ahorro` (columna calculada). `ruta.detalle_optimizacion` guarda la comparación **tiempo / km / TAG / combustible / costo** de la ruta sin optimizar, con TAG y sin TAG, más el motivo de la elección. Solo la ve el Administrador; el Chofer solo ve si la ruta usa TAG (sí/no) | 
 
 Indicadores: la vista `v_kpi` calcula KPI-01, 02, 04, 05, 06, 07 y 08 (solo Administrador).
 KPI-03 se mide en la app (el margen aparece mientras se escribe).

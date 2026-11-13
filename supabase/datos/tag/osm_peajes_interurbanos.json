@@ -1,0 +1,1729 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-11-13T04:20:24Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "way",
+  "id": 512169602,
+  "bounds": {
+    "minlat": -33.9078744,
+    "minlon": -70.7315152,
+    "maxlat": -33.9077381,
+    "maxlon": -70.7313654
+  },
+  "nodes": [
+    5008518136,
+    4249905414,
+    5008518135
+  ],
+  "geometry": [
+    { "lat": -33.9077381, "lon": -70.7315152 },
+    { "lat": -33.9078062, "lon": -70.7314403 },
+    { "lat": -33.9078744, "lon": -70.7313654 }
+  ],
+  "tags": {
+    "alt_name": "Ruta del Maipo",
+    "covered": "yes",
+    "highway": "motorway",
+    "int_name": "Carretera Panamericana",
+    "lanes": "5",
+    "maxspeed": "20",
+    "name": "Ruta 5 Sur",
+    "official_name": "Longitudinal Sur, Sector: Av. Bernardo O'Higgins - Túnel Angostura",
+    "oneway": "yes",
+    "operator": "Ruta del Maipo Sociedad Concesionaria S.A.",
+    "ref": "5",
+    "smoothness": "excellent",
+    "source:maxspeed": "markings",
+    "source:ref": "Vialidad",
+    "surface": "concrete",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 512169603,
+  "bounds": {
+    "minlat": -33.9074669,
+    "minlon": -70.7309816,
+    "maxlat": -33.9073366,
+    "maxlon": -70.7308341
+  },
+  "nodes": [
+    5008518138,
+    4503134946,
+    5008518139
+  ],
+  "geometry": [
+    { "lat": -33.9074669, "lon": -70.7308341 },
+    { "lat": -33.9074017, "lon": -70.7309078 },
+    { "lat": -33.9073366, "lon": -70.7309816 }
+  ],
+  "tags": {
+    "alt_name": "Ruta del Maipo",
+    "covered": "yes",
+    "highway": "motorway",
+    "int_name": "Carretera Panamericana",
+    "lanes": "5",
+    "maxspeed": "20",
+    "name": "Ruta 5 Sur",
+    "official_name": "Longitudinal Sur, Sector: Av. Bernardo O'Higgins - Túnel Angostura",
+    "oneway": "yes",
+    "operator": "Ruta del Maipo Sociedad Concesionaria S.A.",
+    "ref": "5",
+    "smoothness": "excellent",
+    "source:maxspeed": "markings",
+    "source:ref": "Vialidad",
+    "surface": "concrete",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 549481188,
+  "bounds": {
+    "minlat": -33.4573959,
+    "minlon": -70.8985060,
+    "maxlat": -33.4573015,
+    "maxlon": -70.8981526
+  },
+  "nodes": [
+    5307885513,
+    5508725661,
+    5307885512
+  ],
+  "geometry": [
+    { "lat": -33.4573959, "lon": -70.8985060 },
+    { "lat": -33.4573556, "lon": -70.8983566 },
+    { "lat": -33.4573015, "lon": -70.8981526 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Pacífico",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "5",
+    "maxspeed": "10",
+    "name": "Ruta 68",
+    "official_name": "Santiago - Valparaíso, Sector: Santiago - Túnel Zapata",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Rutas del Pacífico S.A.",
+    "ref": "68",
+    "source:ref": "Vialidad",
+    "surface": "concrete",
+    "toll": "yes",
+    "width": "20"
+  }
+},
+{
+  "type": "way",
+  "id": 549481190,
+  "bounds": {
+    "minlat": -33.4564485,
+    "minlon": -70.8988226,
+    "maxlat": -33.4563873,
+    "maxlon": -70.8985919
+  },
+  "nodes": [
+    5307885515,
+    243646585,
+    5307885514
+  ],
+  "geometry": [
+    { "lat": -33.4563873, "lon": -70.8985919 },
+    { "lat": -33.4564150, "lon": -70.8986965 },
+    { "lat": -33.4564485, "lon": -70.8988226 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Pacífico",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "5",
+    "maxspeed": "10",
+    "name": "Ruta 68",
+    "official_name": "Santiago - Valparaíso, Sector: Santiago - Túnel Zapata",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Rutas del Pacífico S.A.",
+    "ref": "68",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes",
+    "width": "20"
+  }
+},
+{
+  "type": "way",
+  "id": 563408500,
+  "bounds": {
+    "minlat": -33.9080976,
+    "minlon": -70.7317561,
+    "maxlat": -33.9071671,
+    "maxlon": -70.7307409
+  },
+  "nodes": [
+    4908523842,
+    5008518142,
+    4908523805
+  ],
+  "geometry": [
+    { "lat": -33.9071671, "lon": -70.7317561 },
+    { "lat": -33.9076152, "lon": -70.7312672 },
+    { "lat": -33.9080976, "lon": -70.7307409 }
+  ],
+  "tags": {
+    "alt_name": "Ruta del Maipo",
+    "highway": "motorway",
+    "int_name": "Carretera Panamericana",
+    "lanes": "3",
+    "lit": "yes",
+    "maxspeed": "100",
+    "maxspeed:hgv:conditional": "90 @ (weight>=3.86)",
+    "maxspeed:psv:conditional": "90 @ (weight>=3.86)",
+    "name": "Ruta 5 Sur",
+    "official_name": "Longitudinal Sur, Sector: Av. Bernardo O'Higgins - Túnel Angostura",
+    "oneway": "yes",
+    "operator": "Ruta del Maipo Sociedad Concesionaria S.A.",
+    "ref": "5",
+    "smoothness": "excellent",
+    "source:maxspeed": "markings",
+    "source:ref": "Vialidad",
+    "surface": "concrete",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 569385009,
+  "bounds": {
+    "minlat": -32.6296720,
+    "minlon": -71.2308688,
+    "maxlat": -32.6295555,
+    "maxlon": -71.2308463
+  },
+  "nodes": [
+    5475920456,
+    289394039,
+    5475920534
+  ],
+  "geometry": [
+    { "lat": -32.6295555, "lon": -71.2308463 },
+    { "lat": -32.6296140, "lon": -71.2308575 },
+    { "lat": -32.6296720, "lon": -71.2308688 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Aconcagua",
+    "hazmat": "no",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "50",
+    "motorroad": "no",
+    "name": "Ruta 5 Norte",
+    "official_name": "Longitudinal Norte, Sector: Montenegro - Los Ermitaños",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Autopista del Aconcagua S.A.",
+    "ref": "5",
+    "source:ref": "Vialidad",
+    "surface": "concrete",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 571433639,
+  "bounds": {
+    "minlat": -33.0008324,
+    "minlon": -70.6872634,
+    "maxlat": -33.0007375,
+    "maxlon": -70.6872234
+  },
+  "nodes": [
+    5579699167,
+    335639289,
+    5579699168
+  ],
+  "geometry": [
+    { "lat": -33.0008324, "lon": -70.6872634 },
+    { "lat": -33.0007885, "lon": -70.6872448 },
+    { "lat": -33.0007375, "lon": -70.6872234 }
+  ],
+  "tags": {
+    "alt_name": "Ruta 57",
+    "covered": "yes",
+    "hazmat": "no",
+    "highway": "trunk",
+    "lanes": "7",
+    "lanes:backward": "4",
+    "maxheight": "4.3",
+    "maxspeed": "50",
+    "maxwidth": "3.5",
+    "motorroad": "yes",
+    "name": "Autopista Los Libertadores",
+    "official_name": "Cruce Ruta 70 (Santiago) - Cruce Ruta 60 CH (Los Andes); Sector Cruce Ruta 70 (Santiago) - Túnel Chacabuco",
+    "oneway": "no",
+    "operator": "Sociedad Concesionaria Los Libertadores S.A.",
+    "ref": "57",
+    "source:ref": "Vialidad",
+    "surface": "concrete",
+    "toll": "yes",
+    "width": "28"
+  }
+},
+{
+  "type": "way",
+  "id": 664889501,
+  "bounds": {
+    "minlat": -33.2356388,
+    "minlon": -70.7586376,
+    "maxlat": -33.2354951,
+    "maxlon": -70.7585723
+  },
+  "nodes": [
+    6223443629,
+    1946795918,
+    6223443628
+  ],
+  "geometry": [
+    { "lat": -33.2356388, "lon": -70.7585723 },
+    { "lat": -33.2355669, "lon": -70.7586049 },
+    { "lat": -33.2354951, "lon": -70.7586376 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Aconcagua",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "8",
+    "maxspeed": "50",
+    "name": "Ruta 5 Norte",
+    "official_name": "Longitudinal Norte, Sector: Av. Bernardo O'Higgins - Límite Regional Norte (Montenegro)",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Autopista del Aconcagua S.A.",
+    "ref": "5",
+    "source:ref": "Vialidad",
+    "surface": "concrete",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 664889503,
+  "bounds": {
+    "minlat": -33.2358060,
+    "minlon": -70.7592500,
+    "maxlat": -33.2356628,
+    "maxlon": -70.7591849
+  },
+  "nodes": [
+    6223443631,
+    1946795899,
+    6223443630
+  ],
+  "geometry": [
+    { "lat": -33.2356628, "lon": -70.7592500 },
+    { "lat": -33.2357344, "lon": -70.7592174 },
+    { "lat": -33.2358060, "lon": -70.7591849 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Aconcagua",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "8",
+    "maxspeed": "50",
+    "name": "Ruta 5 Norte",
+    "official_name": "Longitudinal Norte, Sector: Av. Bernardo O'Higgins - Límite Regional Norte (Montenegro)",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Autopista del Aconcagua S.A.",
+    "ref": "5",
+    "source:ref": "Vialidad",
+    "surface": "concrete",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 664889506,
+  "bounds": {
+    "minlat": -33.2383409,
+    "minlon": -70.7601293,
+    "maxlat": -33.2326272,
+    "maxlon": -70.7575133
+  },
+  "nodes": [
+    2610197601,
+    6223443642,
+    6223443643,
+    6223443641,
+    6277890252,
+    6223443640,
+    6223443644,
+    13116868800,
+    1946795915
+  ],
+  "geometry": [
+    { "lat": -33.2383409, "lon": -70.7575133 },
+    { "lat": -33.2373751, "lon": -70.7579868 },
+    { "lat": -33.2365507, "lon": -70.7583945 },
+    { "lat": -33.2360930, "lon": -70.7586171 },
+    { "lat": -33.2356286, "lon": -70.7588357 },
+    { "lat": -33.2348479, "lon": -70.7591897 },
+    { "lat": -33.2340728, "lon": -70.7595277 },
+    { "lat": -33.2333246, "lon": -70.7598415 },
+    { "lat": -33.2326272, "lon": -70.7601293 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Aconcagua",
+    "highway": "motorway",
+    "lanes": "3",
+    "maxspeed": "80",
+    "name": "Ruta 5 Norte",
+    "official_name": "Longitudinal Norte, Sector: Av. Bernardo O'Higgins - Límite Regional Norte (Montenegro)",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Autopista del Aconcagua S.A.",
+    "placement": "middle_of:2",
+    "ref": "5",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 664889507,
+  "bounds": {
+    "minlat": -33.2376533,
+    "minlon": -70.7601634,
+    "maxlat": -33.2330093,
+    "maxlon": -70.7580578
+  },
+  "nodes": [
+    259950223,
+    6223443637,
+    6223443638,
+    6223443639,
+    13116868803,
+    2610197602
+  ],
+  "geometry": [
+    { "lat": -33.2330093, "lon": -70.7601634 },
+    { "lat": -33.2349746, "lon": -70.7593198 },
+    { "lat": -33.2355983, "lon": -70.7590362 },
+    { "lat": -33.2364486, "lon": -70.7586385 },
+    { "lat": -33.2370517, "lon": -70.7583504 },
+    { "lat": -33.2376533, "lon": -70.7580578 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Aconcagua",
+    "highway": "motorway",
+    "lanes": "3",
+    "maxspeed": "100",
+    "maxspeed:coach": "100",
+    "maxspeed:hgv:conditional": "90 @ (weight>=3.86)",
+    "maxspeed:psv:conditional": "90 @ (weight>=3.86)",
+    "name": "Ruta 5 Norte",
+    "official_name": "Longitudinal Norte, Sector: Av. Bernardo O'Higgins - Límite Regional Norte (Montenegro)",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Autopista del Aconcagua S.A.",
+    "ref": "5",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 671167799,
+  "bounds": {
+    "minlat": -33.6515957,
+    "minlon": -71.3804001,
+    "maxlat": -33.6361282,
+    "maxlon": -71.3529275
+  },
+  "nodes": [
+    13202196188,
+    12511410972,
+    13202196187,
+    12511410973,
+    12511410979,
+    12511410978,
+    12511410977,
+    2386490335,
+    12511410976,
+    12511410975,
+    12511410974,
+    2386490288,
+    12511410970,
+    12810894760,
+    12810894765,
+    12810894762,
+    2386490241,
+    12810894785,
+    12810894784,
+    2386490416,
+    12810894783,
+    12810894782,
+    2386490207,
+    12810894780,
+    12810894779,
+    2386490291,
+    12810894778,
+    12810894777,
+    12810894781,
+    2386490282,
+    12810894766,
+    2386490208,
+    11726160495,
+    11726160494,
+    2386490313,
+    11726160493,
+    11726160492,
+    2386490317,
+    11726160498,
+    11726160497,
+    11726160500,
+    11726160496,
+    11726160499
+  ],
+  "geometry": [
+    { "lat": -33.6515957, "lon": -71.3529275 },
+    { "lat": -33.6512116, "lon": -71.3537496 },
+    { "lat": -33.6505530, "lon": -71.3551591 },
+    { "lat": -33.6498899, "lon": -71.3565458 },
+    { "lat": -33.6495895, "lon": -71.3571560 },
+    { "lat": -33.6495020, "lon": -71.3573348 },
+    { "lat": -33.6494097, "lon": -71.3575101 },
+    { "lat": -33.6493127, "lon": -71.3576818 },
+    { "lat": -33.6491972, "lon": -71.3578716 },
+    { "lat": -33.6490760, "lon": -71.3580561 },
+    { "lat": -33.6489492, "lon": -71.3582353 },
+    { "lat": -33.6488125, "lon": -71.3584194 },
+    { "lat": -33.6474761, "lon": -71.3601781 },
+    { "lat": -33.6457780, "lon": -71.3624095 },
+    { "lat": -33.6423450, "lon": -71.3669206 },
+    { "lat": -33.6402760, "lon": -71.3696323 },
+    { "lat": -33.6381670, "lon": -71.3723964 },
+    { "lat": -33.6380703, "lon": -71.3725312 },
+    { "lat": -33.6379780, "lon": -71.3726703 },
+    { "lat": -33.6378901, "lon": -71.3728134 },
+    { "lat": -33.6378000, "lon": -71.3729729 },
+    { "lat": -33.6377155, "lon": -71.3731366 },
+    { "lat": -33.6376366, "lon": -71.3733043 },
+    { "lat": -33.6375723, "lon": -71.3734579 },
+    { "lat": -33.6375131, "lon": -71.3736144 },
+    { "lat": -33.6374591, "lon": -71.3737737 },
+    { "lat": -33.6374071, "lon": -71.3739474 },
+    { "lat": -33.6373613, "lon": -71.3741236 },
+    { "lat": -33.6373218, "lon": -71.3743021 },
+    { "lat": -33.6372804, "lon": -71.3745368 },
+    { "lat": -33.6372414, "lon": -71.3747969 },
+    { "lat": -33.6367021, "lon": -71.3786754 },
+    { "lat": -33.6366750, "lon": -71.3788577 },
+    { "lat": -33.6366414, "lon": -71.3790384 },
+    { "lat": -33.6366016, "lon": -71.3792172 },
+    { "lat": -33.6365632, "lon": -71.3793661 },
+    { "lat": -33.6365203, "lon": -71.3795132 },
+    { "lat": -33.6364732, "lon": -71.3796584 },
+    { "lat": -33.6364187, "lon": -71.3798018 },
+    { "lat": -33.6363599, "lon": -71.3799427 },
+    { "lat": -33.6362968, "lon": -71.3800809 },
+    { "lat": -33.6362154, "lon": -71.3802427 },
+    { "lat": -33.6361282, "lon": -71.3804001 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Sol",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "120",
+    "maxspeed:coach": "100",
+    "maxspeed:hgv:conditional": "90 @ (weight>=3.86)",
+    "maxspeed:psv:conditional": "90 @ (weight>=3.86)",
+    "name": "Ruta 78",
+    "official_name": "Santiago - San Antonio, Sector: Cruce Ruta 5 - Límite Regional (Paso Superior Sepultura)",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Autopista San Antonio - Santiago",
+    "ref": "78",
+    "source:ref": "Vialidad",
+    "surface": "concrete",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 703501731,
+  "bounds": {
+    "minlat": -33.3120916,
+    "minlon": -70.7031805,
+    "maxlat": -33.3094113,
+    "maxlon": -70.7013794
+  },
+  "nodes": [
+    9645656352,
+    13073654021,
+    13073654022,
+    13073654020,
+    13073654023,
+    13073654024,
+    13073653998,
+    13073653997,
+    13073653996,
+    13073653995,
+    13073653994,
+    13073653993,
+    9645902677,
+    13073653936,
+    2836081246
+  ],
+  "geometry": [
+    { "lat": -33.3120916, "lon": -70.7031805 },
+    { "lat": -33.3120008, "lon": -70.7031321 },
+    { "lat": -33.3119117, "lon": -70.7030793 },
+    { "lat": -33.3118285, "lon": -70.7030248 },
+    { "lat": -33.3117470, "lon": -70.7029666 },
+    { "lat": -33.3116215, "lon": -70.7028714 },
+    { "lat": -33.3113732, "lon": -70.7026783 },
+    { "lat": -33.3111132, "lon": -70.7024778 },
+    { "lat": -33.3109244, "lon": -70.7023430 },
+    { "lat": -33.3107450, "lon": -70.7022203 },
+    { "lat": -33.3104889, "lon": -70.7020526 },
+    { "lat": -33.3102827, "lon": -70.7019252 },
+    { "lat": -33.3100020, "lon": -70.7017482 },
+    { "lat": -33.3096893, "lon": -70.7015551 },
+    { "lat": -33.3094113, "lon": -70.7013794 }
+  ],
+  "tags": {
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "80",
+    "name": "Autopista Los Libertadores",
+    "official_name": "Cruce Ruta 70 (Santiago) - Cruce Ruta 60 CH (Los Andes); Sector Cruce Ruta 70 (Santiago) - Túnel Chacabuco",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Los Libertadores S.A.",
+    "ref": "57",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 703501732,
+  "bounds": {
+    "minlat": -33.3116181,
+    "minlon": -70.7029901,
+    "maxlat": -33.3094830,
+    "maxlon": -70.7015464
+  },
+  "nodes": [
+    2836081257,
+    9645902676,
+    13073653986,
+    13073653985,
+    13073653987,
+    13073653988,
+    6606616893,
+    13073653989,
+    6606616894,
+    2836081245
+  ],
+  "geometry": [
+    { "lat": -33.3094830, "lon": -70.7015464 },
+    { "lat": -33.3099829, "lon": -70.7018568 },
+    { "lat": -33.3105461, "lon": -70.7022129 },
+    { "lat": -33.3106868, "lon": -70.7023048 },
+    { "lat": -33.3108196, "lon": -70.7023946 },
+    { "lat": -33.3109765, "lon": -70.7025053 },
+    { "lat": -33.3110998, "lon": -70.7025951 },
+    { "lat": -33.3112561, "lon": -70.7027145 },
+    { "lat": -33.3114461, "lon": -70.7028580 },
+    { "lat": -33.3116181, "lon": -70.7029901 }
+  ],
+  "tags": {
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "80",
+    "name": "Autopista Los Libertadores",
+    "official_name": "Cruce Ruta 70 (Santiago) - Cruce Ruta 60 CH (Los Andes); Sector Cruce Ruta 70 (Santiago) - Túnel Chacabuco",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Los Libertadores S.A.",
+    "ref": "57",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 704303252,
+  "bounds": {
+    "minlat": -33.3715926,
+    "minlon": -71.3001308,
+    "maxlat": -33.3715214,
+    "maxlon": -71.2999756
+  },
+  "nodes": [
+    6613063421,
+    6613063427,
+    6613063422
+  ],
+  "geometry": [
+    { "lat": -33.3715214, "lon": -71.3001308 },
+    { "lat": -33.3715517, "lon": -71.3000625 },
+    { "lat": -33.3715926, "lon": -71.2999756 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Pacífico",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "5",
+    "maxspeed": "50",
+    "name": "Ruta 68",
+    "official_name": "Santiago - Valparaíso, Sector: Túnel Zapata - Valparaíso",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Rutas del Pacífico S.A.",
+    "placement": "middle_of:4",
+    "ref": "68",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 704303254,
+  "bounds": {
+    "minlat": -33.3706784,
+    "minlon": -71.2995525,
+    "maxlat": -33.3706084,
+    "maxlon": -71.2993995
+  },
+  "nodes": [
+    6613063420,
+    6613063432,
+    6613063419
+  ],
+  "geometry": [
+    { "lat": -33.3706784, "lon": -71.2993995 },
+    { "lat": -33.3706472, "lon": -71.2994676 },
+    { "lat": -33.3706084, "lon": -71.2995525 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Pacífico",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "5",
+    "maxspeed": "50",
+    "name": "Ruta 68",
+    "official_name": "Santiago - Valparaíso, Sector: Túnel Zapata - Valparaíso",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Rutas del Pacífico S.A.",
+    "placement": "right_of:4",
+    "ref": "68",
+    "source:ref": "Vialidad",
+    "surface": "concrete",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 704426618,
+  "bounds": {
+    "minlat": -33.6743710,
+    "minlon": -71.1509599,
+    "maxlat": -33.6691030,
+    "maxlon": -71.1011539
+  },
+  "nodes": [
+    243522919,
+    12511401284,
+    9008699777,
+    9008699776,
+    9008554939,
+    9008554936,
+    9008554935,
+    243523139,
+    1134987384,
+    1134987169,
+    243523078,
+    9008699734,
+    243523195,
+    9008699733,
+    1134986948,
+    243523087,
+    1134987063,
+    9008699842,
+    9008699841,
+    243522973,
+    9008699840,
+    1134987054,
+    9008699838,
+    9008699839,
+    9008699837,
+    1134987075,
+    9008699759,
+    243522935,
+    9008699758,
+    9008699757,
+    243523197,
+    1134987167,
+    9008699749,
+    9008699748,
+    243522930,
+    9008699747,
+    9008699746,
+    243523160,
+    9008699743,
+    9008699742,
+    9008699761,
+    9008699741,
+    243522905,
+    9008699763,
+    243523152,
+    13643747234
+  ],
+  "geometry": [
+    { "lat": -33.6694367, "lon": -71.1509599 },
+    { "lat": -33.6694249, "lon": -71.1507469 },
+    { "lat": -33.6693712, "lon": -71.1497752 },
+    { "lat": -33.6693113, "lon": -71.1485901 },
+    { "lat": -33.6692570, "lon": -71.1474046 },
+    { "lat": -33.6692201, "lon": -71.1465189 },
+    { "lat": -33.6691884, "lon": -71.1456328 },
+    { "lat": -33.6691621, "lon": -71.1447465 },
+    { "lat": -33.6691331, "lon": -71.1430071 },
+    { "lat": -33.6691108, "lon": -71.1416070 },
+    { "lat": -33.6691030, "lon": -71.1398716 },
+    { "lat": -33.6691067, "lon": -71.1386827 },
+    { "lat": -33.6691197, "lon": -71.1374939 },
+    { "lat": -33.6691398, "lon": -71.1364054 },
+    { "lat": -33.6691677, "lon": -71.1353172 },
+    { "lat": -33.6692157, "lon": -71.1335751 },
+    { "lat": -33.6693095, "lon": -71.1315447 },
+    { "lat": -33.6693385, "lon": -71.1309023 },
+    { "lat": -33.6693742, "lon": -71.1302143 },
+    { "lat": -33.6694222, "lon": -71.1293668 },
+    { "lat": -33.6694780, "lon": -71.1285031 },
+    { "lat": -33.6695427, "lon": -71.1276475 },
+    { "lat": -33.6696142, "lon": -71.1267208 },
+    { "lat": -33.6696945, "lon": -71.1257458 },
+    { "lat": -33.6697827, "lon": -71.1247842 },
+    { "lat": -33.6698675, "lon": -71.1238951 },
+    { "lat": -33.6699590, "lon": -71.1230448 },
+    { "lat": -33.6700510, "lon": -71.1222062 },
+    { "lat": -33.6701678, "lon": -71.1212498 },
+    { "lat": -33.6702916, "lon": -71.1202947 },
+    { "lat": -33.6704224, "lon": -71.1193410 },
+    { "lat": -33.6707147, "lon": -71.1173505 },
+    { "lat": -33.6708812, "lon": -71.1163330 },
+    { "lat": -33.6710550, "lon": -71.1153173 },
+    { "lat": -33.6712359, "lon": -71.1143035 },
+    { "lat": -33.6713819, "lon": -71.1135146 },
+    { "lat": -33.6715322, "lon": -71.1127269 },
+    { "lat": -33.6716868, "lon": -71.1119404 },
+    { "lat": -33.6718263, "lon": -71.1112633 },
+    { "lat": -33.6719714, "lon": -71.1105878 },
+    { "lat": -33.6721221, "lon": -71.1099140 },
+    { "lat": -33.6723881, "lon": -71.1087470 },
+    { "lat": -33.6726600, "lon": -71.1075819 },
+    { "lat": -33.6730864, "lon": -71.1058746 },
+    { "lat": -33.6737899, "lon": -71.1031239 },
+    { "lat": -33.6743710, "lon": -71.1011539 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Sol",
+    "highway": "motorway",
+    "lanes": "2",
+    "maxspeed": "120",
+    "maxspeed:coach": "100",
+    "maxspeed:hgv:conditional": "90 @ (weight>=3.86)",
+    "maxspeed:psv:conditional": "90 @ (weight>=3.86)",
+    "name": "Ruta 78",
+    "official_name": "Santiago - San Antonio, Sector: Cruce Ruta 5 - Límite Regional (Paso Superior Sepultura)",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Autopista San Antonio - Santiago",
+    "ref": "78",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 731105454,
+  "bounds": {
+    "minlat": -33.6739179,
+    "minlon": -71.1523645,
+    "maxlat": -33.6689869,
+    "maxlon": -71.1022577
+  },
+  "nodes": [
+    243522670,
+    13643747235,
+    9008699762,
+    243522701,
+    9008699740,
+    243522754,
+    9008699745,
+    9008699744,
+    243522758,
+    9008699753,
+    9008699752,
+    243522763,
+    9008699751,
+    9008699750,
+    9008699760,
+    9008699756,
+    243522777,
+    9008699755,
+    9008699754,
+    243522790,
+    9008699739,
+    9008699738,
+    9008699737,
+    243522801,
+    1134987238,
+    243522823,
+    9008699774,
+    1134987366,
+    9008699773,
+    243522832,
+    9008699736,
+    243522842,
+    9008699735,
+    243522848,
+    9008699772,
+    9008699771,
+    243522858,
+    9008699764,
+    9008699770,
+    243522862,
+    9008699781,
+    243522866,
+    9008699780,
+    9008699779,
+    9008699778,
+    9008699775
+  ],
+  "geometry": [
+    { "lat": -33.6739179, "lon": -71.1022577 },
+    { "lat": -33.6735987, "lon": -71.1034191 },
+    { "lat": -33.6729692, "lon": -71.1058505 },
+    { "lat": -33.6725417, "lon": -71.1075711 },
+    { "lat": -33.6722708, "lon": -71.1087264 },
+    { "lat": -33.6720082, "lon": -71.1098845 },
+    { "lat": -33.6718580, "lon": -71.1105658 },
+    { "lat": -33.6717122, "lon": -71.1112484 },
+    { "lat": -33.6715707, "lon": -71.1119324 },
+    { "lat": -33.6714153, "lon": -71.1127110 },
+    { "lat": -33.6712650, "lon": -71.1134911 },
+    { "lat": -33.6711198, "lon": -71.1142726 },
+    { "lat": -33.6709397, "lon": -71.1152848 },
+    { "lat": -33.6707682, "lon": -71.1162992 },
+    { "lat": -33.6706053, "lon": -71.1173156 },
+    { "lat": -33.6704537, "lon": -71.1183144 },
+    { "lat": -33.6703094, "lon": -71.1193148 },
+    { "lat": -33.6701787, "lon": -71.1202699 },
+    { "lat": -33.6700547, "lon": -71.1212263 },
+    { "lat": -33.6699374, "lon": -71.1221840 },
+    { "lat": -33.6698356, "lon": -71.1230798 },
+    { "lat": -33.6697413, "lon": -71.1239768 },
+    { "lat": -33.6696544, "lon": -71.1248749 },
+    { "lat": -33.6695751, "lon": -71.1257739 },
+    { "lat": -33.6694054, "lon": -71.1277333 },
+    { "lat": -33.6692961, "lon": -71.1293373 },
+    { "lat": -33.6692341, "lon": -71.1305360 },
+    { "lat": -33.6691778, "lon": -71.1317351 },
+    { "lat": -33.6691153, "lon": -71.1332356 },
+    { "lat": -33.6690617, "lon": -71.1347365 },
+    { "lat": -33.6690300, "lon": -71.1360259 },
+    { "lat": -33.6690070, "lon": -71.1373155 },
+    { "lat": -33.6689927, "lon": -71.1385895 },
+    { "lat": -33.6689869, "lon": -71.1398636 },
+    { "lat": -33.6689947, "lon": -71.1415923 },
+    { "lat": -33.6690126, "lon": -71.1429723 },
+    { "lat": -33.6690394, "lon": -71.1443067 },
+    { "lat": -33.6690527, "lon": -71.1449799 },
+    { "lat": -33.6690673, "lon": -71.1456370 },
+    { "lat": -33.6691052, "lon": -71.1466308 },
+    { "lat": -33.6691398, "lon": -71.1474556 },
+    { "lat": -33.6691800, "lon": -71.1483528 },
+    { "lat": -33.6692369, "lon": -71.1495303 },
+    { "lat": -33.6693012, "lon": -71.1507237 },
+    { "lat": -33.6693746, "lon": -71.1519183 },
+    { "lat": -33.6694045, "lon": -71.1523645 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Sol",
+    "highway": "motorway",
+    "lanes": "2",
+    "maxspeed": "120",
+    "maxspeed:coach": "100",
+    "maxspeed:hgv:conditional": "90 @ (weight>=3.86)",
+    "maxspeed:psv:conditional": "90 @ (weight>=3.86)",
+    "name": "Ruta 78",
+    "official_name": "Santiago - San Antonio, Sector: Cruce Ruta 5 - Límite Regional (Paso Superior Sepultura)",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Autopista San Antonio - Santiago",
+    "ref": "78",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 987011311,
+  "bounds": {
+    "minlat": -33.9080069,
+    "minlon": -70.7316287,
+    "maxlat": -33.9070759,
+    "maxlon": -70.7306208
+  },
+  "nodes": [
+    9123189764,
+    5008518144,
+    9123189765
+  ],
+  "geometry": [
+    { "lat": -33.9080069, "lon": -70.7306208 },
+    { "lat": -33.9075996, "lon": -70.7310618 },
+    { "lat": -33.9070759, "lon": -70.7316287 }
+  ],
+  "tags": {
+    "alt_name": "Ruta del Maipo",
+    "highway": "motorway",
+    "int_name": "Carretera Panamericana",
+    "lanes": "3",
+    "lit": "yes",
+    "maxspeed": "100",
+    "maxspeed:hgv:conditional": "90 @ (weight>=3.86)",
+    "maxspeed:psv:conditional": "90 @ (weight>=3.86)",
+    "name": "Ruta 5 Sur",
+    "official_name": "Longitudinal Sur, Sector: Av. Bernardo O'Higgins - Túnel Angostura",
+    "oneway": "yes",
+    "operator": "Ruta del Maipo Sociedad Concesionaria S.A.",
+    "ref": "5",
+    "smoothness": "excellent",
+    "source:maxspeed": "markings",
+    "source:ref": "Vialidad",
+    "surface": "concrete",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1049624778,
+  "bounds": {
+    "minlat": -33.3109017,
+    "minlon": -70.7021605,
+    "maxlat": -33.3108385,
+    "maxlon": -70.7021186
+  },
+  "nodes": [
+    9645902693,
+    267454369,
+    9645902694
+  ],
+  "geometry": [
+    { "lat": -33.3109017, "lon": -70.7021605 },
+    { "lat": -33.3108701, "lon": -70.7021396 },
+    { "lat": -33.3108385, "lon": -70.7021186 }
+  ],
+  "tags": {
+    "alt_name": "Ruta 57;Carretera General San Martín",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "50",
+    "name": "Autopista Los Libertadores",
+    "official_name": "Cruce Ruta 70 (Santiago) - Cruce Ruta 60 CH (Los Andes); Sector Cruce Ruta 70 (Santiago) - Túnel Chacabuco",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Los Libertadores S.A.",
+    "ref": "57",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1049624779,
+  "bounds": {
+    "minlat": -33.3107461,
+    "minlon": -70.7025041,
+    "maxlat": -33.3106761,
+    "maxlon": -70.7024564
+  },
+  "nodes": [
+    9645902692,
+    277060427,
+    9645902691
+  ],
+  "geometry": [
+    { "lat": -33.3106761, "lon": -70.7024564 },
+    { "lat": -33.3107111, "lon": -70.7024802 },
+    { "lat": -33.3107461, "lon": -70.7025041 }
+  ],
+  "tags": {
+    "alt_name": "Ruta 57;Carretera General San Martín",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "50",
+    "name": "Autopista Los Libertadores",
+    "official_name": "Cruce Ruta 70 (Santiago) - Cruce Ruta 60 CH (Los Andes); Sector Cruce Ruta 70 (Santiago) - Túnel Chacabuco",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Los Libertadores S.A.",
+    "ref": "57",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1050300923,
+  "bounds": {
+    "minlat": -33.4573556,
+    "minlon": -70.8984061,
+    "maxlat": -33.4572154,
+    "maxlon": -70.8983566
+  },
+  "nodes": [
+    5508725661,
+    6824422333
+  ],
+  "geometry": [
+    { "lat": -33.4573556, "lon": -70.8983566 },
+    { "lat": -33.4572154, "lon": -70.8984061 }
+  ],
+  "tags": {
+    "access": "private",
+    "covered": "yes",
+    "highway": "footway"
+  }
+},
+{
+  "type": "way",
+  "id": 1057986504,
+  "bounds": {
+    "minlat": -33.0629334,
+    "minlon": -71.4341168,
+    "maxlat": -33.0629178,
+    "maxlon": -71.4339649
+  },
+  "nodes": [
+    13049579206,
+    276093010,
+    13049579207
+  ],
+  "geometry": [
+    { "lat": -33.0629334, "lon": -71.4339649 },
+    { "lat": -33.0629256, "lon": -71.4340409 },
+    { "lat": -33.0629178, "lon": -71.4341168 }
+  ],
+  "tags": {
+    "alt_name": "Ruta 60 CH",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "4",
+    "maxspeed": "60",
+    "name": "Autopista Troncal Sur",
+    "official_name": "Cruce Ruta 5 (Llay-Llay) - Túnel Cristo Redentor",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Rutas del Pacífico S.A.",
+    "ref": "60",
+    "smoothness": "excellent",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes",
+    "width": "20"
+  }
+},
+{
+  "type": "way",
+  "id": 1057986505,
+  "bounds": {
+    "minlat": -33.0634563,
+    "minlon": -71.4342021,
+    "maxlat": -33.0634396,
+    "maxlon": -71.4340504
+  },
+  "nodes": [
+    13049579215,
+    294489553,
+    13049579216
+  ],
+  "geometry": [
+    { "lat": -33.0634396, "lon": -71.4342021 },
+    { "lat": -33.0634480, "lon": -71.4341262 },
+    { "lat": -33.0634563, "lon": -71.4340504 }
+  ],
+  "tags": {
+    "alt_name": "Ruta 60 CH",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "4",
+    "maxspeed": "50",
+    "name": "Autopista Troncal Sur",
+    "official_name": "Cruce Ruta 5 (Llay-Llay) - Túnel Cristo Redentor",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Rutas del Pacífico S.A.",
+    "ref": "60",
+    "smoothness": "excellent",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes",
+    "width": "20"
+  }
+},
+{
+  "type": "way",
+  "id": 1262028519,
+  "bounds": {
+    "minlat": -33.6513655,
+    "minlon": -71.3805469,
+    "maxlat": -33.6361466,
+    "maxlon": -71.3537042
+  },
+  "nodes": [
+    11726160478,
+    6913927745,
+    11726160482,
+    11726160481,
+    2386490148,
+    11726160480,
+    11726160479,
+    12810894787,
+    2386490325,
+    12810894786,
+    2386490412,
+    2386490279,
+    12810894767,
+    2386490290,
+    12810894771,
+    12810894770,
+    2386490400,
+    12810894769,
+    12810894768,
+    12810894776,
+    12810894775,
+    12810894774,
+    2386490276,
+    12810894773,
+    12810894772,
+    2386490267,
+    12810894763,
+    12810894764,
+    12810894761,
+    12511410971,
+    2386490285,
+    12511410984,
+    12511410983,
+    12511410982,
+    2386490170,
+    12511410981,
+    12511410980,
+    12511410985,
+    13202196186,
+    2386490278
+  ],
+  "geometry": [
+    { "lat": -33.6361466, "lon": -71.3805469 },
+    { "lat": -33.6362996, "lon": -71.3802787 },
+    { "lat": -33.6363944, "lon": -71.3801044 },
+    { "lat": -33.6364719, "lon": -71.3799308 },
+    { "lat": -33.6365413, "lon": -71.3797523 },
+    { "lat": -33.6365849, "lon": -71.3796250 },
+    { "lat": -33.6366243, "lon": -71.3794957 },
+    { "lat": -33.6366673, "lon": -71.3793332 },
+    { "lat": -33.6367054, "lon": -71.3791689 },
+    { "lat": -33.6367393, "lon": -71.3789993 },
+    { "lat": -33.6367679, "lon": -71.3788283 },
+    { "lat": -33.6373184, "lon": -71.3748412 },
+    { "lat": -33.6373564, "lon": -71.3745943 },
+    { "lat": -33.6374010, "lon": -71.3743490 },
+    { "lat": -33.6374368, "lon": -71.3741759 },
+    { "lat": -33.6374792, "lon": -71.3740050 },
+    { "lat": -33.6375283, "lon": -71.3738367 },
+    { "lat": -33.6375929, "lon": -71.3736465 },
+    { "lat": -33.6376659, "lon": -71.3734608 },
+    { "lat": -33.6377472, "lon": -71.3732801 },
+    { "lat": -33.6378287, "lon": -71.3731148 },
+    { "lat": -33.6379166, "lon": -71.3729542 },
+    { "lat": -33.6380107, "lon": -71.3727987 },
+    { "lat": -33.6380866, "lon": -71.3726835 },
+    { "lat": -33.6381659, "lon": -71.3725717 },
+    { "lat": -33.6382485, "lon": -71.3724634 },
+    { "lat": -33.6403332, "lon": -71.3697197 },
+    { "lat": -33.6424131, "lon": -71.3669823 },
+    { "lat": -33.6458226, "lon": -71.3625378 },
+    { "lat": -33.6475460, "lon": -71.3602912 },
+    { "lat": -33.6489175, "lon": -71.3584864 },
+    { "lat": -33.6490502, "lon": -71.3583036 },
+    { "lat": -33.6491782, "lon": -71.3581160 },
+    { "lat": -33.6493015, "lon": -71.3579239 },
+    { "lat": -33.6494199, "lon": -71.3577274 },
+    { "lat": -33.6495304, "lon": -71.3575317 },
+    { "lat": -33.6496361, "lon": -71.3573323 },
+    { "lat": -33.6497369, "lon": -71.3571292 },
+    { "lat": -33.6506010, "lon": -71.3553402 },
+    { "lat": -33.6513655, "lon": -71.3537042 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Sol",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "120",
+    "maxspeed:coach": "100",
+    "maxspeed:hgv:conditional": "90 @ (weight>=3.86)",
+    "maxspeed:psv:conditional": "90 @ (weight>=3.86)",
+    "name": "Ruta 78",
+    "official_name": "Santiago - San Antonio, Sector: Cruce Ruta 5 - Límite Regional (Paso Superior Sepultura)",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Autopista San Antonio - Santiago",
+    "ref": "78",
+    "source:ref": "Vialidad",
+    "surface": "concrete",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1426901320,
+  "bounds": {
+    "minlat": -33.2701025,
+    "minlon": -70.7355101,
+    "maxlat": -33.2700568,
+    "maxlon": -70.7354101
+  },
+  "nodes": [
+    13116868510,
+    314200644,
+    13116868509
+  ],
+  "geometry": [
+    { "lat": -33.2700568, "lon": -70.7354101 },
+    { "lat": -33.2700796, "lon": -70.7354601 },
+    { "lat": -33.2701025, "lon": -70.7355101 }
+  ],
+  "tags": {
+    "covered": "yes",
+    "highway": "primary",
+    "lanes": "2",
+    "maxspeed": "60",
+    "name": "Ruta 73",
+    "official_name": "Lo Pinto - San José",
+    "ref": "73",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1551759666,
+  "bounds": {
+    "minlat": -32.1750681,
+    "minlon": -71.5207058,
+    "maxlat": -32.1749096,
+    "maxlon": -71.5206590
+  },
+  "nodes": [
+    14115636703,
+    1502159436,
+    14115636702
+  ],
+  "geometry": [
+    { "lat": -32.1750681, "lon": -71.5207058 },
+    { "lat": -32.1749622, "lon": -71.5206745 },
+    { "lat": -32.1749096, "lon": -71.5206590 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Aconcagua",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "2",
+    "maxheight": "4.2",
+    "maxspeed": "50",
+    "maxwidth": "2.6",
+    "name": "Ruta 5 Norte",
+    "official_name": "Longitudinal Norte, Sector: Los Ermitaños - Punta Colorada",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Autopista del Aconcagua S.A.",
+    "ref": "5",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1551759671,
+  "bounds": {
+    "minlat": -32.1759344,
+    "minlon": -71.5211965,
+    "maxlat": -32.1732474,
+    "maxlon": -71.5202723
+  },
+  "nodes": [
+    14115636751,
+    14115636722,
+    14115636721,
+    14115636723,
+    14115636720,
+    14115636719,
+    14115636718,
+    14115636717,
+    1502159456,
+    14115636715,
+    14115636714,
+    14115636713,
+    14115636716,
+    14115636712,
+    14115636711,
+    14115636710,
+    2284970827
+  ],
+  "geometry": [
+    { "lat": -32.1732474, "lon": -71.5202723 },
+    { "lat": -32.1734271, "lon": -71.5203921 },
+    { "lat": -32.1736101, "lon": -71.5205047 },
+    { "lat": -32.1737962, "lon": -71.5206099 },
+    { "lat": -32.1740099, "lon": -71.5207196 },
+    { "lat": -32.1742270, "lon": -71.5208195 },
+    { "lat": -32.1744472, "lon": -71.5209096 },
+    { "lat": -32.1746701, "lon": -71.5209896 },
+    { "lat": -32.1748955, "lon": -71.5210594 },
+    { "lat": -32.1750062, "lon": -71.5210994 },
+    { "lat": -32.1751186, "lon": -71.5211326 },
+    { "lat": -32.1752322, "lon": -71.5211590 },
+    { "lat": -32.1753469, "lon": -71.5211785 },
+    { "lat": -32.1754936, "lon": -71.5211932 },
+    { "lat": -32.1756409, "lon": -71.5211965 },
+    { "lat": -32.1757880, "lon": -71.5211886 },
+    { "lat": -32.1759344, "lon": -71.5211693 }
+  ],
+  "tags": {
+    "alt_name": "Autopista del Aconcagua",
+    "highway": "motorway",
+    "lanes": "2",
+    "maxheight": "4.2",
+    "maxspeed": "50",
+    "maxwidth": "2.6",
+    "name": "Ruta 5 Norte",
+    "official_name": "Longitudinal Norte, Sector: Los Ermitaños - Punta Colorada",
+    "oneway": "yes",
+    "operator": "Sociedad Concesionaria Autopista del Aconcagua S.A.",
+    "ref": "5",
+    "source:ref": "Vialidad",
+    "surface": "asphalt",
+    "toll": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 243646585,
+  "lat": -33.4564150,
+  "lon": -70.8986965,
+  "tags": {
+    "barrier": "toll_booth",
+    "name": "Peaje Troncal Lo Prado"
+  }
+},
+{
+  "type": "node",
+  "id": 267454369,
+  "lat": -33.3108701,
+  "lon": -70.7021396,
+  "tags": {
+    "barrier": "toll_booth",
+    "name": "Peaje Las Canteras"
+  }
+},
+{
+  "type": "node",
+  "id": 276093010,
+  "lat": -33.0629256,
+  "lon": -71.4340409,
+  "tags": {
+    "barrier": "toll_booth",
+    "name": "Peaje Troncal Sur Rutas del Pacífico"
+  }
+},
+{
+  "type": "node",
+  "id": 277060427,
+  "lat": -33.3107111,
+  "lon": -70.7024802,
+  "tags": {
+    "barrier": "toll_booth",
+    "name": "Peaje Las Canteras"
+  }
+},
+{
+  "type": "node",
+  "id": 289394039,
+  "lat": -32.6296140,
+  "lon": -71.2308575,
+  "tags": {
+    "barrier": "toll_booth",
+    "fee": "4200 clp",
+    "name": "Peaje Tunel el Melon",
+    "name:es": "Peaje Tunel el Melon"
+  }
+},
+{
+  "type": "node",
+  "id": 294489553,
+  "lat": -33.0634480,
+  "lon": -71.4341262,
+  "tags": {
+    "barrier": "toll_booth",
+    "name": "Peaje Troncal Sur Rutas del Pacífico"
+  }
+},
+{
+  "type": "node",
+  "id": 314200644,
+  "lat": -33.2700796,
+  "lon": -70.7354601,
+  "tags": {
+    "barrier": "toll_booth",
+    "fee": "800",
+    "name": "Peaje San José"
+  }
+},
+{
+  "type": "node",
+  "id": 335639289,
+  "lat": -33.0007885,
+  "lon": -70.6872448,
+  "tags": {
+    "barrier": "toll_booth",
+    "name": "Peaje Chacabuco"
+  }
+},
+{
+  "type": "node",
+  "id": 1502159436,
+  "lat": -32.1749622,
+  "lon": -71.5206745,
+  "tags": {
+    "barrier": "toll_booth",
+    "name": "Peaje Pichidangui",
+    "name:es": "Peaje Pichidangui"
+  }
+},
+{
+  "type": "node",
+  "id": 1502159456,
+  "lat": -32.1748955,
+  "lon": -71.5210594,
+  "tags": {
+    "barrier": "toll_booth",
+    "name": "Peaje Pichidangui",
+    "name:es": "Peaje Pichidangui"
+  }
+},
+{
+  "type": "node",
+  "id": 1946795899,
+  "lat": -33.2357344,
+  "lon": -70.7592174,
+  "tags": {
+    "barrier": "toll_booth",
+    "charge": "200CLP motorcycle;700CLP motocar;1400CLP hgv",
+    "check_date": "2024-04-25",
+    "fee": "yes",
+    "name": "Peaje Lampa"
+  }
+},
+{
+  "type": "node",
+  "id": 1946795918,
+  "lat": -33.2355669,
+  "lon": -70.7586049,
+  "tags": {
+    "barrier": "toll_booth",
+    "charge": "200CLP motorcycle;700CLP motocar;1400CLP hgv",
+    "check_date": "2024-04-25",
+    "fee": "yes",
+    "name": "Peaje Lampa"
+  }
+},
+{
+  "type": "node",
+  "id": 4249905414,
+  "lat": -33.9078062,
+  "lon": -70.7314403,
+  "tags": {
+    "barrier": "toll_booth",
+    "name": "Peaje Angostura"
+  }
+},
+{
+  "type": "node",
+  "id": 4503134946,
+  "lat": -33.9074017,
+  "lon": -70.7309078,
+  "tags": {
+    "barrier": "toll_booth",
+    "name": "Peaje Angostura"
+  }
+},
+{
+  "type": "node",
+  "id": 5008518142,
+  "lat": -33.9076152,
+  "lon": -70.7312672,
+  "tags": {
+    "highway": "toll_gantry",
+    "name": "Peaje Angostura"
+  }
+},
+{
+  "type": "node",
+  "id": 5008518144,
+  "lat": -33.9075996,
+  "lon": -70.7310618,
+  "tags": {
+    "highway": "toll_gantry",
+    "name": "Peaje Angostura"
+  }
+},
+{
+  "type": "node",
+  "id": 5508725661,
+  "lat": -33.4573556,
+  "lon": -70.8983566,
+  "tags": {
+    "barrier": "toll_booth",
+    "name": "Peaje Troncal Lo Prado"
+  }
+},
+{
+  "type": "node",
+  "id": 6223443638,
+  "lat": -33.2355983,
+  "lon": -70.7590362,
+  "tags": {
+    "charge": "200CLP motorcycle;700CLP motocar;1400CLP hgv",
+    "check_date": "2024-04-25",
+    "highway": "toll_gantry",
+    "name": "Peaje Lampa",
+    "operator": "Sociedad Concesionaria Nueva Aconcagua S.A."
+  }
+},
+{
+  "type": "node",
+  "id": 6277890252,
+  "lat": -33.2356286,
+  "lon": -70.7588357,
+  "tags": {
+    "charge": "200CLP motorcycle;700CLP motocar;1400CLP hgv",
+    "check_date": "2024-04-25",
+    "highway": "toll_gantry",
+    "name": "Peaje Lampa",
+    "operator": "Sociedad Concesionaria Nueva Aconcagua S.A."
+  }
+},
+{
+  "type": "node",
+  "id": 6613063427,
+  "lat": -33.3715517,
+  "lon": -71.3000625,
+  "tags": {
+    "barrier": "toll_booth",
+    "fee": "2300",
+    "name": "Peaje Zapata Rutas del Pacífico",
+    "phone": "+5626800002"
+  }
+},
+{
+  "type": "node",
+  "id": 6613063432,
+  "lat": -33.3706472,
+  "lon": -71.2994676,
+  "tags": {
+    "barrier": "toll_booth",
+    "fee": "2300",
+    "name": "Peaje Zapata Rutas del Pacífico",
+    "phone": "+5626800002"
+  }
+},
+{
+  "type": "node",
+  "id": 9008699779,
+  "lat": -33.6693012,
+  "lon": -71.1507237,
+  "tags": {
+    "highway": "toll_gantry",
+    "name": "Pomaire",
+    "ref": "T8"
+  }
+},
+{
+  "type": "node",
+  "id": 9645902676,
+  "lat": -33.3099829,
+  "lon": -70.7018568,
+  "tags": {
+    "highway": "toll_gantry",
+    "name": "Peaje Las Canteras"
+  }
+},
+{
+  "type": "node",
+  "id": 9645902677,
+  "lat": -33.3100020,
+  "lon": -70.7017482,
+  "tags": {
+    "highway": "toll_gantry",
+    "name": "Peaje Las Canteras"
+  }
+},
+{
+  "type": "node",
+  "id": 12511401284,
+  "lat": -33.6694249,
+  "lon": -71.1507469,
+  "tags": {
+    "highway": "toll_gantry",
+    "name": "Pomaire",
+    "ref": "T8"
+  }
+},
+{
+  "type": "node",
+  "id": 12511410970,
+  "lat": -33.6474761,
+  "lon": -71.3601781,
+  "tags": {
+    "highway": "toll_gantry",
+    "name": "Puangue",
+    "ref": "T10"
+  }
+},
+{
+  "type": "node",
+  "id": 12511410971,
+  "lat": -33.6475460,
+  "lon": -71.3602912,
+  "tags": {
+    "highway": "toll_gantry",
+    "name": "Puangue",
+    "ref": "T10"
+  }
+}
+
+  ]
+}

@@ -123,10 +123,79 @@ class RutaAdminPantalla extends ConsumerWidget {
             : VistaRuta(
                 ruta: async.value!,
                 encabezado: Column(children: [
+                  _ChoferRuta(ruta: async.value!),
                   _CostosRuta(ruta: async.value!),
                   if (async.value!.detalle != null) _ComparacionOptimizacion(detalle: async.value!.detalle!),
                 ]),
               ),
+      ),
+    );
+  }
+}
+
+/// Chofer asignado a la ruta, con opción de asignarlo o cambiarlo después
+/// de creada (p. ej. rutas calculadas "sin chofer").
+class _ChoferRuta extends ConsumerWidget {
+  final RutaAdmin ruta;
+
+  const _ChoferRuta({required this.ruta});
+
+  Future<void> _elegir(BuildContext context, WidgetRef ref) async {
+    final choferes = await ref.read(choferesProvider.future);
+    if (!context.mounted) return;
+    final elegido = await showDialog<({String? id})>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(ruta.choferId == null ? 'Asignar chofer' : 'Cambiar chofer'),
+        children: [
+          for (final c in choferes)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, (id: c.id)),
+              child: Row(children: [
+                Icon(c.id == ruta.choferId ? Icons.radio_button_checked : Icons.radio_button_unchecked, size: 20),
+                const SizedBox(width: 12),
+                Expanded(child: Text(c.nombreVisible)),
+              ]),
+            ),
+          if (choferes.isEmpty)
+            const Padding(padding: EdgeInsets.all(16), child: Text('No hay usuarios con rol Chofer.')),
+          if (ruta.choferId != null)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, (id: null)),
+              child: const Row(children: [
+                Icon(Icons.person_off_outlined, size: 20),
+                SizedBox(width: 12),
+                Text('Dejar sin chofer'),
+              ]),
+            ),
+        ],
+      ),
+    );
+    if (elegido == null || elegido.id == ruta.choferId) return;
+    try {
+      await ref.read(rutasRepositorioProvider).asignarChofer(ruta.id, elegido.id);
+      ref.invalidate(rutaAdminProvider(ruta.id));
+      ref.invalidate(rutasAdminProvider);
+      if (context.mounted) {
+        mostrarMensaje(context, elegido.id == null ? 'Ruta sin chofer asignado.' : 'Chofer asignado.');
+      }
+    } catch (e) {
+      if (context.mounted) mostrarMensaje(context, mensajeError(e));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sinChofer = ruta.choferId == null;
+    return Card(
+      child: ListTile(
+        leading: Icon(sinChofer ? Icons.person_off_outlined : Icons.person,
+            color: sinChofer ? Theme.of(context).colorScheme.error : null),
+        title: Text(ruta.choferNombre ?? 'Sin chofer asignado'),
+        subtitle: Text(sinChofer ? 'El Chofer no verá esta ruta hasta asignarla.' : 'Chofer de la ruta'),
+        trailing: sinChofer
+            ? FilledButton.tonal(onPressed: () => _elegir(context, ref), child: const Text('Asignar'))
+            : TextButton(onPressed: () => _elegir(context, ref), child: const Text('Cambiar')),
       ),
     );
   }

@@ -276,7 +276,11 @@ ok((await db.query(`select count(*)::int n from storage.buckets where id = 'prod
 
 // --- Pórticos TAG ---
 const nPort = (await db.query(`select count(*)::int n, count(distinct concesion)::int c from portico`)).rows[0];
-ok(nPort.n === 114 && nPort.c === 8, `pórticos TAG cargados (${nPort.n} de ${nPort.c} concesiones)`);
+ok(nPort.n === 161 && nPort.c === 13, `pórticos TAG cargados (${nPort.n} de ${nPort.c} concesiones: 114 urbanos + 47 interurbanos)`);
+const ang = (await db.query(`select tarifas, rumbo from portico where codigo = 'Angostura'`)).rows;
+ok(ang.length === 2 && ang[0].tarifas["1"].tbfp === 3800, "Angostura: un punto por sentido, $3.800 categoría 1");
+const chac = (await db.query(`select rumbo from portico where codigo = 'Chacabuco'`)).rows;
+ok(chac.length === 1 && chac[0].rumbo === null, "Chacabuco cobra en ambos sentidos (rumbo null)");
 const pa13 = (await db.query(`select tarifas from portico where codigo = 'PA13'`)).rows[0];
 ok(Number(pa13.tarifas["1"].ts) === 545.6, "tarifa TS de PA13 (MOP 2026) cargada");
 ok((await como(C1, `select * from portico`)).rows.length === 0, "el Chofer no lee la tabla de pórticos (tarifas)");

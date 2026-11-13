@@ -55,6 +55,12 @@ class RutasRepositorio {
     );
   }
 
+  /// Asigna (o quita, con null) el Chofer de una ruta ya creada. La vista
+  /// v_ruta_chofer filtra por ruta.chofer_id, así que el cambio basta para
+  /// que la ruta aparezca en "Mi jornada" del Chofer.
+  Future<void> asignarChofer(String rutaId, String? choferId) =>
+      supabase.from('ruta').update({'chofer_id': choferId}).eq('id', rutaId);
+
   Future<void> eliminar(String id) => supabase.from('ruta').delete().eq('id', id);
 
   // --- Chofer (vista sin costos ni ahorro) ---------------------------------

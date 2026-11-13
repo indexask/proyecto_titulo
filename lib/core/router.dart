@@ -79,7 +79,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/chofer/despachos/:id',
         builder: (c, s) => DespachoChoferPantalla(despachoId: s.pathParameters['id']!),
       ),
-      GoRoute(path: '/chofer/rutas', builder: (c, s) => const RutasChoferPantalla()),
       GoRoute(
         path: '/chofer/rutas/:id',
         builder: (c, s) => RutaChoferPantalla(rutaId: s.pathParameters['id']!),

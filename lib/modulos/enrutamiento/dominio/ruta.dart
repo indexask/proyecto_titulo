@@ -53,6 +53,26 @@ class Ruta {
   /// Primera parada aún no entregada (la próxima a visitar).
   ParadaRuta? get proximaParada =>
       paradas.where((p) => p.estado != EstadoDespacho.entregado).firstOrNull;
+
+  int get entregadas => paradas.where((p) => p.estado == EstadoDespacho.entregado).length;
+
+  /// Avance de la ruta según sus paradas.
+  EstadoRuta get estado {
+    if (paradas.isNotEmpty && entregadas == paradas.length) return EstadoRuta.completada;
+    if (paradas.any((p) => p.estado != EstadoDespacho.pendiente)) return EstadoRuta.enCurso;
+    return EstadoRuta.porIniciar;
+  }
+}
+
+/// Estado de una ruta, derivado del estado de sus despachos (RF-14).
+enum EstadoRuta {
+  porIniciar('Por iniciar'),
+  enCurso('En curso'),
+  completada('Completada');
+
+  final String etiqueta;
+
+  const EstadoRuta(this.etiqueta);
 }
 
 /// Tiempo, km, TAG y combustible de una alternativa de recorrido.

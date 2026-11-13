@@ -59,4 +59,20 @@ void main() {
       'dir_action': 'navigate',
     });
   });
+
+  test('estado de la ruta según sus paradas: por iniciar, en curso, completada', () {
+    Ruta con(List<EstadoDespacho> estados) => Ruta(
+          id: 'r',
+          fecha: DateTime(2026, 11, 12),
+          origenDireccion: 'Bodega',
+          origenLat: -33.5,
+          origenLng: -70.7,
+          paradas: [for (final (i, e) in estados.indexed) parada(i, e)],
+        );
+    expect(con([EstadoDespacho.pendiente, EstadoDespacho.pendiente]).estado, EstadoRuta.porIniciar);
+    expect(con([EstadoDespacho.enRuta, EstadoDespacho.pendiente]).estado, EstadoRuta.enCurso);
+    expect(con([EstadoDespacho.entregado, EstadoDespacho.enRuta]).estado, EstadoRuta.enCurso);
+    expect(con([EstadoDespacho.entregado, EstadoDespacho.entregado]).estado, EstadoRuta.completada);
+    expect(con([EstadoDespacho.entregado, EstadoDespacho.enRuta]).entregadas, 1);
+  });
 }

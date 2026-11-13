@@ -10,52 +10,92 @@ import '../../logistico_notificaciones/presentacion/logistico_providers.dart';
 import '../datos/navegacion_repositorio.dart';
 import '../dominio/ruta.dart';
 import 'enrutamiento_providers.dart';
+import 'iconos_mapa.dart';
 import 'vista_ruta.dart';
 
-/// Rutas asignadas al Chofer (RF-23). Sin costos ni ahorro (RF-03).
-class RutasChoferPantalla extends ConsumerWidget {
-  const RutasChoferPantalla({super.key});
+/// Tarjeta de una ruta del Chofer para su pantalla de inicio: estado,
+/// avance, paradas en orden y acceso al mapa (RF-13, RF-23). Sin costos (RF-03).
+class TarjetaRutaChofer extends StatelessWidget {
+  final Ruta ruta;
+
+  const TarjetaRutaChofer({super.key, required this.ruta});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(rutasChoferProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Mis rutas')),
-      body: RefreshIndicator(
-        onRefresh: () => ref.refresh(rutasChoferProvider.future),
-        child: VistaAsync(
-          cargando: async.isLoading,
-          error: async.error,
-          onReintentar: () => ref.invalidate(rutasChoferProvider),
-          child: Builder(builder: (context) {
-            final rutas = async.value ?? const <Ruta>[];
-            if (rutas.isEmpty) {
-              return ListView(children: const [
-                SizedBox(height: 120),
-                Center(child: Text('No tienes rutas asignadas.')),
-              ]);
-            }
-            final hoyIso = fechaIso(hoy());
-            return ListView.separated(
-              padding: const EdgeInsets.all(12),
-              itemCount: rutas.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, i) {
-                final r = rutas[i];
-                final esHoy = fechaIso(r.fecha) == hoyIso;
-                return Card(
-                  child: ListTile(
-                    leading: Icon(Icons.route, color: esHoy ? Theme.of(context).colorScheme.primary : null),
-                    title: Text('${esHoy ? 'Hoy · ' : ''}${formatoFecha(r.fecha)}'),
-                    subtitle: Text('${r.paradas.length} paradas · '
-                        '${r.distanciaKm ?? '—'} km · ${r.duracionMin ?? '—'} min'),
-                    onTap: () => context.push('/chofer/rutas/${r.id}'),
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final esHoy = fechaIso(ruta.fecha) == fechaIso(hoy());
+    final estado = ruta.estado;
+    final (colorEstado, iconoEstado) = switch (estado) {
+      EstadoRuta.porIniciar => (tema.colorScheme.outline, Icons.schedule),
+      EstadoRuta.enCurso => (Colors.orange.shade800, Icons.local_shipping),
+      EstadoRuta.completada => (Colors.green.shade700, Icons.check_circle),
+    };
+    final total = ruta.paradas.length;
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListTile(
+            leading: Icon(Icons.route, color: esHoy ? tema.colorScheme.primary : null),
+            title: Text('${esHoy ? 'Hoy · ' : ''}${formatoFecha(ruta.fecha)}',
+                style: tema.textTheme.titleMedium),
+            subtitle: Text('${ruta.distanciaKm ?? '—'} km · ${ruta.duracionMin ?? '—'} min'
+                '${ruta.usaPeajes ? ' · usa TAG' : ''}'),
+            trailing: Chip(
+              avatar: Icon(iconoEstado, color: colorEstado, size: 18),
+              label: Text(estado.etiqueta),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(children: [
+              Expanded(
+                child: LinearProgressIndicator(
+                  value: total == 0 ? 0 : ruta.entregadas / total,
+                  color: colorEstado,
+                  minHeight: 6,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text('${ruta.entregadas} de $total entregadas', style: tema.textTheme.bodySmall),
+            ]),
+          ),
+          const SizedBox(height: 4),
+          for (final p in ruta.paradas)
+            ListTile(
+              dense: true,
+              visualDensity: VisualDensity.compact,
+              selected: estado == EstadoRuta.enCurso && p.despachoId == ruta.proximaParada?.despachoId,
+              leading: CircleAvatar(
+                radius: 14,
+                backgroundColor: IconosMapa.colorEstado(p.estado),
+                foregroundColor: Colors.white,
+                child: Text('${p.orden + 1}', style: const TextStyle(fontSize: 12)),
+              ),
+              title: Text(p.cliente),
+              subtitle: Text(p.direccion, maxLines: 1, overflow: TextOverflow.ellipsis),
+              trailing: Text(p.estado.etiqueta, style: tema.textTheme.bodySmall),
+              onTap: () => context.push('/chofer/despachos/${p.despachoId}'),
+            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: estado == EstadoRuta.completada
+                ? OutlinedButton.icon(
+                    onPressed: () => context.push('/chofer/rutas/${ruta.id}'),
+                    icon: const Icon(Icons.map_outlined),
+                    label: const Text('Ver ruta'),
+                  )
+                : FilledButton.icon(
+                    onPressed: () => context.push('/chofer/rutas/${ruta.id}'),
+                    icon: Icon(estado == EstadoRuta.porIniciar ? Icons.play_arrow : Icons.navigation),
+                    label: Text(estado == EstadoRuta.porIniciar ? 'Abrir ruta e iniciar' : 'Continuar ruta'),
                   ),
-                );
-              },
-            );
-          }),
-        ),
+          ),
+        ],
       ),
     );
   }

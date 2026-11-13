@@ -4,20 +4,31 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/vista_async.dart';
 import '../../administracion_seguridad/presentacion/cerrar_sesion.dart';
+import '../../enrutamiento/dominio/ruta.dart';
+import '../../enrutamiento/presentacion/enrutamiento_providers.dart';
+import '../../enrutamiento/presentacion/rutas_chofer_pantalla.dart';
 import '../datos/despachos_chofer_repositorio.dart';
+import '../dominio/despacho_chofer.dart';
 import '../dominio/estado_despacho.dart';
 import 'logistico_providers.dart';
 import 'widgets_despacho.dart';
 
-/// Inicio del Chofer (app móvil): inventario de despachos a cargar y datos
-/// del cliente (RF-13). Sin información financiera (RF-03).
+/// Inicio del Chofer, "Mi jornada" (RF-13, RF-23): sus despachos organizados
+/// por ruta, en el orden de visita, con el avance de cada una. Sin información
+/// financiera (RF-03). Funciona sin conexión con los datos guardados (RF-15).
 class ChoferInicioPantalla extends ConsumerWidget {
   const ChoferInicioPantalla({super.key});
 
+  Future<void> _recargar(WidgetRef ref) async {
+    await ref.read(despachosChoferProvider.notifier).recargar();
+    ref.invalidate(rutasChoferProvider);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(despachosChoferProvider);
-    final resultado = async.value;
+    final despachosAsync = ref.watch(despachosChoferProvider);
+    final rutasAsync = ref.watch(rutasChoferProvider);
+    final resultado = despachosAsync.value;
 
     ref.listen(despachosChoferProvider, (_, siguiente) {
       for (final rechazo in siguiente.value?.rechazos ?? const <String>[]) {
@@ -25,15 +36,14 @@ class ChoferInicioPantalla extends ConsumerWidget {
       }
     });
 
+    final cargando = (despachosAsync.isLoading && !despachosAsync.hasValue) ||
+        (rutasAsync.isLoading && !rutasAsync.hasValue);
+    final error = despachosAsync.hasValue ? (rutasAsync.hasValue ? null : rutasAsync.error) : despachosAsync.error;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis despachos'),
+        title: const Text('Mi jornada'),
         actions: [
-          IconButton(
-            tooltip: 'Mis rutas',
-            icon: const Icon(Icons.map),
-            onPressed: () => context.push('/chofer/rutas'),
-          ),
           IconButton(
             tooltip: 'Alertas',
             icon: const Icon(Icons.notifications),
@@ -47,17 +57,109 @@ class ChoferInicioPantalla extends ConsumerWidget {
           if (resultado != null) _BannerSincronizacion(resultado: resultado),
           Expanded(
             child: RefreshIndicator(
-              onRefresh: () => ref.read(despachosChoferProvider.notifier).recargar(),
+              onRefresh: () => _recargar(ref),
               child: VistaAsync(
-                cargando: async.isLoading && !async.hasValue,
-                error: async.hasValue ? null : async.error,
-                onReintentar: () => ref.invalidate(despachosChoferProvider),
-                child: _ListaDespachos(resultado: resultado),
+                cargando: cargando,
+                error: error,
+                onReintentar: () => _recargar(ref),
+                child: _Jornada(
+                  rutas: rutasAsync.value ?? const [],
+                  despachos: resultado?.despachos ?? const [],
+                ),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _Jornada extends StatelessWidget {
+  final List<Ruta> rutas;
+  final List<DespachoChofer> despachos;
+
+  const _Jornada({required this.rutas, required this.despachos});
+
+  @override
+  Widget build(BuildContext context) {
+    // Rutas activas: la más próxima primero (hoy antes que mañana).
+    final activas = rutas.where((r) => r.estado != EstadoRuta.completada).toList()
+      ..sort((a, b) => a.fecha.compareTo(b.fecha));
+    // Historial: la más reciente primero.
+    final completadas = rutas.where((r) => r.estado == EstadoRuta.completada).toList()
+      ..sort((a, b) => b.fecha.compareTo(a.fecha));
+
+    // Despachos aún no incluidos en ninguna ruta (lo que viene).
+    final enRutas = {for (final r in rutas) for (final p in r.paradas) p.despachoId};
+    final sinRuta = despachos
+        .where((d) => !enRutas.contains(d.despachoId) && d.estado != EstadoDespacho.entregado)
+        .toList()
+      ..sort((a, b) => a.fechaComprometida.compareTo(b.fechaComprometida));
+
+    final tema = Theme.of(context);
+    Widget titulo(String texto, {String? detalle}) => Padding(
+          padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
+          child: Row(children: [
+            Text(texto, style: tema.textTheme.titleMedium),
+            if (detalle != null) ...[
+              const SizedBox(width: 8),
+              Text(detalle, style: tema.textTheme.bodySmall),
+            ],
+          ]),
+        );
+
+    if (rutas.isEmpty && sinRuta.isEmpty) {
+      return ListView(children: const [
+        SizedBox(height: 120),
+        Center(child: Text('No tienes rutas ni despachos asignados.')),
+      ]);
+    }
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+      children: [
+        titulo('Rutas', detalle: activas.isEmpty ? 'sin rutas pendientes' : null),
+        for (final r in activas) ...[
+          TarjetaRutaChofer(ruta: r),
+          const SizedBox(height: 8),
+        ],
+        if (sinRuta.isNotEmpty) ...[
+          titulo('Despachos sin ruta asignada', detalle: '${sinRuta.length}'),
+          for (final d in sinRuta)
+            Card(
+              child: ListTile(
+                title: Text(d.cliente),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(d.direccionEntrega),
+                    TextoPlazo(fechaComprometida: d.fechaComprometida),
+                    Text('Bultos: ${d.cantidadBultos ?? 'por registrar'}'),
+                  ],
+                ),
+                isThreeLine: true,
+                trailing: ChipEstado(d.estado),
+                onTap: () => context.push('/chofer/despachos/${d.despachoId}'),
+              ),
+            ),
+        ],
+        if (completadas.isNotEmpty)
+          Card(
+            margin: const EdgeInsets.only(top: 16),
+            child: ExpansionTile(
+              leading: const Icon(Icons.history),
+              title: Text('Rutas completadas (${completadas.length})'),
+              childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              children: [
+                for (final r in completadas) ...[
+                  TarjetaRutaChofer(ruta: r),
+                  const SizedBox(height: 8),
+                ],
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
@@ -87,65 +189,6 @@ class _BannerSincronizacion extends ConsumerWidget {
           child: const Text('Reintentar'),
         ),
       ),
-    );
-  }
-}
-
-class _ListaDespachos extends StatelessWidget {
-  final ResultadoDespachos? resultado;
-
-  const _ListaDespachos({required this.resultado});
-
-  @override
-  Widget build(BuildContext context) {
-    final despachos = [...?resultado?.despachos]..sort((a, b) {
-        final entregadoA = a.estado == EstadoDespacho.entregado ? 1 : 0;
-        final entregadoB = b.estado == EstadoDespacho.entregado ? 1 : 0;
-        return entregadoA != entregadoB
-            ? entregadoA - entregadoB
-            : a.fechaComprometida.compareTo(b.fechaComprometida);
-      });
-
-    if (despachos.isEmpty) {
-      return ListView(children: const [
-        SizedBox(height: 120),
-        Center(child: Text('No tienes despachos asignados.')),
-      ]);
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(12),
-      itemCount: despachos.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 8),
-      itemBuilder: (context, i) {
-        final d = despachos[i];
-        return Card(
-          child: ListTile(
-            title: Text(d.cliente),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(d.direccionEntrega),
-                TextoPlazo(
-                    fechaComprometida: d.fechaComprometida,
-                    entregado: d.estado == EstadoDespacho.entregado),
-                Text('Bultos: ${d.cantidadBultos ?? 'por registrar'}'),
-              ],
-            ),
-            isThreeLine: true,
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                ChipEstado(d.estado),
-                if (d.pendienteDeSincronizar)
-                  const Icon(Icons.cloud_upload, size: 16, semanticLabel: 'Por sincronizar'),
-              ],
-            ),
-            onTap: () => context.push('/chofer/despachos/${d.despachoId}'),
-          ),
-        );
-      },
     );
   }
 }

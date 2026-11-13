@@ -108,7 +108,7 @@ dominio no depende de Flutter ni de Supabase, así que se puede probar de forma 
 | RF-10 | `orden_compra.responsable_id` |
 | RF-11 | `ProductosLista` (CRUD del catálogo) |
 | RF-12 | `despacho.cantidad_bultos`, registrado desde el detalle de la orden |
-| RF-13 | `ChoferInicioPantalla` y `DespachoChoferPantalla` (bultos, productos, cliente y dirección) |
+| RF-13 | Inicio del Chofer **"Mi jornada"** (`ChoferInicioPantalla`): despachos **organizados por ruta** (activas primero, con estado Por iniciar/En curso/Completada, avance "N de M entregadas" y paradas en orden de visita), luego **despachos sin ruta asignada** y al final el historial de rutas completadas. `DespachoChoferPantalla`: bultos, productos, cliente y dirección |
 | RF-14 | `EstadoDespacho` (Dart) + trigger `despacho_validar_transicion` (BD): solo se avanza de a un paso |
 | RF-15 | `DespachosChoferRepositorio`: copia local + cola de cambios, sincronización automática al reconectar. RPC `cambiar_estado_despacho` idempotente |
 | RF-16 | `despacho.fecha_hora_entrega` y `orden_compra.fecha_hora_entrega`, con la **hora real** del cambio aunque se sincronice después |
@@ -180,7 +180,7 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 
 | Qué | Cómo | Resultado |
 |---|---|---|
-| Reglas de dominio (margen, estados, formatos, polilínea, días hábiles, importación) y lógica offline | `flutter test` | 23 pruebas OK |
+| Reglas de dominio (margen, estados, formatos, polilínea, días hábiles, importación) y lógica offline | `flutter test` | 27 pruebas OK |
 | Migraciones, RLS, vistas, triggers, RPC, alertas, KPI, registro de dispositivos y disparo push, respaldo y restauración del prototipo | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 57 verificaciones OK |
 | Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones, resumen, elección entre 3 alternativas y motivo de la optimización | Incluido en `npm test` | 24 pruebas OK |
 

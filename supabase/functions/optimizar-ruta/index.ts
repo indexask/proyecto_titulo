@@ -234,6 +234,12 @@ servir(async (req) => {
  */
 async function calcularMatriz(apiKey: string, puntos: Punto[], evitarPeajes: boolean): Promise<MatrizCostos> {
   const waypoint = (p: Punto) => ({ waypoint: { location: { latLng: { latitude: p.lat, longitude: p.lng } } } });
+  // En Route Matrix las opciones de ruta (evitar TAG, vehículo) van en cada
+  // origen (RouteMatrixOrigin.routeModifiers), no en la raíz como en Routes.
+  const origen = (p: Punto) => ({
+    ...waypoint(p),
+    routeModifiers: { avoidTolls: evitarPeajes, vehicleInfo: { emissionType: "DIESEL" } },
+  });
   const res = await fetch("https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix", {
     method: "POST",
     headers: {
@@ -242,11 +248,10 @@ async function calcularMatriz(apiKey: string, puntos: Punto[], evitarPeajes: boo
       "X-Goog-FieldMask": "originIndex,destinationIndex,distanceMeters,duration,condition,travelAdvisory.tollInfo",
     },
     body: JSON.stringify({
-      origins: puntos.map(waypoint),
+      origins: puntos.map(origen),
       destinations: puntos.map(waypoint),
       travelMode: "DRIVE",
       routingPreference: "TRAFFIC_UNAWARE",
-      routeModifiers: { avoidTolls: evitarPeajes, vehicleInfo: { emissionType: "DIESEL" } },
       extraComputations: ["TOLLS"],
       languageCode: "es-CL",
       units: "METRIC",

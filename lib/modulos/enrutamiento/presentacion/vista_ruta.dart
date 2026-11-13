@@ -94,18 +94,11 @@ class _VistaRutaState extends State<VistaRuta> {
     _refresco = Timer(const Duration(milliseconds: 350), _refrescarMapa);
   }
 
-  /// Reaplica la cámara y la desplaza un píxel ida y vuelta: obliga a Google
+  /// Reaplica la cámara (centro/zoom explícito + encuadre): obliga a Google
   /// Maps a redibujar con el tamaño actual.
   Future<void> _refrescarMapa() async {
-    final mapa = _mapa;
-    if (!mounted || mapa == null) return;
+    if (!mounted || _mapa == null) return;
     await _aplicarCamara();
-    try {
-      await mapa.moveCamera(CameraUpdate.scrollBy(1, 0));
-      await mapa.moveCamera(CameraUpdate.scrollBy(-1, 0));
-    } catch (_) {
-      // Mapa sin tamaño todavía; el próximo cambio lo vuelve a intentar.
-    }
   }
 
   @override
@@ -182,16 +175,30 @@ class _VistaRutaState extends State<VistaRuta> {
         destino = CameraUpdate.newLatLngBounds(_limites([_origen, ..._puntosParadas, ..._trazado, ?yo]), 48);
     }
     if (destino == null) return;
+
+    // Encuadrar límites con el mapa aún sin tamaño deja la cámara en un
+    // estado inválido (en web el mapa queda gris sin pedir imágenes). Se
+    // espera a tener tamaño y antes se fija un centro/zoom explícito válido.
+    final tamano = _tamanoMapa;
+    if (tamano == null || tamano.width < 50 || tamano.height < 50) return;
     try {
+      await mapa.moveCamera(CameraUpdate.newLatLngZoom(_centroDeReferencia(), 12));
       animar ? await mapa.animateCamera(destino) : await mapa.moveCamera(destino);
     } catch (_) {
-      // El mapa aún no tiene tamaño; el siguiente intento lo corrige.
+      // El siguiente refresco lo vuelve a intentar.
     }
   }
 
-  /// Al crear el mapa: en web, Google Maps a veces queda gris hasta que la
-  /// cámara se mueve, así que se aplica la cámara varias veces y se hace un
-  /// pequeño desplazamiento final para forzar el dibujo.
+  /// Un punto válido para fijar la cámara: el tramo actual o la bodega.
+  LatLng _centroDeReferencia() {
+    final proxima = ruta.proximaParada;
+    if (_modo != ModoCamara.rutaCompleta && _yo != null) return _yo!;
+    if (proxima?.lat != null && proxima?.lng != null) return LatLng(proxima!.lat!, proxima.lng!);
+    return _origen;
+  }
+
+  /// Al crear el mapa se aplica la cámara varias veces mientras termina de
+  /// tomar su tamaño (en web, a veces tarda).
   Future<void> _alCrearMapa(GoogleMapController mapa) async {
     _mapa = mapa;
     for (final espera in const [300, 900, 2000]) {

@@ -25,6 +25,11 @@ export interface ImagenPdf {
   alto: number;
   filtro: string; // "/DCTDecode" = JPEG
   bytes: Uint8Array;
+  /** Borde superior donde se dibuja en la página (coordenada PDF), si se pudo leer. */
+  arriba?: number;
+  izquierda?: number;
+  /** Orden en la lista de recursos de la página (respaldo si no hay posición). */
+  ordenRecurso?: number;
 }
 
 export interface LineaCotizacion {
@@ -190,13 +195,25 @@ export function leerCotizacion(items: ItemTexto[]): DatosCotizacion {
 }
 
 /**
- * Foto del producto: la imagen JPEG más grande fuera de la primera página
- * (la primera tiene el encabezado y el timbre). Si el PDF tiene una sola
- * página, no se elige ninguna para no confundir el timbre con el producto.
+ * Fotos de los productos, en el mismo orden que la tabla de la cotización:
+ * las imágenes JPEG de las páginas de "Detalles" (desde la página 2; la
+ * primera tiene el encabezado y el timbre), de arriba hacia abajo y de
+ * izquierda a derecha. Se descartan imágenes muy pequeñas (íconos).
  */
+export function elegirFotosProductos(imagenes: ImagenPdf[]): ImagenPdf[] {
+  return imagenes
+    .filter((i) => i.pagina > 1 && i.filtro === "/DCTDecode" && i.ancho >= 80 && i.alto >= 80)
+    .sort((a, b) =>
+      a.pagina - b.pagina ||
+      // Más arriba primero (en PDF, y mayor = más arriba). Tolerancia de 20 pt
+      // para imágenes en la misma fila.
+      (Math.abs((b.arriba ?? 0) - (a.arriba ?? 0)) > 20 ? (b.arriba ?? 0) - (a.arriba ?? 0) : 0) ||
+      (a.izquierda ?? 0) - (b.izquierda ?? 0) ||
+      (a.ordenRecurso ?? 0) - (b.ordenRecurso ?? 0)
+    );
+}
+
+/** Compatibilidad: la primera foto de producto. */
 export function elegirFotoProducto(imagenes: ImagenPdf[]): ImagenPdf | null {
-  const candidatas = imagenes
-    .filter((i) => i.pagina > 1 && i.filtro === "/DCTDecode")
-    .sort((a, b) => b.ancho * b.alto - a.ancho * a.alto);
-  return candidatas[0] ?? null;
+  return elegirFotosProductos(imagenes)[0] ?? null;
 }

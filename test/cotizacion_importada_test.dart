@@ -44,4 +44,22 @@ void main() {
     expect(normalizarNombre('  Aspiradora  INDUSTRIAL Polvo/Agua '), normalizarNombre('aspiradora industrial polvo/agua'));
     expect(normalizarNombre('Cámara Ñandú'), 'camara nandu');
   });
+
+  test('varias fotos: una por producto en el orden de la tabla', () {
+    final c = CotizacionImportada.fromMap({
+      'lineas': [
+        {'descripcion': 'Mesa plegable', 'unidades': 20, 'precioUnidad': 36542, 'total': 730840},
+        {'descripcion': 'Silla plegable', 'unidades': 200, 'precioUnidad': 20714, 'total': 4142800},
+      ],
+      'fotos': [
+        {'base64': 'AQI=', 'tipo': 'image/jpeg'},
+        {'base64': 'AwQ=', 'tipo': 'image/jpeg'},
+      ],
+      'advertencias': <String>[],
+    });
+    expect(c.fotos.length, 2);
+    expect(c.fotoDe(0), [1, 2]);
+    expect(c.fotoDe(1), [3, 4]);
+    expect(c.fotoDe(2), isNull);
+  });
 }

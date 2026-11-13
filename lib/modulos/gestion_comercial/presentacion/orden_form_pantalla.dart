@@ -198,8 +198,8 @@ class _FormularioState extends ConsumerState<_Formulario> {
       _lineas.addAll(o.detalles.map((d) => _LineaForm.desde(d, widget.productos)));
     } else if (c != null) {
       for (final (i, l) in c.lineas.indexed) {
-        // La cotización trae una foto: corresponde al producto principal.
-        _lineas.add(_LineaForm.importada(l, widget.productos, foto: i == 0 ? c.foto : null));
+        // Cada producto recibe su foto, en el mismo orden que la tabla.
+        _lineas.add(_LineaForm.importada(l, widget.productos, foto: c.fotoDe(i)));
       }
     }
     if (_lineas.isEmpty) _lineas.add(_LineaForm());

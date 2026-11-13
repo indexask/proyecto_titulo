@@ -35,8 +35,15 @@ class CotizacionImportada {
   final num? iva;
   final num? totalConIva;
   final ({int min, int max})? plazoDiasHabiles;
-  final Uint8List? foto;
+
+  /// Una foto por producto, en el mismo orden que [lineas].
+  final List<Uint8List> fotos;
   final List<String> advertencias;
+
+  Uint8List? get foto => fotos.isEmpty ? null : fotos.first;
+
+  /// Foto del producto en la posición [indice] de la tabla, si existe.
+  Uint8List? fotoDe(int indice) => indice < fotos.length ? fotos[indice] : null;
 
   const CotizacionImportada({
     required this.lineas,
@@ -49,12 +56,16 @@ class CotizacionImportada {
     this.iva,
     this.totalConIva,
     this.plazoDiasHabiles,
-    this.foto,
+    this.fotos = const [],
   });
 
   factory CotizacionImportada.fromMap(Map<String, dynamic> m) {
     final plazo = m['plazoDiasHabiles'] as Map<String, dynamic>?;
-    final foto = m['foto'] as Map<String, dynamic>?;
+    // `fotos` (una por producto); versiones anteriores solo enviaban `foto`.
+    final listaFotos = (m['fotos'] as List?) ?? [if (m['foto'] != null) m['foto']];
+    final fotos = [
+      for (final f in listaFotos) base64Decode((f as Map<String, dynamic>)['base64'] as String),
+    ];
     return CotizacionImportada(
       fechaCotizacion:
           m['fechaCotizacion'] == null ? null : DateTime.parse(m['fechaCotizacion'] as String),
@@ -70,7 +81,7 @@ class CotizacionImportada {
       plazoDiasHabiles: plazo == null
           ? null
           : (min: (plazo['min'] as num).toInt(), max: (plazo['max'] as num).toInt()),
-      foto: foto == null ? null : base64Decode(foto['base64'] as String),
+      fotos: fotos,
       advertencias: ((m['advertencias'] as List?) ?? const []).cast<String>(),
     );
   }

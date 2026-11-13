@@ -34,7 +34,7 @@ El Administrador presiona **"Subir cotización"** en Órdenes, elige el PDF y el
 | Dirección (del cliente, no la de GyG) | `orden_compra.direccion_entrega`; se valida sola con Places |
 | Cotización (ej. 5609-132-COT26) | `orden_compra.numero_cotizacion` (única: no se puede importar dos veces) |
 | Descripción, Unidades, Precio unidad, Total | Una línea de `detalle_orden` por producto. Si el producto existe en el catálogo se reutiliza; si no, se crea al guardar |
-| Foto del producto | `producto.foto_path` (bucket privado `productos` de Supabase Storage) |
+| Foto de cada producto | `producto.foto_path` (bucket privado `productos` de Supabase Storage). Se toman **todas** las fotos de las páginas de "Detalles", ordenadas de arriba hacia abajo según su posición en la página, y se asignan a los productos en el mismo orden de la tabla. Si la cantidad no coincide, se avisa |
 
 - **Sin IA y sin tecnologías nuevas.** La Edge Function `importar-cotizacion` lee la **plantilla propia de GyG** (etiquetas y columnas del PDF) con librerías de lectura de PDF, y extrae la foto embebida (JPEG). El PDF no sale de Supabase. Por eso no se reintroduce Gemini, que usaba el prototipo y está fuera del stack.
 - **Lo que no viene en la cotización:** el **costo de compra** (necesario para el margen, RF-07) se completa solo si el producto ya está en el catálogo; si es nuevo, el formulario lo pide. El **plazo de entrega** se propone desde el texto "N a M días hábiles" (hoy + M días hábiles) y es editable.
@@ -180,9 +180,9 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 
 | Qué | Cómo | Resultado |
 |---|---|---|
-| Reglas de dominio (margen, estados, formatos, polilínea, días hábiles, importación) y lógica offline | `flutter test` | 27 pruebas OK |
+| Reglas de dominio (margen, estados, formatos, polilínea, días hábiles, importación) y lógica offline | `flutter test` | 28 pruebas OK |
 | Migraciones, RLS, vistas, triggers, RPC, alertas, KPI, registro de dispositivos y disparo push, respaldo y restauración del prototipo | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 57 verificaciones OK |
-| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones, resumen, elección entre 3 alternativas y motivo de la optimización | Incluido en `npm test` | 24 pruebas OK |
+| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones (incluidas varias fotos por posición), resumen, elección entre 3 alternativas y motivo de la optimización | Incluido en `npm test` | 27 pruebas OK |
 
 ---
 

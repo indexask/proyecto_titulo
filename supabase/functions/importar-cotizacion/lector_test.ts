@@ -3,7 +3,8 @@
 // GyG); los datos bancarios se reemplazaron por valores ficticios.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { elegirFotoProducto, leerCotizacion, parsearMonto } from "./lector.ts";
+import { elegirFotoProducto, elegirFotosProductos, leerCotizacion, parsearMonto } from "./lector.ts";
+import { posicionesDeImagenes } from "./extraer.ts";
 import type { ItemTexto } from "./lector.ts";
 
 const p1 = (x: number, y: number, texto: string): ItemTexto => ({ texto, x, y, pagina: 1 });
@@ -105,4 +106,37 @@ test("la foto es la imagen de la página de detalles, no el timbre ni el encabez
   const foto = elegirFotoProducto([img(1, 844, 163), img(1, 521, 228), img(2, 360, 534)]);
   assert.deepEqual([foto?.pagina, foto?.ancho], [2, 360]);
   assert.equal(elegirFotoProducto([img(1, 844, 163)]), null);
+});
+
+test("varias fotos: una por producto, de arriba hacia abajo (cotización mesa + silla)", () => {
+  const img = (nombre: string, pagina: number, ancho: number, alto: number, arriba?: number, orden = 0) =>
+    ({ pagina, ancho, alto, filtro: "/DCTDecode", bytes: new TextEncoder().encode(nombre), arriba, ordenRecurso: orden });
+  const fotos = elegirFotosProductos([
+    img("encabezado", 1, 844, 163, 780, 1),
+    img("timbre", 1, 521, 228, 150, 2),
+    img("silla", 2, 350, 514, 502, 2),
+    img("mesa", 2, 909, 539, 765, 1),
+  ]);
+  assert.deepEqual(fotos.map((f) => new TextDecoder().decode(f.bytes)), ["mesa", "silla"]);
+});
+
+test("sin posición, las fotos quedan en el orden de los recursos de la página", () => {
+  const img = (nombre: string, orden: number) =>
+    ({ pagina: 2, ancho: 300, alto: 300, filtro: "/DCTDecode", bytes: new TextEncoder().encode(nombre), ordenRecurso: orden });
+  const fotos = elegirFotosProductos([img("b", 2), img("a", 1)]);
+  assert.deepEqual(fotos.map((f) => new TextDecoder().decode(f.bytes)), ["a", "b"]);
+});
+
+test("lee la posición de cada imagen desde el contenido de la página", () => {
+  const contenido = `
+    q 0.75 0 0 0.75 0 0 cm
+    BT /F1 9 Tf (Detalles (con paréntesis) y texto) Tj ET
+    q 681.75 0 0 404.25 60 616.5 cm /Image1 Do Q
+    q 262.5 0 0 385.5 60 284.25 cm /Image2 Do Q
+    Q`;
+  const pos = posicionesDeImagenes(contenido);
+  // Escala 0,75: la imagen 1 termina más arriba (y + alto) que la imagen 2.
+  assert.equal(Math.round(pos.get("/Image1")!.arriba), Math.round((616.5 + 404.25) * 0.75));
+  assert.equal(Math.round(pos.get("/Image2")!.arriba), Math.round((284.25 + 385.5) * 0.75));
+  assert.ok(pos.get("/Image1")!.arriba > pos.get("/Image2")!.arriba);
 });

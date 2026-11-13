@@ -114,6 +114,17 @@ class DetalleOptimizacion {
   final String motivo;
   final int paradasPrioritarias;
 
+  /// Motor usado ("Vecino Más Cercano + 2-opt sobre Route Matrix") y su efecto.
+  final String? algoritmo;
+  final int? mejoras2opt;
+
+  /// Mejora de 2-opt sobre el Vecino Más Cercano, en % del costo del modelo.
+  final double? mejora2optPct;
+
+  /// VRP: número de lote y total de rutas creadas en el mismo cálculo.
+  final int? lote;
+  final int? totalRutas;
+
   const DetalleOptimizacion({
     required this.sinOptimizar,
     required this.conTag,
@@ -121,6 +132,11 @@ class DetalleOptimizacion {
     required this.eleccion,
     required this.motivo,
     required this.paradasPrioritarias,
+    this.algoritmo,
+    this.mejoras2opt,
+    this.mejora2optPct,
+    this.lote,
+    this.totalRutas,
   });
 
   ResumenRecorrido get elegida => switch (eleccion) {
@@ -131,7 +147,18 @@ class DetalleOptimizacion {
 
   static DetalleOptimizacion? fromMap(Object? datos) {
     if (datos is! Map<String, dynamic>) return null;
+    final alg = datos['algoritmo'] as Map<String, dynamic>?;
+    final vrp = datos['vrp'] as Map<String, dynamic>?;
+    final costoVecino = (alg?['costoVecino'] as num?)?.toDouble();
+    final costo2opt = (alg?['costo2opt'] as num?)?.toDouble();
     return DetalleOptimizacion(
+      algoritmo: alg?['nombre'] as String?,
+      mejoras2opt: (alg?['mejoras2opt'] as num?)?.toInt(),
+      mejora2optPct: (costoVecino != null && costo2opt != null && costoVecino > 0)
+          ? (costoVecino - costo2opt) / costoVecino * 100
+          : null,
+      lote: (vrp?['lote'] as num?)?.toInt(),
+      totalRutas: (vrp?['rutas'] as num?)?.toInt(),
       sinOptimizar: ResumenRecorrido.fromMap(datos['sinOptimizar'] as Map<String, dynamic>),
       conTag: ResumenRecorrido.fromMap(datos['conTag'] as Map<String, dynamic>),
       sinTag: ResumenRecorrido.fromMap(datos['sinTag'] as Map<String, dynamic>),

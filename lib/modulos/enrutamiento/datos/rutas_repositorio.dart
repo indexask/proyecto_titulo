@@ -29,9 +29,11 @@ class RutasRepositorio {
   /// Function `optimizar-ruta` la ruta óptima (Routes API). Primero se visita
   /// lo que vence en la jornada; después se optimiza por distancia/costo.
   /// Devuelve el id y las advertencias (p. ej. plazos ya vencidos).
-  Future<({String id, List<String> advertencias})> crearOptimizada({
+  /// Con varios choferes, el servidor reparte los despachos en un lote por
+  /// chofer (VRP) y crea una ruta para cada uno. Devuelve los ids creados.
+  Future<({List<String> ids, List<String> advertencias})> crearOptimizada({
     required DateTime fecha,
-    required String? choferId,
+    required List<String> choferIds,
     required String origenDireccion,
     required double origenLat,
     required double origenLng,
@@ -39,13 +41,14 @@ class RutasRepositorio {
   }) async {
     final res = await supabase.functions.invoke('optimizar-ruta', body: {
       'fecha': fechaIso(fecha),
-      'choferId': choferId,
+      'choferIds': choferIds,
       'origen': {'direccion': origenDireccion, 'lat': origenLat, 'lng': origenLng},
       'despachoIds': despachoIds,
     });
     final data = res.data as Map<String, dynamic>;
+    final rutas = (data['rutas'] as List?) ?? [if (data['rutaId'] != null) {'rutaId': data['rutaId']}];
     return (
-      id: data['rutaId'] as String,
+      ids: [for (final r in rutas) (r as Map<String, dynamic>)['rutaId'] as String],
       advertencias: ((data['advertencias'] as List?) ?? const []).cast<String>(),
     );
   }

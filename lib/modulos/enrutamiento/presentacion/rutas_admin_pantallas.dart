@@ -229,10 +229,27 @@ class _ComparacionOptimizacion extends StatelessWidget {
         ),
         if (detalle.paradasPrioritarias > 0)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
             child: Text('${detalle.paradasPrioritarias} parada(s) vencen en la jornada y se visitan primero.',
                 style: tema.textTheme.bodySmall),
           ),
+        if (detalle.algoritmo != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            child: Text(
+              'Algoritmo: ${detalle.algoritmo}'
+              '${detalle.mejoras2opt != null ? ' · 2-opt aplicó ${detalle.mejoras2opt} mejora(s)' : ''}'
+              '${(detalle.mejora2optPct ?? 0) > 0.05 ? ' (${detalle.mejora2optPct!.toStringAsFixed(1)} % menos que solo Vecino Más Cercano)' : ''}',
+              style: tema.textTheme.bodySmall,
+            ),
+          ),
+        if ((detalle.totalRutas ?? 1) > 1)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            child: Text('Reparto VRP: ruta ${detalle.lote} de ${detalle.totalRutas} calculadas en conjunto.',
+                style: tema.textTheme.bodySmall),
+          ),
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -250,7 +267,7 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
   final _origenCtrl = TextEditingController();
   DireccionGeocodificada? _origen;
   DateTime _fecha = hoy();
-  String? _choferId;
+  final _choferes = <String>{}; // en el orden en que se eligieron
   final _seleccion = <String>{};
   bool _geocodificando = false;
   bool _guardando = false;
@@ -280,11 +297,12 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
   Future<void> _crear() async {
     if (_origen == null) return mostrarMensaje(context, 'Valida la dirección de salida');
     if (_seleccion.isEmpty) return mostrarMensaje(context, 'Selecciona al menos un despacho');
+    if (_seleccion.length > 24) return mostrarMensaje(context, 'Máximo 24 despachos por cálculo');
     setState(() => _guardando = true);
     try {
-      final creada = await ref.read(rutasRepositorioProvider).crearOptimizada(
+      final creadas = await ref.read(rutasRepositorioProvider).crearOptimizada(
             fecha: _fecha,
-            choferId: _choferId,
+            choferIds: _choferes.toList(),
             origenDireccion: _origen!.direccion,
             origenLat: _origen!.lat,
             origenLng: _origen!.lng,
@@ -292,10 +310,16 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
           );
       ref.invalidate(rutasAdminProvider);
       if (!mounted) return;
-      if (creada.advertencias.isNotEmpty) {
-        mostrarMensaje(context, 'Atención: ${creada.advertencias.join(' · ')}');
+      final avisos = [
+        if (creadas.ids.length > 1) 'Se crearon ${creadas.ids.length} rutas (una por chofer)',
+        ...creadas.advertencias,
+      ];
+      if (avisos.isNotEmpty) mostrarMensaje(context, avisos.join(' · '));
+      if (creadas.ids.length == 1) {
+        context.pushReplacement('/admin/rutas/${creadas.ids.first}');
+      } else {
+        context.pop();
       }
-      context.pushReplacement('/admin/rutas/${creada.id}');
     } catch (e) {
       if (mounted) mostrarMensaje(context, mensajeError(e));
     } finally {
@@ -337,25 +361,38 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
                 if (f != null) setState(() => _fecha = f);
               },
             ),
-            DropdownButtonFormField<String?>(
-              initialValue: _choferId,
-              decoration: const InputDecoration(labelText: 'Chofer'),
-              items: [
-                const DropdownMenuItem(value: null, child: Text('Sin asignar')),
-                for (final c in choferes) DropdownMenuItem(value: c.id, child: Text(c.nombreVisible)),
-              ],
-              onChanged: (v) => setState(() {
-                _choferId = v;
-                // Preselecciona los despachos de los que el chofer es responsable.
-                if (v != null) {
-                  _seleccion
-                    ..clear()
-                    ..addAll(candidatas
-                        .where((o) => o.responsableId == v)
-                        .map((o) => o.despacho!.id));
-                }
-              }),
+            Text('Choferes disponibles', style: Theme.of(context).textTheme.titleSmall),
+            const Text(
+              'Con más de un chofer, el sistema reparte los despachos en un lote por chofer (VRP) '
+              'y crea una ruta para cada uno.',
+              style: TextStyle(fontSize: 12),
             ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final c in choferes)
+                  FilterChip(
+                    label: Text(c.nombreVisible),
+                    selected: _choferes.contains(c.id),
+                    onSelected: (v) => setState(() {
+                      if (v) {
+                        _choferes.add(c.id);
+                        // Preselecciona los despachos de los que el chofer es responsable.
+                        _seleccion.addAll(
+                            candidatas.where((o) => o.responsableId == c.id).map((o) => o.despacho!.id));
+                      } else {
+                        _choferes.remove(c.id);
+                      }
+                    }),
+                  ),
+              ],
+            ),
+            if (_choferes.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: Text('Sin chofer: se creará una ruta sin asignar.', style: TextStyle(fontSize: 12)),
+              ),
             const SizedBox(height: 12),
             TextField(
               controller: _origenCtrl,
@@ -372,8 +409,8 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
             const Divider(height: 32),
             Text('Despachos de la jornada', style: Theme.of(context).textTheme.titleMedium),
             const Text(
-                'Ordenados por plazo. Lo que vence en la jornada se visita primero; '
-                'dentro de cada grupo el orden se optimiza automáticamente.',
+                'Ordenados por plazo. Lo que vence en la jornada se visita primero; dentro de cada '
+                'grupo el orden se optimiza con Vecino Más Cercano + 2-opt sobre distancias reales.',
                 style: TextStyle(fontSize: 12)),
             if (candidatas.isEmpty)
               const Padding(padding: EdgeInsets.all(24), child: Text('No hay despachos pendientes.')),
@@ -395,7 +432,7 @@ class _RutaFormPantallaState extends ConsumerState<RutaFormPantalla> {
               icon: _guardando
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.alt_route),
-              label: const Text('Calcular ruta óptima'),
+              label: Text(_choferes.length > 1 ? 'Calcular ${_choferes.length} rutas óptimas' : 'Calcular ruta óptima'),
             ),
           ],
         ),

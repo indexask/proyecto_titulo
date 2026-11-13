@@ -1,33 +1,36 @@
 // Edge Function: Módulo Enrutamiento (RF-21 a RF-24).
 //
-// 1. Compila las direcciones de entrega de los despachos de la jornada (RF-21).
-// 2. "Cumplir el plazo primero, optimizar después": las paradas cuyo plazo
-//    vence en la jornada (o ya venció) se visitan ANTES que el resto. Dentro de
-//    cada grupo, Google Routes API ordena las paradas para minimizar el
-//    recorrido (RF-22).
-// 3. Se calcula esa ruta priorizada permitiendo peajes (TAG) y evitándolos, y
-//    se aplica la regla de negocio: el desvío más rápido solo se acepta si
-//    cuesta menos de $500 por cada 10 minutos ahorrados.
-// 4. Línea base para el ahorro: las mismas paradas en orden de plazo, sin
-//    optimizar (como se arman hoy los repartos).
-// 5. Guarda la ruta, sus paradas y el ahorro estimado en combustible y
-//    peajes (RF-24). El Chofer solo la visualiza (RF-23).
-import {
-  clienteAdministrador,
-  googleMapsApiKey,
-  HttpError,
-  json,
-  servir,
-} from "../_shared/comun.ts";
+// 1. Compila las direcciones de los despachos de la jornada (RF-21); las que
+//    no estaban validadas se geocodifican con Places.
+// 2. Datos del mundo real: Google Route Matrix (Routes API) entrega la matriz
+//    de distancia, tiempo y peajes (TAG) por calles entre bodega y paradas,
+//    permitiendo TAG y evitándolo (RF-22).
+// 3. VRP: reparte los despachos en un lote por chofer (barrido angular desde
+//    la bodega, evaluado con el costo real). Con un chofer, un solo lote.
+// 4. Motor algorítmico: cada lote se ordena con Vecino Más Cercano + 2-opt.
+//    El plazo manda: lo que vence en la jornada se visita primero.
+//    Costo minimizado = combustible + peajes + $50 por minuto, que equivale a
+//    la regla "aceptar < $500 de costo adicional por cada 10 min ahorrados".
+// 5. Por lote se comparan 3 alternativas con el trazado real (Routes API):
+//    orden por plazo (línea base), optimizada permitiendo TAG y optimizada
+//    evitando TAG. Gana la de menor costo + $50/min.
+// 6. Se guarda una ruta por chofer con sus paradas y el ahorro estimado en
+//    combustible y peajes (RF-24). El Chofer solo la visualiza (RF-23).
+import { clienteAdministrador, googleMapsApiKey, HttpError, json, servir } from "../_shared/comun.ts";
 import { geocodificarDireccion } from "../_shared/places.ts";
 import {
+  COSTO_MAXIMO_POR_10_MIN,
   costoRecorrido,
   elegirMejor,
   explicarEleccion,
+  PRECIO_DIESEL_CLP_POR_LITRO,
+  RENDIMIENTO_KM_POR_LITRO,
   resumenRecorrido,
   separarPorPlazo,
 } from "./costos.ts";
 import type { Recorrido } from "./costos.ts";
+import { asignarLotes, ordenarLote } from "./vrp.ts";
+import type { MatrizCostos } from "./vrp.ts";
 
 interface Punto {
   lat: number;
@@ -42,29 +45,33 @@ interface Parada extends Punto {
 
 interface ResultadoRuta extends Recorrido {
   polilinea: string;
-  /** Paradas en el orden de visita. */
   secuencia: Parada[];
   usaPeajes: boolean;
 }
 
-const MAX_PARADAS = 25; // límite de puntos intermedios de Routes API
+// Route Matrix admite 625 elementos: (paradas + bodega)² ≤ 625.
+const MAX_PARADAS = 24;
 
 servir(async (req) => {
   const supabase = await clienteAdministrador(req);
 
   const body = (await req.json()) as {
     fecha?: string;
-    choferId?: string | null;
+    choferId?: string | null; // compatibilidad: un solo chofer
+    choferIds?: string[];
     origen?: Punto & { direccion: string };
     despachoIds?: string[];
   };
 
-  const { fecha, choferId, origen, despachoIds } = body;
+  const { fecha, origen, despachoIds } = body;
+  const choferIds: (string | null)[] = body.choferIds?.length
+    ? body.choferIds
+    : [body.choferId ?? null];
   if (!fecha || !origen || !despachoIds?.length) {
     throw new HttpError(400, "Faltan fecha, origen o despachos");
   }
   if (despachoIds.length > MAX_PARADAS) {
-    throw new HttpError(400, `Máximo ${MAX_PARADAS} paradas por ruta`);
+    throw new HttpError(400, `Máximo ${MAX_PARADAS} paradas por cálculo`);
   }
 
   // --- RF-21: compilar direcciones de la jornada ---------------------------
@@ -76,8 +83,6 @@ servir(async (req) => {
 
   const apiKey = googleMapsApiKey();
 
-  // Las direcciones aún sin validar se geocodifican ahora (Places) y se
-  // guardan en la orden.
   // deno-lint-ignore no-explicit-any
   for (const f of (filas ?? []) as any[]) {
     const o = f.orden_compra;
@@ -94,9 +99,7 @@ servir(async (req) => {
   // deno-lint-ignore no-explicit-any
   const paradas: Parada[] = (filas ?? []).map((f: any) => {
     const o = f.orden_compra;
-    if (f.estado === "entregado") {
-      throw new HttpError(400, `El despacho de ${o.cliente} ya fue entregado`);
-    }
+    if (f.estado === "entregado") throw new HttpError(400, `El despacho de ${o.cliente} ya fue entregado`);
     return {
       despachoId: f.id,
       lat: o.direccion_lat,
@@ -105,138 +108,176 @@ servir(async (req) => {
       cliente: o.cliente,
     };
   });
-  if (paradas.length !== despachoIds.length) {
-    throw new HttpError(404, "Algún despacho no existe");
-  }
+  if (paradas.length !== despachoIds.length) throw new HttpError(404, "Algún despacho no existe");
 
+  // Orden por plazo (línea base): primero lo que vence antes.
   paradas.sort((a, b) =>
     a.fechaComprometida.localeCompare(b.fechaComprometida) || a.cliente.localeCompare(b.cliente)
   );
+  const { urgentes, vencidas } = separarPorPlazo(paradas, fecha);
+  const esUrgente = new Set(urgentes.map((p) => p.despachoId));
 
-  // --- Plazo primero --------------------------------------------------------
-  const { urgentes, resto, vencidas } = separarPorPlazo(paradas, fecha);
-
-  // --- RF-22: Google Routes API --------------------------------------------
-  const [sinOptimizar, conPeajes, sinPeajes] = await Promise.all([
-    calcularRuta(apiKey, origen, origen, paradas, { optimizar: false, evitarPeajes: false }),
-    rutaPriorizada(apiKey, origen, urgentes, resto, false),
-    rutaPriorizada(apiKey, origen, urgentes, resto, true),
+  // --- Datos del mundo real: Route Matrix (nodo 0 = bodega) -----------------
+  const puntos: Punto[] = [origen, ...paradas];
+  const [matrizConTag, matrizSinTag] = await Promise.all([
+    calcularMatriz(apiKey, puntos, false),
+    calcularMatriz(apiKey, puntos, true),
   ]);
 
-  // Las tres alternativas respetan el plazo (lo urgente va primero). Google
-  // optimiza el orden por TIEMPO, así que la "optimizada" puede recorrer más
-  // km; por eso el orden por plazo también compite. Gana la de menor
-  // costo + $50/min (regla de $500 por cada 10 minutos ahorrados).
-  const candidatas = [
-    { clave: "sin_optimizar", etiqueta: "Orden por plazo", ...sinOptimizar },
-    { clave: "con_tag", etiqueta: "Optimizada · permite TAG", ...conPeajes },
-    { clave: "sin_tag", etiqueta: "Optimizada · evita TAG", ...sinPeajes },
-  ];
-  const elegida = elegirMejor(candidatas);
-
-  // --- RF-24: costos y ahorro ----------------------------------------------
-  const costoSinOptimizar = costoRecorrido(sinOptimizar);
-  const costoOptimizada = costoRecorrido(elegida);
-
-  // Comparación completa para el Administrador: tiempo, km, TAG y combustible
-  // de cada alternativa, y por qué se eligió la ruta final.
-  const detalleOptimizacion = {
-    sinOptimizar: resumenRecorrido(sinOptimizar),
-    conTag: resumenRecorrido(conPeajes),
-    sinTag: resumenRecorrido(sinPeajes),
-    elegida: elegida.clave,
-    motivo: explicarEleccion(candidatas, elegida),
-    paradasPrioritarias: urgentes.length,
-  };
-
-  const { data: ruta, error: errRuta } = await supabase
-    .from("ruta")
-    .insert({
-      fecha,
-      chofer_id: choferId ?? null,
-      origen_direccion: origen.direccion,
-      origen_lat: origen.lat,
-      origen_lng: origen.lng,
-      distancia_km: Math.round(elegida.distanciaMetros / 100) / 10,
-      duracion_min: Math.round(elegida.duracionSegundos / 60),
-      polilinea: elegida.polilinea,
-      usa_peajes: elegida.usaPeajes,
-      costo_ruta_sin_optimizar: costoSinOptimizar,
-      costo_ruta_optimizada: costoOptimizada,
-      detalle_optimizacion: detalleOptimizacion,
-    })
-    .select("id")
-    .single();
-  if (errRuta) throw new HttpError(500, errRuta.message);
-
-  const filasParadas = elegida.secuencia.map((p, posicion) => ({
-    ruta_id: ruta.id,
-    despacho_id: p.despachoId,
-    orden: posicion,
+  // --- VRP: un lote por chofer ------------------------------------------------
+  const paradasVrp = paradas.map((p, i) => ({
+    nodo: i + 1,
+    lat: p.lat,
+    lng: p.lng,
+    urgente: esUrgente.has(p.despachoId),
   }));
-  const { error: errParadas } = await supabase.from("ruta_parada").insert(filasParadas);
-  if (errParadas) {
-    await supabase.from("ruta").delete().eq("id", ruta.id);
-    throw new HttpError(500, errParadas.message);
+  const { lotes } = asignarLotes(matrizConTag, origen, paradasVrp, choferIds.length);
+
+  const rutasCreadas = [];
+  for (const [indiceLote, lote] of lotes.entries()) {
+    const choferId = choferIds[indiceLote] ?? null;
+    const nodosLote = lote.nodos;
+    const paradasLote = nodosLote.map((n) => paradas[n - 1]);
+    const urgentesLote = nodosLote.filter((n) => paradasVrp[n - 1].urgente);
+    const restoLote = nodosLote.filter((n) => !paradasVrp[n - 1].urgente);
+
+    // Motor: Vecino Más Cercano + 2-opt, con cada matriz (con y sin TAG).
+    const conTag = ordenarLote(matrizConTag, urgentesLote, restoLote);
+    const sinTag = ordenarLote(matrizSinTag, urgentesLote, restoLote);
+    const secuencia = (orden: number[]) => orden.map((n) => paradas[n - 1]);
+    const ordenPorPlazo = [...paradasLote].sort((a, b) =>
+      a.fechaComprometida.localeCompare(b.fechaComprometida) || a.cliente.localeCompare(b.cliente)
+    );
+
+    // Trazado real por calles de cada alternativa (orden fijo).
+    const [sinOptimizar, optConTag, optSinTag] = await Promise.all([
+      calcularRuta(apiKey, origen, ordenPorPlazo, false),
+      calcularRuta(apiKey, origen, secuencia(conTag.orden), false),
+      calcularRuta(apiKey, origen, secuencia(sinTag.orden), true),
+    ]);
+
+    const candidatas = [
+      { clave: "sin_optimizar", etiqueta: "Orden por plazo", ...sinOptimizar },
+      { clave: "con_tag", etiqueta: "Optimizada · permite TAG", ...optConTag },
+      { clave: "sin_tag", etiqueta: "Optimizada · evita TAG", ...optSinTag },
+    ];
+    const elegida = elegirMejor(candidatas);
+
+    // --- RF-24: costos y ahorro --------------------------------------------
+    const costoSinOptimizar = costoRecorrido(sinOptimizar);
+    const costoOptimizada = costoRecorrido(elegida);
+    const motor = elegida.clave === "sin_tag" ? sinTag : conTag;
+
+    const detalleOptimizacion = {
+      sinOptimizar: resumenRecorrido(sinOptimizar),
+      conTag: resumenRecorrido(optConTag),
+      sinTag: resumenRecorrido(optSinTag),
+      elegida: elegida.clave,
+      motivo: explicarEleccion(candidatas, elegida),
+      paradasPrioritarias: urgentesLote.length,
+      algoritmo: {
+        nombre: "Vecino Más Cercano + 2-opt sobre Route Matrix",
+        // Costo del modelo (combustible + peajes + $50/min) antes y después de 2-opt.
+        costoVecino: Math.round(motor.costoVecino),
+        costo2opt: Math.round(motor.costo2opt),
+        mejoras2opt: motor.mejoras2opt,
+      },
+      vrp: { choferes: choferIds.length, rutas: lotes.length, lote: indiceLote + 1 },
+    };
+
+    const { data: ruta, error: errRuta } = await supabase
+      .from("ruta")
+      .insert({
+        fecha,
+        chofer_id: choferId,
+        origen_direccion: origen.direccion,
+        origen_lat: origen.lat,
+        origen_lng: origen.lng,
+        distancia_km: Math.round(elegida.distanciaMetros / 100) / 10,
+        duracion_min: Math.round(elegida.duracionSegundos / 60),
+        polilinea: elegida.polilinea,
+        usa_peajes: elegida.usaPeajes,
+        costo_ruta_sin_optimizar: costoSinOptimizar,
+        costo_ruta_optimizada: costoOptimizada,
+        detalle_optimizacion: detalleOptimizacion,
+      })
+      .select("id")
+      .single();
+    if (errRuta) throw new HttpError(500, errRuta.message);
+
+    const { error: errParadas } = await supabase.from("ruta_parada").insert(
+      elegida.secuencia.map((p, posicion) => ({ ruta_id: ruta.id, despacho_id: p.despachoId, orden: posicion })),
+    );
+    if (errParadas) {
+      await supabase.from("ruta").delete().eq("id", ruta.id);
+      throw new HttpError(500, errParadas.message);
+    }
+
+    rutasCreadas.push({
+      rutaId: ruta.id,
+      choferId,
+      paradas: elegida.secuencia.length,
+      ahorro: costoSinOptimizar - costoOptimizada,
+    });
   }
 
   return json({
-    rutaId: ruta.id,
-    usaPeajes: elegida.usaPeajes,
-    costoSinOptimizar,
-    costoOptimizada,
-    ahorro: costoSinOptimizar - costoOptimizada,
-    paradasPrioritarias: urgentes.length,
-    advertencias: vencidas.map((p) =>
-      `${p.cliente}: el plazo venció el ${p.fechaComprometida}; se visita primero`
-    ),
+    rutaId: rutasCreadas[0]?.rutaId, // compatibilidad: una sola ruta
+    rutas: rutasCreadas,
+    advertencias: vencidas.map((p) => `${p.cliente}: el plazo venció el ${p.fechaComprometida}; se visita primero`),
   });
 });
 
 /**
- * Ruta que visita primero las paradas urgentes y después el resto, cada
- * grupo en su orden óptimo:
- *   a) urgentes: bodega → urgentes (orden óptimo) → bodega
- *   b) resto:    última urgente → resto (orden óptimo) → bodega
- *   c) recorrido final con ese orden fijo (distancia, peajes y trazado reales)
+ * Matriz de costos con Google Route Matrix. Costo de cada tramo =
+ * combustible + peajes + $50 por minuto (regla de $500 por cada 10 min).
  */
-async function rutaPriorizada(
-  apiKey: string,
-  origen: Punto,
-  urgentes: Parada[],
-  resto: Parada[],
-  evitarPeajes: boolean,
-): Promise<ResultadoRuta> {
-  if (urgentes.length === 0 || resto.length === 0) {
-    const todas = urgentes.length ? urgentes : resto;
-    return calcularRuta(apiKey, origen, origen, todas, { optimizar: true, evitarPeajes });
+async function calcularMatriz(apiKey: string, puntos: Punto[], evitarPeajes: boolean): Promise<MatrizCostos> {
+  const waypoint = (p: Punto) => ({ waypoint: { location: { latLng: { latitude: p.lat, longitude: p.lng } } } });
+  const res = await fetch("https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": "originIndex,destinationIndex,distanceMeters,duration,condition,travelAdvisory.tollInfo",
+    },
+    body: JSON.stringify({
+      origins: puntos.map(waypoint),
+      destinations: puntos.map(waypoint),
+      travelMode: "DRIVE",
+      routingPreference: "TRAFFIC_UNAWARE",
+      routeModifiers: { avoidTolls: evitarPeajes, vehicleInfo: { emissionType: "DIESEL" } },
+      extraComputations: ["TOLLS"],
+      languageCode: "es-CL",
+      units: "METRIC",
+    }),
+  });
+  if (!res.ok) throw new HttpError(502, `Route Matrix: ${await res.text()}`);
+  const elementos = await res.json();
+
+  const n = puntos.length;
+  const m: MatrizCostos = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 0 : 1e12)));
+  // deno-lint-ignore no-explicit-any
+  for (const e of elementos as any[]) {
+    const i = e.originIndex ?? 0;
+    const j = e.destinationIndex ?? 0;
+    if (i === j || (e.condition && e.condition !== "ROUTE_EXISTS")) continue;
+    const km = (e.distanceMeters ?? 0) / 1000;
+    const minutos = parseInt(String(e.duration ?? "0s").replace("s", ""), 10) / 60;
+    const peajes = (e.travelAdvisory?.tollInfo?.estimatedPrice ?? [])
+      // deno-lint-ignore no-explicit-any
+      .filter((p: any) => p.currencyCode === "CLP")
+      // deno-lint-ignore no-explicit-any
+      .reduce((s: number, p: any) => s + Number(p.units ?? 0) + (p.nanos ?? 0) / 1e9, 0);
+    m[i][j] = (km / RENDIMIENTO_KM_POR_LITRO) * PRECIO_DIESEL_CLP_POR_LITRO + peajes +
+      (COSTO_MAXIMO_POR_10_MIN / 10) * minutos;
   }
-
-  const tramoUrgente = await calcularRuta(apiKey, origen, origen, urgentes, {
-    optimizar: true,
-    evitarPeajes,
-  });
-  const ultimaUrgente = tramoUrgente.secuencia[tramoUrgente.secuencia.length - 1];
-  const tramoResto = await calcularRuta(apiKey, ultimaUrgente, origen, resto, {
-    optimizar: true,
-    evitarPeajes,
-  });
-
-  return calcularRuta(apiKey, origen, origen, [...tramoUrgente.secuencia, ...tramoResto.secuencia], {
-    optimizar: false,
-    evitarPeajes,
-  });
+  return m;
 }
 
-async function calcularRuta(
-  apiKey: string,
-  desde: Punto,
-  hasta: Punto,
-  paradas: Parada[],
-  opciones: { optimizar: boolean; evitarPeajes: boolean },
-): Promise<ResultadoRuta> {
+/** Recorrido real por calles en un orden fijo: bodega → paradas → bodega. */
+async function calcularRuta(apiKey: string, origen: Punto, paradas: Parada[], evitarPeajes: boolean): Promise<ResultadoRuta> {
   const punto = (p: Punto) => ({ location: { latLng: { latitude: p.lat, longitude: p.lng } } });
-
   const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
     method: "POST",
     headers: {
@@ -246,30 +287,23 @@ async function calcularRuta(
         "routes.distanceMeters",
         "routes.duration",
         "routes.polyline.encodedPolyline",
-        "routes.optimizedIntermediateWaypointIndex",
         "routes.travelAdvisory.tollInfo",
       ].join(","),
     },
     body: JSON.stringify({
-      origin: punto(desde),
-      destination: punto(hasta),
+      origin: punto(origen),
+      destination: punto(origen), // viaje redondo: vuelve a bodega
       intermediates: paradas.map(punto),
       travelMode: "DRIVE",
       routingPreference: "TRAFFIC_UNAWARE",
-      optimizeWaypointOrder: opciones.optimizar && paradas.length > 1,
-      routeModifiers: {
-        avoidTolls: opciones.evitarPeajes,
-        vehicleInfo: { emissionType: "DIESEL" },
-      },
+      routeModifiers: { avoidTolls: evitarPeajes, vehicleInfo: { emissionType: "DIESEL" } },
       extraComputations: ["TOLLS"],
       languageCode: "es-CL",
       units: "METRIC",
     }),
   });
-
   if (!res.ok) throw new HttpError(502, `Routes API: ${await res.text()}`);
-  const data = await res.json();
-  const r = data.routes?.[0];
+  const r = (await res.json()).routes?.[0];
   if (!r) throw new HttpError(502, "Routes API no devolvió rutas");
 
   const peajesClp = (r.travelAdvisory?.tollInfo?.estimatedPrice ?? [])
@@ -278,18 +312,12 @@ async function calcularRuta(
     // deno-lint-ignore no-explicit-any
     .reduce((s: number, m: any) => s + Number(m.units ?? 0) + (m.nanos ?? 0) / 1e9, 0);
 
-  const indices: number[] =
-    opciones.optimizar && Array.isArray(r.optimizedIntermediateWaypointIndex) &&
-      r.optimizedIntermediateWaypointIndex.length === paradas.length
-      ? r.optimizedIntermediateWaypointIndex
-      : paradas.map((_, i) => i);
-
   return {
     distanciaMetros: r.distanceMeters ?? 0,
     duracionSegundos: parseInt(String(r.duration ?? "0s").replace("s", ""), 10),
     peajesClp,
     polilinea: r.polyline?.encodedPolyline ?? "",
-    secuencia: indices.map((i) => paradas[i]),
+    secuencia: paradas,
     usaPeajes: peajesClp > 0,
   };
 }

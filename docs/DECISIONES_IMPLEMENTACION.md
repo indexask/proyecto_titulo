@@ -43,6 +43,25 @@ El Administrador presiona **"Subir cotización"** en Órdenes, elige el PDF y el
 - **[VALIDAR] para el informe:** extiende RF-05 (registro de adjudicación) y RF-11 (foto en el catálogo). Agrega los campos `numero_cotizacion`, `fecha_cotizacion` y `foto_path`.
 - Pruebas: `lector_test.ts` (fixture con las posiciones reales de la cotización 5609-132-COT26) y `cotizacion_importada_test.dart`. Se verificó de punta a punta con el PDF real: los 8 campos y la foto.
 
+
+## 0.2 Motor de optimización: VRP + Route Matrix + Vecino Más Cercano + 2-opt (solicitud del equipo, 2026-11-13)
+
+La optimización de rutas pasa de usar el optimizador interno de Google (`optimizeWaypointOrder`) a un **motor propio en tres capas**, implementado en la Edge Function `optimizar-ruta` (`vrp.ts`):
+
+1. **Estructura del negocio (VRP, Vehicle Routing Problem).** El Administrador elige los despachos de la jornada y **uno o varios choferes**. El sistema reparte los despachos en un **lote por chofer** con un **barrido angular** desde la bodega: ordena las paradas por ángulo y prueba todos los cortes del círculo en lotes contiguos de tamaño equilibrado. Se queda con la partición de **menor costo total real**. Con un chofer, es una sola ruta.
+2. **Datos del mundo real (Distance Matrix).** **Google Route Matrix**, parte de Routes API (sin tecnologías nuevas), entrega distancia, tiempo y peajes por calles entre la bodega y todas las paradas, con TAG y sin TAG. Costo de cada tramo = combustible (km ÷ 9 × $1.272) + peajes + **$50 por minuto**, que equivale a la regla de $500 por cada 10 minutos ahorrados.
+3. **Motor algorítmico.** Cada lote se ordena con **Vecino Más Cercano** (heurística constructiva) y se mejora con **2-opt** (búsqueda local que invierte tramos para eliminar cruces). **El plazo manda:** lo que vence en la jornada va primero, y 2-opt solo reordena dentro de cada grupo.
+
+Por cada lote se mantiene la comparación de 3 alternativas con el trazado real (orden por plazo, optimizada con TAG y optimizada sin TAG). La ruta detallada muestra el algoritmo, cuántas mejoras aplicó 2-opt y cuánto redujo el costo frente a usar solo Vecino Más Cercano.
+
+**[VALIDAR] para el informe:**
+- La especificación menciona **un** vehículo (JAC Sunray 2018). El VRP admite **varios choferes** con los mismos parámetros de vehículo.
+- **No hay restricción de capacidad** (bultos por vehículo): la capacidad del furgón está **por definir**.
+- Máximo **24 paradas por cálculo**, por el límite de 625 elementos de Route Matrix.
+- **Costo de Google:** 2 matrices de (paradas + 1)² elementos por cálculo. Para 5 paradas son 72 elementos, un costo despreciable. Revisar la cuota gratuita mensual de Route Matrix si la cantidad de despachos crece.
+
+Pruebas: `vrp_test.ts` (7): vecino más cercano, 2-opt elimina cruces, 2-opt nunca empeora en 30 casos aleatorios, prioridad por plazo, reparto VRP por zonas, un chofer y más choferes que paradas.
+
 ---
 
 ## 1. Qué pasó con el prototipo (`cotizaciones_rutas`)
@@ -182,7 +201,7 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 |---|---|---|
 | Reglas de dominio (margen, estados, formatos, polilínea, días hábiles, importación) y lógica offline | `flutter test` | 28 pruebas OK |
 | Migraciones, RLS, vistas, triggers, RPC, alertas, KPI, registro de dispositivos y disparo push, respaldo y restauración del prototipo | `cd supabase/pruebas && npm install && npm test` (PostgreSQL real en PGlite) | 57 verificaciones OK |
-| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones (incluidas varias fotos por posición), resumen, elección entre 3 alternativas y motivo de la optimización | Incluido en `npm test` | 27 pruebas OK |
+| Regla de $500 por cada 10 min, costo de ruta, prioridad por plazo, texto de las alertas push, firma OAuth (RS256), respuestas de FCM y lector de cotizaciones (incluidas varias fotos por posición), resumen, elección entre 3 alternativas, motivo de la optimización y motor VRP + Vecino Más Cercano + 2-opt | Incluido en `npm test` | 34 pruebas OK |
 
 ---
 

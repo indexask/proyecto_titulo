@@ -48,16 +48,31 @@ void main() {
     expect(DetalleOptimizacion.fromMap(null), isNull);
   });
 
-  test('la navegación abre Google Maps en modo auto hacia la parada', () {
-    final url = NavegacionRepositorio.urlNavegacion(-33.4378, -70.6155);
+  test('la navegación abre toda la ruta en Google Maps con las direcciones exactas', () {
+    const bodega = PuntoNavegacion(direccion: 'San Juan de la Cruz 5453, Maipú', lat: -33.5, lng: -70.7);
+    final url = NavegacionRepositorio.urlRuta(const [
+      PuntoNavegacion(direccion: 'Arturo Burhle 50, Providencia', lat: -33.43, lng: -70.61),
+      PuntoNavegacion(direccion: 'Loreley 1582, La Reina'),
+      PuntoNavegacion(direccion: '', lat: -33.40, lng: -70.64), // sin dirección: coordenadas
+    ], bodega);
     expect(url.host, 'www.google.com');
     expect(url.path, '/maps/dir/');
     expect(url.queryParameters, {
       'api': '1',
-      'destination': '-33.4378,-70.6155',
+      'destination': 'San Juan de la Cruz 5453, Maipú',
+      'waypoints': 'Arturo Burhle 50, Providencia|Loreley 1582, La Reina|-33.4,-70.64',
       'travelmode': 'driving',
       'dir_action': 'navigate',
     });
+  });
+
+  test('con más paradas que el límite de Google Maps, el enlace llega hasta la décima', () {
+    final paradas = [for (var i = 1; i <= 12; i++) PuntoNavegacion(direccion: 'Calle $i')];
+    final url = NavegacionRepositorio.urlRuta(paradas, const PuntoNavegacion(direccion: 'Bodega'));
+    expect(url.queryParameters['destination'], 'Calle 10');
+    expect(url.queryParameters['waypoints']!.split('|').length, 9);
+    expect(NavegacionRepositorio.paradasFuera(paradas), 2);
+    expect(NavegacionRepositorio.paradasFuera(paradas.take(10).toList()), 0);
   });
 
   test('estado de la ruta según sus paradas: por iniciar, en curso, completada', () {

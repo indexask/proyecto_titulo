@@ -197,7 +197,7 @@ dominio no depende de Flutter ni de Supabase, así que se puede probar de forma 
 | RF-20 | Tabla `alerta` + pantalla de alertas (Administrador: todas; Chofer: las suyas) |
 | RF-21 | El Administrador elige los despachos de la jornada y `optimizar-ruta` compila sus direcciones. Las direcciones que aún no estaban validadas se geocodifican en ese momento (Places) y quedan guardadas en la orden. Si la ruta se creó sin chofer, el Administrador puede **asignarlo o cambiarlo después** desde el detalle de la ruta (`ruta.chofer_id`); la ruta aparece entonces en "Mi jornada" de ese Chofer |
 | RF-22 | Edge Functions `optimizar-ruta` (**Routes API**) y `geocodificar` (**Places API**). La clave está solo en el servidor |
-| RF-23 | `VistaRuta`: mapa con el trazado y las paradas en orden. El Chofer solo visualiza. **Ubicación del Chofer en tiempo real** (geolocator): punto en el mapa, precisión, "centrar en mí / seguir", próxima parada y distancia en línea recta. La ubicación no se envía ni se guarda en el servidor. **Flujo en ruta:** "Iniciar ruta" (pendientes → En Ruta) abre la **navegación de Google Maps** a la parada 1; "Confirmar entrega" abre automáticamente la navegación a la siguiente; al final, "Volver a bodega". Se usan enlaces de Google Maps (sin costo ni clave). No se modifica la ruta. Cámara con tres modos: tramo actual (ubicación → próxima parada), ruta completa y seguirme |
+| RF-23 | `VistaRuta`: mapa con el trazado y las paradas en orden. El Chofer solo visualiza. **Ubicación del Chofer en tiempo real** (geolocator): punto en el mapa, precisión, "centrar en mí / seguir", próxima parada y distancia en línea recta. La ubicación no se envía ni se guarda en el servidor. **Flujo en ruta:** "Iniciar ruta" (pendientes → En Ruta) abre **una sola vez** Google Maps con **todo el recorrido**: las paradas en orden como puntos intermedios y el regreso a bodega como destino. Se usa la **dirección exacta** de cada orden, porque con coordenadas Google Maps rotula el destino con el lugar más cercano, por ejemplo "Universidad de Chile" en vez de la calle. Google Maps admite 10 puntos por recorrido; si hay más paradas, se avisa y "Navegar" abre el resto. "Confirmar entrega" ya no abre pestañas nuevas. "Navegar" vuelve a abrir lo que falta, y al final está "Volver a bodega". Se usan enlaces de Google Maps (sin costo ni clave). No se modifica la ruta. Cámara con tres modos: tramo actual (ubicación → próxima parada), ruta completa y seguirme |
 | RF-24 | `ruta.costo_ruta_sin_optimizar`, `costo_ruta_optimizada` y `ahorro` (columna calculada). `ruta.detalle_optimizacion` guarda la comparación **tiempo / km / TAG / combustible / costo** de la ruta sin optimizar, con TAG y sin TAG, más el motivo de la elección. Solo la ve el Administrador; el Chofer solo ve si la ruta usa TAG (sí/no) | 
 
 Indicadores: la vista `v_kpi` calcula KPI-01, 02, 04, 05, 06, 07 y 08 (solo Administrador).
@@ -245,7 +245,7 @@ KPI-03 se mide en la app (el margen aparece mientras se escribe).
 - `firebase_core` y `firebase_messaging`: recepción de push vía FCM (ver §0).
 - `geolocator`: ubicación del Chofer en tiempo real en el mapa de su ruta (RF-23).
 - `file_picker`: elegir el PDF de la cotización (§0.1).
-- `url_launcher`: abrir la navegación de Google Maps hacia la próxima parada (RF-23).
+- `url_launcher`: abrir en Google Maps la navegación del recorrido completo (RF-23).
 
 ### 4.4 Destinatarios y reglas del push
 

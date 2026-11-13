@@ -137,9 +137,9 @@ class RutaChoferPantalla extends ConsumerWidget {
 /// Acciones del Chofer sobre su ruta (RF-14, RF-16), con el mismo enfoque
 /// offline-first de los despachos (RF-15).
 ///
-/// Flujo: "Iniciar ruta" → navegación (Google Maps) a la parada 1 →
-/// "Confirmar entrega" → navegación automática a la siguiente → … →
-/// "Volver a bodega".
+/// Flujo: "Iniciar ruta" → Google Maps con todo el recorrido (paradas en
+/// orden + regreso a bodega) → "Confirmar entrega" en cada parada →
+/// "Volver a bodega". "Navegar" vuelve a abrir el recorrido que falta.
 class _AccionesRuta extends ConsumerStatefulWidget {
   final Ruta ruta;
 
@@ -172,20 +172,34 @@ class _AccionesRutaState extends ConsumerState<_AccionesRuta> {
     }
   }
 
-  Future<void> _navegarA(double? lat, double? lng, String destino) async {
-    if (lat == null || lng == null) {
-      mostrarMensaje(context, 'La dirección de $destino no tiene ubicación en el mapa');
+  PuntoNavegacion get _bodega => PuntoNavegacion(
+      direccion: widget.ruta.origenDireccion, lat: widget.ruta.origenLat, lng: widget.ruta.origenLng);
+
+  /// Abre en Google Maps, de una vez, el recorrido que falta: las paradas no
+  /// entregadas en el orden de la ruta (con su dirección exacta) y el
+  /// regreso a bodega. Así no se abre una pestaña nueva por cada parada.
+  Future<void> _navegarRestante() async {
+    final restantes = widget.ruta.paradas
+        .where((p) => p.estado != EstadoDespacho.entregado)
+        .map((p) => PuntoNavegacion(direccion: p.direccion, lat: p.lat, lng: p.lng))
+        .toList();
+    final ok = await _navegacion.navegarRuta(restantes, _bodega);
+    if (!mounted) return;
+    if (!ok) {
+      mostrarMensaje(context, 'No se pudo abrir Google Maps');
       return;
     }
-    final ok = await _navegacion.navegarA(lat, lng);
-    if (!ok && mounted) mostrarMensaje(context, 'No se pudo abrir Google Maps');
+    final fuera = NavegacionRepositorio.paradasFuera(restantes);
+    if (fuera > 0) {
+      mostrarMensaje(context,
+          'Google Maps admite 10 puntos por recorrido: quedan $fuera parada(s) fuera. Presiona "Navegar" al llegar a la décima.');
+    }
   }
 
   Future<void> _iniciarRuta(List<ParadaRuta> pendientes) async {
     if (!await _cambiar(pendientes, EstadoDespacho.enRuta) || !mounted) return;
-    final primera = widget.ruta.paradas.first;
-    mostrarMensaje(context, 'Ruta iniciada. Navegando a ${primera.orden + 1}. ${primera.cliente}');
-    await _navegarA(primera.lat, primera.lng, primera.cliente);
+    mostrarMensaje(context, 'Ruta iniciada: se abre Google Maps con las ${pendientes.length} parada(s) y el regreso a bodega.');
+    await _navegarRestante();
   }
 
   Future<void> _confirmarEntrega(ParadaRuta p) async {
@@ -207,8 +221,8 @@ class _AccionesRutaState extends ConsumerState<_AccionesRuta> {
         .where((x) => x.orden > p.orden && x.estado != EstadoDespacho.entregado)
         .firstOrNull;
     if (siguiente != null) {
-      mostrarMensaje(context, 'Entrega confirmada. Navegando a ${siguiente.orden + 1}. ${siguiente.cliente}');
-      await _navegarA(siguiente.lat, siguiente.lng, siguiente.cliente);
+      // Google Maps ya tiene todo el recorrido: no se abre otra pestaña.
+      mostrarMensaje(context, 'Entrega confirmada. Siguiente: ${siguiente.orden + 1}. ${siguiente.cliente}');
     } else {
       mostrarMensaje(context, 'Entregas completadas. Puedes volver a la bodega.');
     }
@@ -232,7 +246,7 @@ class _AccionesRutaState extends ConsumerState<_AccionesRuta> {
     } else if (proxima != null) {
       contenido = Row(children: [
         OutlinedButton.icon(
-          onPressed: () => _navegarA(proxima.lat, proxima.lng, proxima.cliente),
+          onPressed: _navegarRestante,
           icon: const Icon(Icons.navigation),
           label: const Text('Navegar'),
         ),
@@ -250,7 +264,7 @@ class _AccionesRutaState extends ConsumerState<_AccionesRuta> {
       contenido = Row(children: [
         const Expanded(child: Text('Ruta completada ✔', textAlign: TextAlign.center)),
         FilledButton.icon(
-          onPressed: () => _navegarA(ruta.origenLat, ruta.origenLng, 'la bodega'),
+          onPressed: () => _navegacion.navegarRuta(const [], _bodega),
           icon: const Icon(Icons.warehouse),
           label: const Text('Volver a bodega'),
         ),

@@ -124,6 +124,32 @@ Pruebas: `criterio_ruta_test.dart` (criterio → alternativa, empates, rutas ant
 
 ---
 
+## 0.5 Estado "No entregado" con justificación (solicitud del equipo, 2026-11-23)
+
+El Chofer puede marcar un despacho como **No entregado** y **debe justificar** por qué no se pudo entregar. Amplía la máquina de estados del despacho (RF-14):
+
+- Antes: `Pendiente → En Ruta → Entregado`.
+- Ahora, además: `En Ruta → No entregado` (exige motivo) y, desde No entregado, `→ En Ruta` (reintento) o `→ Entregado` (entrega posterior). "Entregado" sigue siendo terminal.
+
+**⚠️ Regla de espejo:** esto cambia la regla documentada "Estados de despacho: Pendiente → En Ruta → Entregado". El **informe y el diagrama de estados deben actualizarse** con el nuevo estado y la justificación obligatoria.
+
+Implementación (migración `20261117000000_despacho_no_entregado.sql`):
+- Columna **`despacho.motivo_no_entrega text`**, con **CHECK** que exige el motivo (no vacío) **solo** cuando el estado es `no_entregado`, y lo deja nulo en cualquier otro estado.
+- Se amplía el CHECK de `estado` para incluir `no_entregado`.
+- Función `transicion_despacho_valida(desde, hasta)`: única fuente de verdad de las transiciones. La usan el trigger `despacho_validar_transicion` y la RPC.
+- Al salir de `no_entregado`, el trigger **limpia** el motivo automáticamente.
+- La RPC `cambiar_estado_despacho` ahora recibe `p_motivo`; rechaza "no entregado" sin motivo y mantiene la idempotencia de la cola offline (mismo estado o "entregado" terminal = sin cambios).
+- La vista `v_despacho_chofer` expone `motivo_no_entrega` (dato operativo, no financiero): el Chofer ve su propia justificación.
+
+App (Flutter):
+- `EstadoDespacho.noEntregado` con sus transiciones (`siguientesPosibles`, `requiereMotivo`).
+- La justificación viaja en la cola offline (`CambioPendiente.motivo`), así que se puede marcar sin conexión y se sincroniza después (RF-15/RF-16).
+- UI del Chofer: botón **"No entregado"** (en el detalle del despacho y en la ruta) que abre un diálogo con el motivo **obligatorio**; la parada no entregada se muestra en rojo y la ruta puede completarse igual (una no entrega cuenta como parada resuelta, pero se puede reintentar).
+
+Pruebas: BD (exige motivo, rechaza motivo en blanco, guarda/limpia el motivo, reintento y entrega posterior, la vista lo expone) y Flutter (`estado_despacho_test.dart` transiciones; `offline_first_test.dart` no entrega offline con motivo).
+
+---
+
 ## 1. Qué pasó con el prototipo (`cotizaciones_rutas`)
 
 | Elemento del prototipo | Decisión | Motivo |

@@ -24,6 +24,7 @@ class _DespachoChoferPantallaState extends ConsumerState<DespachoChoferPantalla>
   bool _guardando = false;
 
   Future<void> _avanzar(DespachoChofer d, EstadoDespacho nuevo) async {
+    String? motivo;
     if (nuevo == EstadoDespacho.entregado) {
       final ok = await showDialog<bool>(
         context: context,
@@ -37,11 +38,14 @@ class _DespachoChoferPantallaState extends ConsumerState<DespachoChoferPantalla>
         ),
       );
       if (ok != true) return;
+    } else if (nuevo == EstadoDespacho.noEntregado) {
+      motivo = await pedirMotivoNoEntrega(context, cliente: d.cliente);
+      if (motivo == null) return; // canceló
     }
 
     setState(() => _guardando = true);
     try {
-      await ref.read(despachosChoferProvider.notifier).cambiarEstado(d.despachoId, nuevo);
+      await ref.read(despachosChoferProvider.notifier).cambiarEstado(d.despachoId, nuevo, motivo: motivo);
       final resultado = ref.read(despachosChoferProvider).value;
       if (mounted) {
         mostrarMensaje(
@@ -76,7 +80,6 @@ class _DespachoChoferPantallaState extends ConsumerState<DespachoChoferPantalla>
   }
 
   Widget _detalle(BuildContext context, DespachoChofer d) {
-    final siguiente = d.estado.siguiente;
     final tema = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -130,15 +133,57 @@ class _DespachoChoferPantallaState extends ConsumerState<DespachoChoferPantalla>
             title: Text(item.producto),
             trailing: Text('× ${item.cantidad}', style: tema.textTheme.titleMedium),
           ),
-        const SizedBox(height: 24),
-        if (siguiente != null)
-          FilledButton.icon(
-            onPressed: _guardando ? null : () => _avanzar(d, siguiente),
-            icon: Icon(siguiente == EstadoDespacho.entregado ? Icons.check : Icons.local_shipping),
-            label: Text(siguiente.accion),
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+        if (d.estado == EstadoDespacho.noEntregado && d.motivoNoEntrega != null)
+          Card(
+            color: tema.colorScheme.errorContainer,
+            child: ListTile(
+              leading: Icon(Icons.report_problem, color: tema.colorScheme.onErrorContainer),
+              title: Text('No entregado', style: TextStyle(color: tema.colorScheme.onErrorContainer)),
+              subtitle: Text(d.motivoNoEntrega!, style: TextStyle(color: tema.colorScheme.onErrorContainer)),
+            ),
           ),
+        const SizedBox(height: 24),
+        ..._acciones(d),
       ],
     );
+  }
+
+  /// Botones según el estado del despacho (RF-14):
+  ///  * En Ruta: Confirmar entrega + No entregado (con motivo).
+  ///  * No entregado: reintentar (volver a En Ruta) + Confirmar entrega.
+  List<Widget> _acciones(DespachoChofer d) {
+    Widget principal(EstadoDespacho destino, IconData icono) => FilledButton.icon(
+          onPressed: _guardando ? null : () => _avanzar(d, destino),
+          icon: Icon(icono),
+          label: Text(destino.accion),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+        );
+    Widget noEntregado() => OutlinedButton.icon(
+          onPressed: _guardando ? null : () => _avanzar(d, EstadoDespacho.noEntregado),
+          icon: const Icon(Icons.cancel_outlined),
+          label: const Text('No entregado'),
+          style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(48), foregroundColor: Colors.red),
+        );
+
+    return switch (d.estado) {
+      EstadoDespacho.pendiente => [principal(EstadoDespacho.enRuta, Icons.local_shipping)],
+      EstadoDespacho.enRuta => [
+          principal(EstadoDespacho.entregado, Icons.check),
+          const SizedBox(height: 8),
+          noEntregado(),
+        ],
+      EstadoDespacho.noEntregado => [
+          principal(EstadoDespacho.entregado, Icons.check),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _guardando ? null : () => _avanzar(d, EstadoDespacho.enRuta),
+            icon: const Icon(Icons.replay),
+            label: const Text('Reintentar (volver a En Ruta)'),
+            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+          ),
+        ],
+      EstadoDespacho.entregado => const [],
+    };
   }
 }

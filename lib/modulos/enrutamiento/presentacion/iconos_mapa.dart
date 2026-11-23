@@ -21,6 +21,7 @@ class IconosMapa {
         EstadoDespacho.pendiente => const Color(0xFFD32F2F),
         EstadoDespacho.enRuta => const Color(0xFFEF6C00),
         EstadoDespacho.entregado => const Color(0xFF2E7D32),
+        EstadoDespacho.noEntregado => const Color(0xFF455A64),
       };
 
   static Future<IconosMapa> crear(Iterable<({int numero, EstadoDespacho estado})> paradas) async {

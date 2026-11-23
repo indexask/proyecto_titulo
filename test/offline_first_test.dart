@@ -11,6 +11,7 @@ class RemotoFalso implements DespachosRemoto {
   bool conectado = true;
   final estados = <String, String>{'d1': 'pendiente', 'd2': 'pendiente'};
   final recibidos = <(String, EstadoDespacho, DateTime)>[];
+  final motivos = <String, String?>{};
   final rechazar = <String>{};
 
   @override
@@ -38,12 +39,13 @@ class RemotoFalso implements DespachosRemoto {
   }
 
   @override
-  Future<void> cambiarEstado(String despachoId, EstadoDespacho estado, DateTime ocurridoEn) async {
+  Future<void> cambiarEstado(String despachoId, EstadoDespacho estado, DateTime ocurridoEn, String? motivo) async {
     if (!conectado) throw Exception('Failed host lookup');
     if (rechazar.contains(despachoId)) {
       throw const PostgrestException(message: 'Despacho no encontrado o sin permiso');
     }
     recibidos.add((despachoId, estado, ocurridoEn));
+    motivos[despachoId] = motivo;
     estados[despachoId] = estado.codigo;
   }
 }
@@ -123,5 +125,25 @@ void main() {
     for (final campo in ['costo_compra', 'precio_venta', 'margen_neto', 'ahorro']) {
       expect(todo.contains(campo), isFalse, reason: campo);
     }
+  });
+
+  test('No entregado exige motivo y lo sincroniza, incluso offline (RF-14/RF-16)', () async {
+    await repo.cargar();
+    await repo.cambiarEstado('d1', EstadoDespacho.enRuta);
+    // Sin motivo no se puede marcar como no entregado.
+    expect(() => repo.cambiarEstado('d1', EstadoDespacho.noEntregado), throwsA(isA<Exception>()));
+
+    remoto.conectado = false;
+    var r = await repo.cambiarEstado('d1', EstadoDespacho.noEntregado, motivo: 'Cliente ausente');
+    final d1 = r.despachos.firstWhere((d) => d.despachoId == 'd1');
+    expect(d1.estado, EstadoDespacho.noEntregado);
+    expect(d1.motivoNoEntrega, 'Cliente ausente');
+    expect(d1.fechaHoraEntrega, isNull);
+
+    remoto.conectado = true;
+    r = await repo.cargar();
+    expect(r.cambiosPendientes, 0);
+    expect(remoto.estados['d1'], 'no_entregado');
+    expect(remoto.motivos['d1'], 'Cliente ausente');
   });
 }

@@ -19,6 +19,9 @@ class DespachoChofer {
   final DateTime fechaComprometida;
   final List<ItemCarga> productos;
 
+  /// Justificación cuando el estado es "No entregado" (RF-14/RF-16).
+  final String? motivoNoEntrega;
+
   /// `true` si el estado mostrado aún no se ha sincronizado con el servidor.
   final bool pendienteDeSincronizar;
 
@@ -35,15 +38,16 @@ class DespachoChofer {
     this.direccionLat,
     this.direccionLng,
     this.productos = const [],
+    this.motivoNoEntrega,
     this.pendienteDeSincronizar = false,
   });
 
-  DespachoChofer conEstado(EstadoDespacho nuevo, DateTime momento) => DespachoChofer(
+  DespachoChofer conEstado(EstadoDespacho nuevo, DateTime momento, {String? motivo}) => DespachoChofer(
         despachoId: despachoId,
         ordenId: ordenId,
         estado: nuevo,
         cantidadBultos: cantidadBultos,
-        fechaHoraEntrega: nuevo == EstadoDespacho.entregado ? momento : fechaHoraEntrega,
+        fechaHoraEntrega: nuevo == EstadoDespacho.entregado ? momento : null,
         numeroOc: numeroOc,
         cliente: cliente,
         direccionEntrega: direccionEntrega,
@@ -51,6 +55,7 @@ class DespachoChofer {
         direccionLng: direccionLng,
         fechaComprometida: fechaComprometida,
         productos: productos,
+        motivoNoEntrega: nuevo == EstadoDespacho.noEntregado ? motivo : null,
         pendienteDeSincronizar: true,
       );
 
@@ -71,6 +76,7 @@ class DespachoChofer {
         productos: ((map['productos'] as List?) ?? const [])
             .map((p) => (producto: p['producto'] as String, cantidad: p['cantidad'] as int))
             .toList(),
+        motivoNoEntrega: map['motivo_no_entrega'] as String?,
       );
 }
 
@@ -82,11 +88,15 @@ class CambioPendiente {
   final EstadoDespacho estado;
   final DateTime ocurridoEn;
 
+  /// Justificación cuando el estado es "No entregado" (RF-14/RF-16).
+  final String? motivo;
+
   const CambioPendiente({
     required this.id,
     required this.despachoId,
     required this.estado,
     required this.ocurridoEn,
+    this.motivo,
   });
 
   factory CambioPendiente.fromMap(Map<String, dynamic> map) => CambioPendiente(
@@ -94,6 +104,7 @@ class CambioPendiente {
         despachoId: map['despacho_id'] as String,
         estado: EstadoDespacho.desdeCodigo(map['estado'] as String),
         ocurridoEn: DateTime.parse(map['ocurrido_en'] as String),
+        motivo: map['motivo'] as String?,
       );
 
   Map<String, dynamic> toMap() => {
@@ -101,5 +112,6 @@ class CambioPendiente {
         'despacho_id': despachoId,
         'estado': estado.codigo,
         'ocurrido_en': ocurridoEn.toUtc().toIso8601String(),
+        if (motivo != null) 'motivo': motivo,
       };
 }

@@ -198,6 +198,35 @@ ok((await falla(C1, `update despacho set estado = 'en_ruta' where id = '${d2}'`)
    (await db.query(`select estado from despacho where id = $1`, [d2])).rows[0].estado === "pendiente",
   "Chofer no puede actualizar la tabla despacho directamente");
 
+// --- No entregado con justificación obligatoria (RF-14/RF-16) ---
+const oNE = (await como(A, `insert into orden_compra (cliente, direccion_entrega, fecha_comprometida, responsable_id)
+  values ('Cliente NE', 'Calle NE', $1, '${C1}') returning id`, [iso(5)])).rows[0].id;
+const dNE = (await db.query(`select id from despacho where orden_id = $1`, [oNE])).rows[0].id;
+await como(C1, `select cambiar_estado_despacho('${dNE}', 'en_ruta')`);
+ok((await falla(C1, `select cambiar_estado_despacho('${dNE}', 'no_entregado')`))?.includes("motivo"),
+  "No entregado exige motivo");
+ok((await falla(C1, `select cambiar_estado_despacho('${dNE}', 'no_entregado', now(), '   ')`))?.includes("motivo"),
+  "No entregado rechaza un motivo en blanco");
+await como(C1, `select cambiar_estado_despacho('${dNE}', 'no_entregado', now(), 'Cliente ausente')`);
+const ne = (await db.query(`select estado, motivo_no_entrega, confirmado_en_app, fecha_hora_entrega
+  from despacho where id = $1`, [dNE])).rows[0];
+ok(ne.estado === "no_entregado" && ne.motivo_no_entrega === "Cliente ausente"
+   && ne.confirmado_en_app === false && ne.fecha_hora_entrega === null,
+  "No entregado guarda el motivo y no marca entrega");
+ok((await como(C1, `select motivo_no_entrega from v_despacho_chofer where despacho_id = $1`, [dNE]))
+     .rows[0].motivo_no_entrega === "Cliente ausente",
+  "el Chofer ve su justificación en la vista v_despacho_chofer");
+await como(C1, `select cambiar_estado_despacho('${dNE}', 'en_ruta')`);
+ok((await db.query(`select motivo_no_entrega from despacho where id = $1`, [dNE])).rows[0].motivo_no_entrega === null,
+  "al reintentar (volver a En Ruta) se limpia el motivo");
+await como(C1, `select cambiar_estado_despacho('${dNE}', 'entregado')`);
+ok((await db.query(`select estado from despacho where id = $1`, [dNE])).rows[0].estado === "entregado",
+  "un despacho no entregado puede entregarse en un reintento");
+await como(A, `update despacho set motivo_no_entrega = 'x' where id = '${dNE}'`);
+ok((await db.query(`select motivo_no_entrega from despacho where id = $1`, [dNE])).rows[0].motivo_no_entrega === null,
+  "el motivo solo persiste en estado No entregado (el trigger lo limpia)");
+await como(A, `delete from orden_compra where id = '${oNE}'`);
+
 // --- Bultos (Administrador) ---
 await como(A, `update despacho set cantidad_bultos = 4 where id = $1`, [d2]);
 ok((await como(C1, `select cantidad_bultos from v_despacho_chofer where despacho_id = $1`, [d2])).rows[0].cantidad_bultos === 4,

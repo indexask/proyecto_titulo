@@ -51,9 +51,10 @@ class DespachosChoferNotifier extends AsyncNotifier<ResultadoDespachos> {
     state = resultado;
   }
 
-  /// Lanza una excepción si la transición no está permitida.
-  Future<void> cambiarEstado(String despachoId, EstadoDespacho nuevo) async {
-    final resultado = await _repo.cambiarEstado(despachoId, nuevo);
+  /// Lanza una excepción si la transición no está permitida. Para "No
+  /// entregado" el [motivo] es obligatorio (RF-14/RF-16).
+  Future<void> cambiarEstado(String despachoId, EstadoDespacho nuevo, {String? motivo}) async {
+    final resultado = await _repo.cambiarEstado(despachoId, nuevo, motivo: motivo);
     if (ref.mounted) state = AsyncData(resultado);
   }
 }

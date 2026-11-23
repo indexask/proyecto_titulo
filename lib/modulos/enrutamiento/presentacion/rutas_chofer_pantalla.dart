@@ -7,6 +7,7 @@ import '../../../core/formato.dart';
 import '../../../core/widgets/vista_async.dart';
 import '../../logistico_notificaciones/dominio/estado_despacho.dart';
 import '../../logistico_notificaciones/presentacion/logistico_providers.dart';
+import '../../logistico_notificaciones/presentacion/widgets_despacho.dart';
 import '../datos/navegacion_repositorio.dart';
 import '../dominio/ruta.dart';
 import 'enrutamiento_providers.dart';
@@ -153,12 +154,12 @@ class _AccionesRutaState extends ConsumerState<_AccionesRuta> {
   final _navegacion = NavegacionRepositorio();
   bool _guardando = false;
 
-  Future<bool> _cambiar(List<ParadaRuta> paradas, EstadoDespacho nuevo) async {
+  Future<bool> _cambiar(List<ParadaRuta> paradas, EstadoDespacho nuevo, {String? motivo}) async {
     setState(() => _guardando = true);
     final notificador = ref.read(despachosChoferProvider.notifier);
     try {
       for (final p in paradas) {
-        await notificador.cambiarEstado(p.despachoId, nuevo);
+        await notificador.cambiarEstado(p.despachoId, nuevo, motivo: motivo);
       }
       if ((ref.read(despachosChoferProvider).value?.sinConexion ?? false) && mounted) {
         mostrarMensaje(context, 'Guardado en el teléfono. Se sincronizará al recuperar la conexión.');
@@ -180,7 +181,7 @@ class _AccionesRutaState extends ConsumerState<_AccionesRuta> {
   /// regreso a bodega. Así no se abre una pestaña nueva por cada parada.
   Future<void> _navegarRestante() async {
     final restantes = widget.ruta.paradas
-        .where((p) => p.estado != EstadoDespacho.entregado)
+        .where((p) => p.estado == EstadoDespacho.pendiente || p.estado == EstadoDespacho.enRuta)
         .map((p) => PuntoNavegacion(direccion: p.direccion, lat: p.lat, lng: p.lng))
         .toList();
     final ok = await _navegacion.navegarRuta(restantes, _bodega);
@@ -228,6 +229,14 @@ class _AccionesRutaState extends ConsumerState<_AccionesRuta> {
     }
   }
 
+  /// Marca la parada como NO entregada, pidiendo la justificación (RF-14/RF-16).
+  Future<void> _marcarNoEntregado(ParadaRuta p) async {
+    final motivo = await pedirMotivoNoEntrega(context, cliente: p.cliente);
+    if (motivo == null || !mounted) return;
+    if (!await _cambiar([p], EstadoDespacho.noEntregado, motivo: motivo) || !mounted) return;
+    mostrarMensaje(context, 'Marcado como no entregado: ${p.orden + 1}. ${p.cliente}');
+  }
+
   @override
   Widget build(BuildContext context) {
     final ruta = widget.ruta;
@@ -244,20 +253,30 @@ class _AccionesRutaState extends ConsumerState<_AccionesRuta> {
         label: Text('Iniciar ruta (${pendientes.length} parada${pendientes.length == 1 ? '' : 's'})'),
       );
     } else if (proxima != null) {
-      contenido = Row(children: [
-        OutlinedButton.icon(
-          onPressed: _navegarRestante,
-          icon: const Icon(Icons.navigation),
-          label: const Text('Navegar'),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: FilledButton.icon(
-            onPressed: () => _confirmarEntrega(proxima),
-            icon: const Icon(Icons.check),
-            label: Text('Confirmar entrega · ${proxima.orden + 1}. ${proxima.cliente}',
-                overflow: TextOverflow.ellipsis),
+      contenido = Column(mainAxisSize: MainAxisSize.min, children: [
+        Row(children: [
+          OutlinedButton.icon(
+            onPressed: _navegarRestante,
+            icon: const Icon(Icons.navigation),
+            label: const Text('Navegar'),
           ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: () => _confirmarEntrega(proxima),
+              icon: const Icon(Icons.check),
+              label: Text('Confirmar entrega · ${proxima.orden + 1}. ${proxima.cliente}',
+                  overflow: TextOverflow.ellipsis),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 6),
+        TextButton.icon(
+          onPressed: () => _marcarNoEntregado(proxima),
+          icon: const Icon(Icons.cancel_outlined, size: 18),
+          label: Text('No se pudo entregar · ${proxima.orden + 1}. ${proxima.cliente}',
+              overflow: TextOverflow.ellipsis),
+          style: TextButton.styleFrom(foregroundColor: Colors.red),
         ),
       ]);
     } else {
@@ -274,7 +293,7 @@ class _AccionesRutaState extends ConsumerState<_AccionesRuta> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: SizedBox(height: 52, width: double.infinity, child: contenido),
+        child: SizedBox(width: double.infinity, child: contenido),
       ),
     );
   }

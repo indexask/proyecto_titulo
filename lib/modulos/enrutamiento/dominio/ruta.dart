@@ -50,15 +50,22 @@ class Ruta {
     this.usaPeajes = false,
   });
 
-  /// Primera parada aún no entregada (la próxima a visitar).
-  ParadaRuta? get proximaParada =>
-      paradas.where((p) => p.estado != EstadoDespacho.entregado).firstOrNull;
+  /// Una parada está "resuelta" cuando ya no requiere visita: entregada o
+  /// marcada como no entregada (con justificación).
+  static bool _resuelta(ParadaRuta p) =>
+      p.estado == EstadoDespacho.entregado || p.estado == EstadoDespacho.noEntregado;
+
+  /// Primera parada aún por atender (pendiente o en ruta). Las no entregadas
+  /// se omiten; el Chofer puede reintentarlas desde el detalle del despacho.
+  ParadaRuta? get proximaParada => paradas.where((p) => !_resuelta(p)).firstOrNull;
 
   int get entregadas => paradas.where((p) => p.estado == EstadoDespacho.entregado).length;
 
+  int get noEntregadas => paradas.where((p) => p.estado == EstadoDespacho.noEntregado).length;
+
   /// Avance de la ruta según sus paradas.
   EstadoRuta get estado {
-    if (paradas.isNotEmpty && entregadas == paradas.length) return EstadoRuta.completada;
+    if (paradas.isNotEmpty && paradas.every(_resuelta)) return EstadoRuta.completada;
     if (paradas.any((p) => p.estado != EstadoDespacho.pendiente)) return EstadoRuta.enCurso;
     return EstadoRuta.porIniciar;
   }

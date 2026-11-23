@@ -8,7 +8,7 @@ import '../dominio/estado_despacho.dart';
 /// lógica offline sin servidor).
 abstract interface class DespachosRemoto {
   Future<List<Map<String, dynamic>>> listar();
-  Future<void> cambiarEstado(String despachoId, EstadoDespacho estado, DateTime ocurridoEn);
+  Future<void> cambiarEstado(String despachoId, EstadoDespacho estado, DateTime ocurridoEn, String? motivo);
 }
 
 class DespachosRemotoSupabase implements DespachosRemoto {
@@ -17,11 +17,12 @@ class DespachosRemotoSupabase implements DespachosRemoto {
       supabase.from('v_despacho_chofer').select().order('fecha_comprometida');
 
   @override
-  Future<void> cambiarEstado(String despachoId, EstadoDespacho estado, DateTime ocurridoEn) =>
+  Future<void> cambiarEstado(String despachoId, EstadoDespacho estado, DateTime ocurridoEn, String? motivo) =>
       supabase.rpc('cambiar_estado_despacho', params: {
         'p_despacho_id': despachoId,
         'p_estado': estado.codigo,
         'p_ocurrido_en': ocurridoEn.toUtc().toIso8601String(),
+        'p_motivo': motivo,
       });
 }
 
@@ -106,12 +107,16 @@ class DespachosChoferRepositorio {
   }
 
   /// Registra un cambio de estado (funciona sin conexión) y trata de
-  /// sincronizarlo de inmediato.
-  Future<ResultadoDespachos> cambiarEstado(String despachoId, EstadoDespacho nuevo) async {
+  /// sincronizarlo de inmediato. Para "No entregado" el [motivo] es
+  /// obligatorio (RF-14/RF-16).
+  Future<ResultadoDespachos> cambiarEstado(String despachoId, EstadoDespacho nuevo, {String? motivo}) async {
     final actual = await _estadoEfectivo(despachoId);
     if (actual == null) throw Exception('Despacho no encontrado en el dispositivo');
     if (!actual.puedeAvanzarA(nuevo)) {
       throw Exception('No se puede pasar de "${actual.etiqueta}" a "${nuevo.etiqueta}"');
+    }
+    if (nuevo.requiereMotivo && (motivo == null || motivo.trim().isEmpty)) {
+      throw Exception('Debe indicar el motivo de la no entrega');
     }
 
     final cola = await _leerCola();
@@ -120,6 +125,7 @@ class DespachosChoferRepositorio {
       despachoId: despachoId,
       estado: nuevo,
       ocurridoEn: DateTime.now(),
+      motivo: nuevo.requiereMotivo ? motivo!.trim() : null,
     ));
     await _guardarCola(cola);
     return cargar();
@@ -138,7 +144,7 @@ class DespachosChoferRepositorio {
     while (cola.isNotEmpty) {
       final cambio = cola.first;
       try {
-        await _remoto.cambiarEstado(cambio.despachoId, cambio.estado, cambio.ocurridoEn);
+        await _remoto.cambiarEstado(cambio.despachoId, cambio.estado, cambio.ocurridoEn, cambio.motivo);
       } catch (e) {
         if (esErrorDeConexion(e)) {
           sinConexion = true;
@@ -171,8 +177,10 @@ class DespachosChoferRepositorio {
     final porId = {for (final d in despachos) d.despachoId: d};
     for (final cambio in cola) {
       final d = porId[cambio.despachoId];
-      if (d != null && cambio.estado.index > d.estado.index) {
-        porId[cambio.despachoId] = d.conEstado(cambio.estado, cambio.ocurridoEn);
+      // Se aplica en orden (FIFO). "Entregado" es terminal; un cambio solo
+      // se aplica si es una transición válida desde el estado efectivo actual.
+      if (d != null && !d.estado.esTerminal && d.estado.puedeAvanzarA(cambio.estado)) {
+        porId[cambio.despachoId] = d.conEstado(cambio.estado, cambio.ocurridoEn, motivo: cambio.motivo);
       }
     }
     return despachos.map((d) => porId[d.despachoId]!).toList();

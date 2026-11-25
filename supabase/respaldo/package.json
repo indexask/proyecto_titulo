@@ -1,0 +1,11 @@
+{
+  "name": "gygtrack-respaldo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "respaldar": "node respaldar_prototipo.mjs"
+  },
+  "dependencies": {
+    "pg": "^8.16.0"
+  }
+}

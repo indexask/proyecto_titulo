@@ -1,0 +1,391 @@
+{
+ "fuente": "Dirección General de Concesiones (MOP), \"Peajes Tarifas 2026\": Rutas Transversales (Autopista Los Libertadores, Ruta 68, Ruta 78) y Ruta 5 Sur (Santiago - Talca) / Ruta 5 Norte (Santiago - Los Vilos). Tarifas con TAG habilitado.",
+ "notas": [
+  "Categoría 1: autos y camionetas. Categoría 2: buses y camiones de dos ejes (en Ruta 78, la fila \"Camiones de dos ejes\"; en Ruta 5 Norte, \"Buses y camiones\").",
+  "Ruta 68 (Lo Prado, Zapata): el PDF trae tarifa Normal y Punta pero no define el horario punta; se estima con la Normal y tbp queda guardada como referencia [VALIDAR].",
+  "Ruta 78: la tarifa Punta solo rige en temporada alta (20-dic a 10-mar) y fines de semana largos, en horarios y sentidos específicos; no se modela y se estima con la Normal [VALIDAR].",
+  "Ruta 5 Norte (Lo Marcoleta, Buenaventura, La Montaña, Lo Pinto): el PDF trae TBFP y TBP pero no el horario de TBP; se estima con TBFP [VALIDAR].",
+  "Autopista Los Libertadores: Las Canteras y San José usan la columna \"Las Canteras / San José\" ($1.400) con TAG; el PDF indica $2.800 para la troncal Las Canteras solo para usuarios sin TAG [VALIDAR].",
+  "Laterales sin nombre en OpenStreetMap (Lateral Ruta 5 Sur, laterales Ruta 68, San Luis/Chicureo) quedan por definir: no se puede ubicar el pórtico con certeza."
+ ],
+ "porticos": [
+  {
+   "concesion": "Autopista Los Libertadores",
+   "codigo": "Chacabuco",
+   "tramo": "Plaza Chacabuco",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 3300
+    },
+    "2": {
+     "tbfp": 6000
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Los Libertadores",
+   "codigo": "Las Canteras",
+   "tramo": "Plaza Las Canteras",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 1400
+    },
+    "2": {
+     "tbfp": 2500
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Los Libertadores",
+   "codigo": "San José",
+   "tramo": "Plaza San José",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 1400
+    },
+    "2": {
+     "tbfp": 2500
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 68",
+   "codigo": "Lo Prado",
+   "tramo": "Troncal Lo Prado",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 2700,
+     "tbp": 4000
+    },
+    "2": {
+     "tbfp": 4800,
+     "tbp": 7200
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 68",
+   "codigo": "Zapata",
+   "tramo": "Troncal Zapata",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 2700,
+     "tbp": 4000
+    },
+    "2": {
+     "tbfp": 4800,
+     "tbp": 7200
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 68",
+   "codigo": "Troncal Sur",
+   "tramo": "Troncal Sur",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 1100
+    },
+    "2": {
+     "tbfp": 1900
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 78",
+   "codigo": "T1",
+   "tramo": "Américo Vespucio",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 718,
+     "tbp": 1077
+    },
+    "2": {
+     "tbfp": 1436,
+     "tbp": 2872
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 78",
+   "codigo": "T2",
+   "tramo": "Rinconada",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 330,
+     "tbp": 495
+    },
+    "2": {
+     "tbfp": 660,
+     "tbp": 1320
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 78",
+   "codigo": "T3",
+   "tramo": "Padre Hurtado",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 225,
+     "tbp": 337.5
+    },
+    "2": {
+     "tbfp": 450,
+     "tbp": 900
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 78",
+   "codigo": "T4",
+   "tramo": "Malloco",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 225,
+     "tbp": 337.5
+    },
+    "2": {
+     "tbfp": 450,
+     "tbp": 900
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 78",
+   "codigo": "T6",
+   "tramo": "Talagante",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 375,
+     "tbp": 562.5
+    },
+    "2": {
+     "tbfp": 750,
+     "tbp": 1500
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 78",
+   "codigo": "T7",
+   "tramo": "El Paico",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 375,
+     "tbp": 562.5
+    },
+    "2": {
+     "tbfp": 750,
+     "tbp": 1500
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 78",
+   "codigo": "T8",
+   "tramo": "Pomaire/Melipilla",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 599,
+     "tbp": 898.5
+    },
+    "2": {
+     "tbfp": 1198,
+     "tbp": 2396
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 78",
+   "codigo": "T10",
+   "tramo": "Puangue",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 1161,
+     "tbp": 1741.5
+    },
+    "2": {
+     "tbfp": 2322,
+     "tbp": 4644
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 5 Sur (Santiago - Talca)",
+   "codigo": "Angostura",
+   "tramo": "Troncal Ruta 5 (Angostura)",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 3800
+    },
+    "2": {
+     "tbfp": 6900
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 5 Sur (Santiago - Talca)",
+   "codigo": "Río Maipo",
+   "tramo": "Troncal Río Maipo",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 621
+    },
+    "2": {
+     "tbfp": 1117
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 5 Sur (Santiago - Talca)",
+   "codigo": "Gabriela",
+   "tramo": "Troncal Gabriela",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 621
+    },
+    "2": {
+     "tbfp": 1117
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 5 Sur (Santiago - Talca)",
+   "codigo": "Tocornal",
+   "tramo": "Troncal Tocornal",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 207
+    },
+    "2": {
+     "tbfp": 372
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 5 Norte (Santiago - Los Vilos)",
+   "codigo": "Lo Marcoleta",
+   "tramo": "Paso Superior Lo Marcoleta",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 181,
+     "tbp": 362
+    },
+    "2": {
+     "tbfp": 326,
+     "tbp": 652
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 5 Norte (Santiago - Los Vilos)",
+   "codigo": "Buenaventura",
+   "tramo": "Enlace Buenaventura",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 218,
+     "tbp": 436
+    },
+    "2": {
+     "tbfp": 392,
+     "tbp": 785
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 5 Norte (Santiago - Los Vilos)",
+   "codigo": "La Montaña",
+   "tramo": "Paso Superior La Montaña",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 397,
+     "tbp": 794
+    },
+    "2": {
+     "tbfp": 715,
+     "tbp": 1429
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 5 Norte (Santiago - Los Vilos)",
+   "codigo": "Lo Pinto",
+   "tramo": "Enlace Lo Pinto",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 486,
+     "tbp": 972
+    },
+    "2": {
+     "tbfp": 875,
+     "tbp": 1750
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 5 Norte (Santiago - Los Vilos)",
+   "codigo": "Lampa",
+   "tramo": "Plaza Lampa",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 900
+    },
+    "2": {
+     "tbfp": 1600
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 5 Norte (Santiago - Los Vilos)",
+   "codigo": "Pichidangui",
+   "tramo": "Plaza Pichidangui",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 2900
+    },
+    "2": {
+     "tbfp": 5300
+    }
+   }
+  },
+  {
+   "concesion": "Ruta 5 Norte (Santiago - Los Vilos)",
+   "codigo": "Túnel El Melón",
+   "tramo": "Túnel El Melón",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 2900
+    },
+    "2": {
+     "tbfp": 5300
+    }
+   }
+  }
+ ]
+}

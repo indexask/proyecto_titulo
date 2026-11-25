@@ -1,6 +1,7 @@
 -- Esquema inicial: perfiles, cotizaciones, rutas y puntos de ruta.
 
-create extension if not exists "uuid-ossp";
+-- gen_random_uuid() es nativa de PostgreSQL (no requiere la extensión uuid-ossp,
+-- que en Supabase vive en el esquema "extensions" y falla en `db push`).
 
 -- ============================================================
 -- profiles
@@ -44,7 +45,7 @@ $$;
 -- cotizaciones
 -- ============================================================
 create table public.cotizaciones (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   titulo text not null,
   cliente text,
   monto numeric,
@@ -57,7 +58,7 @@ create table public.cotizaciones (
 -- rutas
 -- ============================================================
 create table public.rutas (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   cotizacion_id uuid not null references public.cotizaciones (id) on delete cascade,
   chofer_id uuid references public.profiles (id),
   nombre text not null,
@@ -69,7 +70,7 @@ create table public.rutas (
 -- puntos_ruta
 -- ============================================================
 create table public.puntos_ruta (
-  id uuid primary key default uuid_generate_v4(),
+  id uuid primary key default gen_random_uuid(),
   ruta_id uuid not null references public.rutas (id) on delete cascade,
   orden int not null default 0,
   direccion text not null,

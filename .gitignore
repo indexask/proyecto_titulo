@@ -53,3 +53,18 @@ env/*.json
 android/local.properties
 android/secrets.properties
 ios/Flutter/Secrets.xcconfig
+
+# Clave de Google Maps para la web
+web/maps_config.js
+
+# Dependencias de las pruebas de BD
+supabase/pruebas/node_modules/
+supabase/pruebas/package-lock.json
+
+# Artefactos de compilación de Android
+/android/build/
+
+# Respaldos de datos (contienen información real) y dependencias
+supabase/respaldo/respaldos/
+supabase/respaldo/node_modules/
+supabase/respaldo/package-lock.json

@@ -1,0 +1,3712 @@
+{
+ "fuente": "Dirección General de Concesiones (MOP), 'Peajes Tarifas 2026 / Autopistas Urbanas' y 'Rutas Transversales' (PDF por concesionaria). Tarifas con TAG habilitado.",
+ "notas": [
+  "Montos en pesos chilenos por pasada por pórtico. Categoría 1 (y 4): motos, autos y camionetas. Categoría 2: buses y camiones.",
+  "horario.laboral: ventanas de Tarifa Base Punta (tbp) y Tarifa Saturación (ts) de lunes a viernes; fuera de ellas rige TBFP. TS tiene prioridad sobre TBP si se superponen.",
+  "Sábados, domingos y festivos se estiman con TBFP salvo en los pórticos de Autopista Central y Túnel San Cristóbal con ventanas propias [VALIDAR].",
+  "Las ventanas horarias se transcribieron de las tablas de cada PDF [VALIDAR]."
+ ],
+ "porticos": [
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA2",
+   "tramo": "Los Guindos - La Capilla",
+   "km": 7.68,
+   "tarifas": {
+    "1": {
+     "tbfp": 868.37
+    },
+    "2": {
+     "tbfp": 1736.74
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA3",
+   "tramo": "La Capilla - Colón",
+   "km": 5.63,
+   "tarifas": {
+    "1": {
+     "tbfp": 585.09,
+     "tbp": 1170.18,
+     "ts": 1755.28
+    },
+    "2": {
+     "tbfp": 1170.18,
+     "tbp": 2340.37,
+     "ts": 3510.56
+    }
+   },
+   "horario": {
+    "laboral": {
+     "ts": [
+      [
+       "07:00",
+       "07:30"
+      ]
+     ],
+     "tbp": [
+      [
+       "06:30",
+       "07:00"
+      ],
+      [
+       "07:30",
+       "08:00"
+      ]
+     ]
+    },
+    "domingo": {
+     "tbp": [
+      [
+       "18:00",
+       "20:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA5",
+   "tramo": "Colón - Las Acacias",
+   "km": 3.22,
+   "tarifas": {
+    "1": {
+     "tbfp": 334.63,
+     "tbp": 669.27,
+     "ts": 1003.9
+    },
+    "2": {
+     "tbfp": 669.27,
+     "tbp": 1338.54,
+     "ts": 2007.81
+    }
+   },
+   "horario": {
+    "laboral": {
+     "ts": [
+      [
+       "07:00",
+       "08:00"
+      ]
+     ],
+     "tbp": [
+      [
+       "06:30",
+       "07:00"
+      ],
+      [
+       "08:00",
+       "09:30"
+      ]
+     ]
+    },
+    "domingo": {
+     "tbp": [
+      [
+       "18:00",
+       "20:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA7",
+   "tramo": "Las Acacias - Américo Vespucio",
+   "km": 4.35,
+   "tarifas": {
+    "1": {
+     "tbfp": 452.06,
+     "tbp": 904.14
+    },
+    "2": {
+     "tbfp": 904.13,
+     "tbp": 1808.28
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    },
+    "domingo": {
+     "tbp": [
+      [
+       "18:30",
+       "20:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA30",
+   "tramo": "Américo Vespucio - Departamental",
+   "km": 3.78,
+   "tarifas": {
+    "1": {
+     "tbfp": 392.83,
+     "tbp": 785.66
+    },
+    "2": {
+     "tbfp": 785.66,
+     "tbp": 1571.33
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    },
+    "sabado": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    },
+    "domingo": {
+     "tbp": [
+      [
+       "18:30",
+       "20:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA10",
+   "tramo": "Departamental - Carlos Valdovinos",
+   "km": 2.75,
+   "tarifas": {
+    "1": {
+     "tbfp": 285.79,
+     "tbp": 571.58
+    },
+    "2": {
+     "tbfp": 571.58,
+     "tbp": 1143.16
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    },
+    "sabado": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    },
+    "domingo": {
+     "tbp": [
+      [
+       "18:30",
+       "20:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA31",
+   "tramo": "Carlos Valdovinos - Alameda",
+   "km": 3.55,
+   "tarifas": {
+    "1": {
+     "tbfp": 368.93,
+     "tbp": 737.86,
+     "ts": 1106.79
+    },
+    "2": {
+     "tbfp": 737.86,
+     "tbp": 1475.72,
+     "ts": 2213.58
+    }
+   },
+   "horario": {
+    "laboral": {
+     "ts": [
+      [
+       "08:30",
+       "09:00"
+      ]
+     ],
+     "tbp": [
+      [
+       "06:30",
+       "08:30"
+      ],
+      [
+       "09:00",
+       "14:00"
+      ],
+      [
+       "17:00",
+       "19:00"
+      ]
+     ]
+    },
+    "sabado": {
+     "tbp": [
+      [
+       "10:00",
+       "13:00"
+      ]
+     ]
+    },
+    "domingo": {
+     "tbp": [
+      [
+       "18:30",
+       "20:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA13",
+   "tramo": "Alameda - Río Mapocho",
+   "km": 1.75,
+   "tarifas": {
+    "1": {
+     "tbfp": 181.86,
+     "tbp": 363.73,
+     "ts": 545.6
+    },
+    "2": {
+     "tbfp": 363.73,
+     "tbp": 727.47,
+     "ts": 1091.2
+    }
+   },
+   "horario": {
+    "laboral": {
+     "ts": [
+      [
+       "08:30",
+       "09:00"
+      ]
+     ],
+     "tbp": [
+      [
+       "06:30",
+       "08:30"
+      ],
+      [
+       "09:00",
+       "14:00"
+      ],
+      [
+       "17:00",
+       "19:00"
+      ]
+     ]
+    },
+    "sabado": {
+     "tbp": [
+      [
+       "10:00",
+       "13:00"
+      ]
+     ]
+    },
+    "domingo": {
+     "tbp": [
+      [
+       "18:30",
+       "20:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA16",
+   "tramo": "Río Mapocho - 14 de la Fama",
+   "km": 4.09,
+   "tarifas": {
+    "1": {
+     "tbfp": 425.04,
+     "tbp": 850.1
+    },
+    "2": {
+     "tbfp": 850.09,
+     "tbp": 1700.2
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA17",
+   "tramo": "14 de la Fama - Américo Vespucio Norte",
+   "km": 4.45,
+   "tarifas": {
+    "1": {
+     "tbfp": 462.46,
+     "tbp": 924.92
+    },
+    "2": {
+     "tbfp": 924.92,
+     "tbp": 1849.85
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "10:00"
+      ],
+      [
+       "10:30",
+       "15:00"
+      ],
+      [
+       "16:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA18",
+   "tramo": "Américo Vespucio Norte - 14 de la Fama",
+   "km": 4.45,
+   "tarifas": {
+    "1": {
+     "tbfp": 462.46,
+     "tbp": 924.92,
+     "ts": 1387.38
+    },
+    "2": {
+     "tbfp": 924.92,
+     "tbp": 1849.85,
+     "ts": 2774.77
+    }
+   },
+   "horario": {
+    "laboral": {
+     "ts": [
+      [
+       "17:30",
+       "18:00"
+      ]
+     ],
+     "tbp": [
+      [
+       "07:00",
+       "08:30"
+      ],
+      [
+       "09:30",
+       "10:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA15",
+   "tramo": "14 de la Fama - Río Mapocho",
+   "km": 4.09,
+   "tarifas": {
+    "1": {
+     "tbfp": 425.04,
+     "tbp": 850.1
+    },
+    "2": {
+     "tbfp": 850.09,
+     "tbp": 1700.2
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "08:00"
+      ],
+      [
+       "08:30",
+       "09:00"
+      ],
+      [
+       "18:30",
+       "20:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA14",
+   "tramo": "Río Mapocho - Alameda",
+   "km": 1.75,
+   "tarifas": {
+    "1": {
+     "tbfp": 181.86,
+     "tbp": 363.73,
+     "ts": 545.6
+    },
+    "2": {
+     "tbfp": 363.73,
+     "tbp": 727.47,
+     "ts": 1091.2
+    }
+   },
+   "horario": {
+    "laboral": {
+     "ts": [
+      [
+       "10:00",
+       "10:30"
+      ],
+      [
+       "11:00",
+       "11:30"
+      ],
+      [
+       "15:30",
+       "16:00"
+      ],
+      [
+       "19:30",
+       "20:00"
+      ]
+     ],
+     "tbp": [
+      [
+       "07:00",
+       "08:30"
+      ],
+      [
+       "09:00",
+       "09:30"
+      ],
+      [
+       "15:00",
+       "15:30"
+      ],
+      [
+       "16:00",
+       "16:30"
+      ],
+      [
+       "18:30",
+       "19:30"
+      ],
+      [
+       "20:00",
+       "20:30"
+      ]
+     ]
+    },
+    "sabado": {
+     "tbp": [
+      [
+       "11:00",
+       "15:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA12",
+   "tramo": "Alameda - Carlos Valdovinos",
+   "km": 3.55,
+   "tarifas": {
+    "1": {
+     "tbfp": 368.93,
+     "tbp": 737.86,
+     "ts": 1106.79
+    },
+    "2": {
+     "tbfp": 737.86,
+     "tbp": 1475.72,
+     "ts": 2213.58
+    }
+   },
+   "horario": {
+    "laboral": {
+     "ts": [
+      [
+       "10:00",
+       "10:30"
+      ],
+      [
+       "11:00",
+       "11:30"
+      ],
+      [
+       "15:30",
+       "16:00"
+      ],
+      [
+       "19:30",
+       "20:00"
+      ]
+     ],
+     "tbp": [
+      [
+       "07:00",
+       "08:30"
+      ],
+      [
+       "09:00",
+       "09:30"
+      ],
+      [
+       "15:00",
+       "15:30"
+      ],
+      [
+       "16:00",
+       "16:30"
+      ],
+      [
+       "18:30",
+       "19:30"
+      ],
+      [
+       "20:00",
+       "20:30"
+      ]
+     ]
+    },
+    "sabado": {
+     "tbp": [
+      [
+       "11:00",
+       "15:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA11",
+   "tramo": "Carlos Valdovinos - Departamental",
+   "km": 2.75,
+   "tarifas": {
+    "1": {
+     "tbfp": 285.79,
+     "tbp": 571.58
+    },
+    "2": {
+     "tbfp": 571.58,
+     "tbp": 1143.16
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "18:00",
+       "20:30"
+      ]
+     ]
+    },
+    "sabado": {
+     "tbp": [
+      [
+       "11:00",
+       "15:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA9",
+   "tramo": "Departamental - Américo Vespucio",
+   "km": 3.78,
+   "tarifas": {
+    "1": {
+     "tbfp": 392.83,
+     "tbp": 785.66
+    },
+    "2": {
+     "tbfp": 785.66,
+     "tbp": 1571.33
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "18:00",
+       "20:30"
+      ]
+     ]
+    },
+    "sabado": {
+     "tbp": [
+      [
+       "11:00",
+       "15:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA8",
+   "tramo": "Américo Vespucio - Las Acacias",
+   "km": 4.35,
+   "tarifas": {
+    "1": {
+     "tbfp": 452.06,
+     "tbp": 904.14
+    },
+    "2": {
+     "tbfp": 904.13,
+     "tbp": 1808.28
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "18:30",
+       "20:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA32",
+   "tramo": "Las Acacias - Lo Blanco",
+   "km": 1.7,
+   "tarifas": {
+    "1": {
+     "tbfp": 176.67,
+     "tbp": 353.34,
+     "ts": 530.01
+    },
+    "2": {
+     "tbfp": 353.34,
+     "tbp": 706.68,
+     "ts": 1060.02
+    }
+   },
+   "horario": {
+    "laboral": {
+     "ts": [
+      [
+       "17:30",
+       "19:30"
+      ]
+     ],
+     "tbp": [
+      [
+       "18:30",
+       "20:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA6",
+   "tramo": "Lo Blanco - Colón",
+   "km": 1.52,
+   "tarifas": {
+    "1": {
+     "tbfp": 157.96,
+     "tbp": 315.93,
+     "ts": 473.89
+    },
+    "2": {
+     "tbfp": 315.92,
+     "tbp": 631.86,
+     "ts": 947.78
+    }
+   },
+   "horario": {
+    "laboral": {
+     "ts": [
+      [
+       "17:30",
+       "19:30"
+      ]
+     ],
+     "tbp": [
+      [
+       "10:00",
+       "10:30"
+      ],
+      [
+       "19:30",
+       "20:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA37",
+   "tramo": "Colón - Calera de Tango",
+   "km": 4.38,
+   "tarifas": {
+    "1": {
+     "tbfp": 455.18
+    },
+    "2": {
+     "tbfp": 910.37
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA4",
+   "tramo": "Calera de Tango - La Capilla",
+   "km": 1.25,
+   "tarifas": {
+    "1": {
+     "tbfp": 129.9
+    },
+    "2": {
+     "tbfp": 259.81
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA1",
+   "tramo": "La Capilla - Los Guindos",
+   "km": 7.68,
+   "tarifas": {
+    "1": {
+     "tbfp": 868.37
+    },
+    "2": {
+     "tbfp": 1736.74
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA19",
+   "tramo": "Ruta 5 Sur - Américo Vespucio",
+   "km": 3.97,
+   "tarifas": {
+    "1": {
+     "tbfp": 412.57
+    },
+    "2": {
+     "tbfp": 618.86
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA21",
+   "tramo": "Américo Vespucio - Carlos Valdovinos",
+   "km": 4.93,
+   "tarifas": {
+    "1": {
+     "tbfp": 512.34
+    },
+    "2": {
+     "tbfp": 768.51
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA23",
+   "tramo": "Carlos Valdovinos - Alameda",
+   "km": 2.77,
+   "tarifas": {
+    "1": {
+     "tbfp": 287.86,
+     "tbp": 575.74
+    },
+    "2": {
+     "tbfp": 431.8,
+     "tbp": 863.61
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "10:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA25",
+   "tramo": "Alameda - Río Mapocho",
+   "km": 4.06,
+   "tarifas": {
+    "1": {
+     "tbfp": 421.93,
+     "tbp": 843.86
+    },
+    "2": {
+     "tbfp": 632.89,
+     "tbp": 1265.79
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "09:30"
+      ],
+      [
+       "14:30",
+       "15:00"
+      ],
+      [
+       "19:00",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA28",
+   "tramo": "Río Mapocho - Ruta 5 Norte",
+   "km": 4.93,
+   "tarifas": {
+    "1": {
+     "tbfp": 512.34,
+     "tbp": 1024.69,
+     "ts": 1537.04
+    },
+    "2": {
+     "tbfp": 768.51,
+     "tbp": 1537.04,
+     "ts": 2305.55
+    }
+   },
+   "horario": {
+    "laboral": {
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ]
+     ],
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "08:30",
+       "09:30"
+      ],
+      [
+       "10:00",
+       "10:30"
+      ],
+      [
+       "18:00",
+       "19:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA29",
+   "tramo": "Ruta 5 Norte - Río Mapocho",
+   "km": 4.93,
+   "tarifas": {
+    "1": {
+     "tbfp": 512.34,
+     "tbp": 1024.69
+    },
+    "2": {
+     "tbfp": 768.51,
+     "tbp": 1537.04
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "17:00",
+       "20:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA26",
+   "tramo": "Río Mapocho - Alameda",
+   "km": 4.06,
+   "tarifas": {
+    "1": {
+     "tbfp": 421.93,
+     "tbp": 843.86
+    },
+    "2": {
+     "tbfp": 632.89,
+     "tbp": 1265.79
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "18:30",
+       "20:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA24",
+   "tramo": "Alameda - Carlos Valdovinos",
+   "km": 2.77,
+   "tarifas": {
+    "1": {
+     "tbfp": 287.86,
+     "tbp": 575.74,
+     "ts": 863.61
+    },
+    "2": {
+     "tbfp": 431.8,
+     "tbp": 863.61,
+     "ts": 1295.41
+    }
+   },
+   "horario": {
+    "laboral": {
+     "ts": [
+      [
+       "18:30",
+       "19:00"
+      ]
+     ],
+     "tbp": [
+      [
+       "18:00",
+       "18:30"
+      ],
+      [
+       "19:00",
+       "20:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA22",
+   "tramo": "Carlos Valdovinos - Américo Vespucio",
+   "km": 4.93,
+   "tarifas": {
+    "1": {
+     "tbfp": 512.34
+    },
+    "2": {
+     "tbfp": 768.51
+    }
+   }
+  },
+  {
+   "concesion": "Autopista Central",
+   "codigo": "PA20",
+   "tramo": "Américo Vespucio - Ruta 5 Sur",
+   "km": 3.97,
+   "tarifas": {
+    "1": {
+     "tbfp": 412.57
+    },
+    "2": {
+     "tbfp": 618.86
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P0",
+   "tramo": "Puente Padre Arteaga - Puente San Francisco",
+   "km": 1.4,
+   "tarifas": {
+    "1": {
+     "tbfp": 149.8,
+     "tbp": 288.4,
+     "ts": 436.8
+    },
+    "2": {
+     "tbfp": 299.6,
+     "tbp": 576.8,
+     "ts": 873.6
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "08:30",
+       "10:00"
+      ],
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "17:30",
+       "19:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "13:00",
+       "14:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P1",
+   "tramo": "Puente San Francisco - Gran Vía",
+   "km": 4.2,
+   "tarifas": {
+    "1": {
+     "tbfp": 449.4,
+     "tbp": 865.2,
+     "ts": 1310.4
+    },
+    "2": {
+     "tbfp": 898.8,
+     "tbp": 1730.4,
+     "ts": 2620.8
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "08:30",
+       "10:00"
+      ],
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "17:30",
+       "19:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "13:00",
+       "14:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P2.1",
+   "tramo": "Gran Vía - Centenario",
+   "km": 3.98,
+   "tarifas": {
+    "1": {
+     "tbfp": 425.86,
+     "tbp": 819.88,
+     "ts": 1241.76
+    },
+    "2": {
+     "tbfp": 851.72,
+     "tbp": 1639.76,
+     "ts": 2483.52
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "08:30",
+       "10:00"
+      ],
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "17:30",
+       "19:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "13:00",
+       "14:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P2.2",
+   "tramo": "Centenario - Puente Lo Saldes",
+   "km": 2.47,
+   "tarifas": {
+    "1": {
+     "tbfp": 264.29,
+     "tbp": 508.82,
+     "ts": 770.64
+    },
+    "2": {
+     "tbfp": 528.58,
+     "tbp": 1017.64,
+     "ts": 1541.28
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "08:30",
+       "10:00"
+      ],
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "17:30",
+       "19:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "13:00",
+       "14:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "SB",
+   "tramo": "Salida Bellavista",
+   "km": 2.185,
+   "tarifas": {
+    "1": {
+     "tbfp": 233.79,
+     "tbp": 450.11,
+     "ts": 681.72
+    },
+    "2": {
+     "tbfp": 467.59,
+     "tbp": 900.22,
+     "ts": 1363.44
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "08:30",
+       "10:00"
+      ],
+      [
+       "11:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "17:00"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "13:00",
+       "14:00"
+      ],
+      [
+       "17:00",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P3",
+   "tramo": "Puente Lo Saldes - Vivaceta",
+   "km": 6.72,
+   "tarifas": {
+    "1": {
+     "tbfp": 719.04,
+     "tbp": 1384.32,
+     "ts": 2096.64
+    },
+    "2": {
+     "tbfp": 1438.08,
+     "tbp": 2768.64,
+     "ts": 4193.28
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "08:30",
+       "10:00"
+      ],
+      [
+       "11:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "17:00"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "13:00",
+       "14:00"
+      ],
+      [
+       "17:00",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "EP",
+   "tramo": "Entrada Purísima",
+   "km": 2.11,
+   "tarifas": {
+    "1": {
+     "tbfp": 225.77,
+     "tbp": 434.66,
+     "ts": 658.32
+    },
+    "2": {
+     "tbfp": 451.54,
+     "tbp": 869.32,
+     "ts": 1316.64
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "08:30",
+       "10:00"
+      ],
+      [
+       "11:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "17:00"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "13:00",
+       "14:00"
+      ],
+      [
+       "17:00",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "EV",
+   "tramo": "Entrada Vivaceta",
+   "km": 1.116,
+   "tarifas": {
+    "1": {
+     "tbfp": 119.41,
+     "tbp": 229.89,
+     "ts": 348.19
+    },
+    "2": {
+     "tbfp": 238.82,
+     "tbp": 459.79,
+     "ts": 696.38
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "08:30",
+       "10:00"
+      ],
+      [
+       "11:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "17:00"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "13:00",
+       "14:00"
+      ],
+      [
+       "17:00",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P5",
+   "tramo": "Vivaceta - Carrascal",
+   "km": 6.69,
+   "tarifas": {
+    "1": {
+     "tbfp": 715.83,
+     "tbp": 1378.14
+    },
+    "2": {
+     "tbfp": 1431.66,
+     "tbp": 2756.28
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "12:00",
+       "15:00"
+      ],
+      [
+       "18:00",
+       "21:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P6.1",
+   "tramo": "Carrascal - Petersen",
+   "km": 2.24,
+   "tarifas": {
+    "1": {
+     "tbfp": 239.68,
+     "tbp": 461.44
+    },
+    "2": {
+     "tbfp": 479.36,
+     "tbp": 922.88
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "12:00",
+       "15:00"
+      ],
+      [
+       "18:00",
+       "21:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P6.2",
+   "tramo": "Petersen - Américo Vespucio Poniente",
+   "km": 3.41,
+   "tarifas": {
+    "1": {
+     "tbfp": 364.87,
+     "tbp": 702.46
+    },
+    "2": {
+     "tbfp": 729.74,
+     "tbp": 1404.92
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "12:00",
+       "15:00"
+      ],
+      [
+       "18:00",
+       "21:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P9",
+   "tramo": "Américo Vespucio Poniente - Ruta 68",
+   "km": 5,
+   "tarifas": {
+    "1": {
+     "tbfp": 535,
+     "tbp": 1030
+    },
+    "2": {
+     "tbfp": 1070,
+     "tbp": 2060
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "12:00",
+       "15:00"
+      ],
+      [
+       "18:00",
+       "21:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P7",
+   "tramo": "Estoril - Las Tranqueras",
+   "km": 2.3385,
+   "tarifas": {
+    "1": {
+     "tbfp": 250.21,
+     "tbp": 481.73,
+     "ts": 729.61
+    },
+    "2": {
+     "tbfp": 500.43,
+     "tbp": 963.46,
+     "ts": 1459.22
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "08:30",
+       "10:00"
+      ],
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "17:30",
+       "19:00"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "13:00",
+       "14:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P8.0",
+   "tramo": "Las Tranqueras - Costanera Norte",
+   "km": 5.4565,
+   "tarifas": {
+    "1": {
+     "tbfp": 583.84,
+     "tbp": 1124.03,
+     "ts": 1702.42
+    },
+    "2": {
+     "tbfp": 1167.69,
+     "tbp": 2248.07,
+     "ts": 3404.85
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "08:30",
+       "10:00"
+      ],
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "17:30",
+       "19:00"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "13:00",
+       "14:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P8.1",
+   "tramo": "Las Tranqueras - Costanera Norte",
+   "km": 5.4565,
+   "tarifas": {
+    "1": {
+     "tbfp": 583.84,
+     "tbp": 1124.03,
+     "ts": 1702.42
+    },
+    "2": {
+     "tbfp": 1167.69,
+     "tbp": 2248.07,
+     "ts": 3404.85
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "08:30",
+       "10:00"
+      ],
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "17:30",
+       "19:00"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "13:00",
+       "14:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P8.2",
+   "tramo": "Costanera Norte - Las Tranqueras",
+   "km": 5.4565,
+   "tarifas": {
+    "1": {
+     "tbfp": 583.84,
+     "tbp": 1124.03,
+     "ts": 1702.42
+    },
+    "2": {
+     "tbfp": 1167.69,
+     "tbp": 2248.07,
+     "ts": 3404.85
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "09:30"
+      ],
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "15:30",
+       "16:00"
+      ],
+      [
+       "16:30",
+       "18:00"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "13:00",
+       "14:00"
+      ],
+      [
+       "18:00",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P8.3",
+   "tramo": "Costanera Norte - Las Tranqueras",
+   "km": 5.4565,
+   "tarifas": {
+    "1": {
+     "tbfp": 583.84,
+     "tbp": 1124.03,
+     "ts": 1702.42
+    },
+    "2": {
+     "tbfp": 1167.69,
+     "tbp": 2248.07,
+     "ts": 3404.85
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "09:30"
+      ],
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "15:30",
+       "16:00"
+      ],
+      [
+       "16:30",
+       "18:00"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "13:00",
+       "14:00"
+      ],
+      [
+       "18:00",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P4",
+   "tramo": "Vivaceta - Torres Tajamar",
+   "km": 3.86,
+   "tarifas": {
+    "1": {
+     "tbfp": 413.02,
+     "tbp": 795.16,
+     "ts": 1204.32
+    },
+    "2": {
+     "tbfp": 826.04,
+     "tbp": 1590.32,
+     "ts": 2408.64
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "14:00",
+       "16:30"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "07:00",
+       "14:00"
+      ],
+      [
+       "16:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P9",
+   "tramo": "Ruta 68 - Américo Vespucio Poniente",
+   "km": 5,
+   "tarifas": {
+    "1": {
+     "tbfp": 535,
+     "tbp": 1030
+    },
+    "2": {
+     "tbfp": 1070,
+     "tbp": 2060
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "10:00"
+      ],
+      [
+       "12:00",
+       "15:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P6.2",
+   "tramo": "Américo Vespucio Poniente - Petersen",
+   "km": 3.41,
+   "tarifas": {
+    "1": {
+     "tbfp": 364.87,
+     "tbp": 702.46,
+     "ts": 1063.92
+    },
+    "2": {
+     "tbfp": 729.74,
+     "tbp": 1404.92,
+     "ts": 2127.84
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "09:30",
+       "10:00"
+      ],
+      [
+       "12:00",
+       "15:00"
+      ],
+      [
+       "18:00",
+       "18:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P6.1",
+   "tramo": "Petersen - Carrascal",
+   "km": 2.24,
+   "tarifas": {
+    "1": {
+     "tbfp": 239.68,
+     "tbp": 461.44,
+     "ts": 698.88
+    },
+    "2": {
+     "tbfp": 479.36,
+     "tbp": 922.88,
+     "ts": 1397.76
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "09:30",
+       "10:00"
+      ],
+      [
+       "12:00",
+       "15:00"
+      ],
+      [
+       "18:00",
+       "18:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P5",
+   "tramo": "Carrascal - Vivaceta",
+   "km": 6.69,
+   "tarifas": {
+    "1": {
+     "tbfp": 715.83,
+     "tbp": 1378.14,
+     "ts": 2087.28
+    },
+    "2": {
+     "tbfp": 1431.66,
+     "tbp": 2756.28,
+     "ts": 4174.56
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "09:30",
+       "10:00"
+      ],
+      [
+       "12:00",
+       "15:00"
+      ],
+      [
+       "18:00",
+       "18:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P3",
+   "tramo": "Torres Tajamar - Puente Lo Saldes",
+   "km": 2.86,
+   "tarifas": {
+    "1": {
+     "tbfp": 306.02,
+     "tbp": 589.16,
+     "ts": 892.32
+    },
+    "2": {
+     "tbfp": 612.04,
+     "tbp": 1178.32,
+     "ts": 1784.64
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "14:00",
+       "16:30"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "07:00",
+       "14:00"
+      ],
+      [
+       "16:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P2.2",
+   "tramo": "Puente Lo Saldes - Centenario",
+   "km": 2.47,
+   "tarifas": {
+    "1": {
+     "tbfp": 264.29,
+     "tbp": 508.82,
+     "ts": 770.64
+    },
+    "2": {
+     "tbfp": 528.58,
+     "tbp": 1017.64,
+     "ts": 1541.28
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "18:00",
+       "18:30"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "13:00",
+       "14:00"
+      ],
+      [
+       "18:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P2.1",
+   "tramo": "Centenario - Gran Vía",
+   "km": 3.98,
+   "tarifas": {
+    "1": {
+     "tbfp": 425.86,
+     "tbp": 819.88,
+     "ts": 1241.76
+    },
+    "2": {
+     "tbfp": 851.72,
+     "tbp": 1639.76,
+     "ts": 2483.52
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "18:00",
+       "18:30"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "13:00",
+       "14:00"
+      ],
+      [
+       "18:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P1",
+   "tramo": "Gran Vía - Puente San Francisco",
+   "km": 4.2,
+   "tarifas": {
+    "1": {
+     "tbfp": 449.4,
+     "tbp": 865.2,
+     "ts": 1310.4
+    },
+    "2": {
+     "tbfp": 898.8,
+     "tbp": 1730.4,
+     "ts": 2620.8
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "18:00",
+       "18:30"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "13:00",
+       "14:00"
+      ],
+      [
+       "18:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P0",
+   "tramo": "Puente San Francisco - Puente Padre Arteaga",
+   "km": 1.4,
+   "tarifas": {
+    "1": {
+     "tbfp": 149.8,
+     "tbp": 288.4,
+     "ts": 436.8
+    },
+    "2": {
+     "tbfp": 299.6,
+     "tbp": 576.8,
+     "ts": 873.6
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "18:00",
+       "18:30"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "13:00",
+       "14:00"
+      ],
+      [
+       "18:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Costanera Norte",
+   "codigo": "P7",
+   "tramo": "Las Tranqueras - Estoril",
+   "km": 2.3385,
+   "tarifas": {
+    "1": {
+     "tbfp": 250.21,
+     "tbp": 481.73,
+     "ts": 729.61
+    },
+    "2": {
+     "tbfp": 500.43,
+     "tbp": 963.46,
+     "ts": 1459.22
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "09:30"
+      ],
+      [
+       "12:00",
+       "13:00"
+      ],
+      [
+       "14:00",
+       "15:00"
+      ],
+      [
+       "15:30",
+       "16:00"
+      ],
+      [
+       "16:30",
+       "18:00"
+      ],
+      [
+       "19:30",
+       "21:00"
+      ]
+     ],
+     "ts": [
+      [
+       "13:00",
+       "14:00"
+      ],
+      [
+       "18:00",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P15",
+   "tramo": "El Salto - Recoleta",
+   "km": 1.4,
+   "tarifas": {
+    "1": {
+     "tbfp": 140.68,
+     "tbp": 281.37,
+     "ts": 422.05
+    },
+    "2": {
+     "tbfp": 281.37,
+     "tbp": 562.74,
+     "ts": 844.11
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "17:30",
+       "18:30"
+      ],
+      [
+       "19:00",
+       "22:00"
+      ]
+     ],
+     "ts": [
+      [
+       "18:30",
+       "19:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P13",
+   "tramo": "Recoleta - Pedro Fontova",
+   "km": 4.1,
+   "tarifas": {
+    "1": {
+     "tbfp": 412,
+     "tbp": 824.01,
+     "ts": 1236.01
+    },
+    "2": {
+     "tbfp": 824.01,
+     "tbp": 1648.02,
+     "ts": 2472.03
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "17:30",
+       "18:30"
+      ],
+      [
+       "19:00",
+       "22:00"
+      ]
+     ],
+     "ts": [
+      [
+       "18:30",
+       "19:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P11",
+   "tramo": "Pedro Fontova - Ruta 5 Norte",
+   "km": 3,
+   "tarifas": {
+    "1": {
+     "tbfp": 301.47,
+     "tbp": 602.93
+    },
+    "2": {
+     "tbfp": 602.93,
+     "tbp": 1205.87
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:00"
+      ],
+      [
+       "17:30",
+       "19:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P8",
+   "tramo": "Ruta 5 Norte - Condell",
+   "km": 6.5,
+   "tarifas": {
+    "1": {
+     "tbfp": 653.18,
+     "tbp": 1306.36
+    },
+    "2": {
+     "tbfp": 1306.36,
+     "tbp": 2612.71
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P6",
+   "tramo": "Condell - Costanera Norte",
+   "km": 4.5,
+   "tarifas": {
+    "1": {
+     "tbfp": 452.2,
+     "tbp": 904.4
+    },
+    "2": {
+     "tbfp": 904.4,
+     "tbp": 1808.8
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ],
+      [
+       "17:30",
+       "18:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P4",
+   "tramo": "Costanera Norte - Ruta 68",
+   "km": 3.5,
+   "tarifas": {
+    "1": {
+     "tbfp": 351.71,
+     "tbp": 703.42,
+     "ts": 1055.13
+    },
+    "2": {
+     "tbfp": 703.42,
+     "tbp": 1406.85,
+     "ts": 2110.27
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "15:30",
+       "16:30"
+      ],
+      [
+       "19:30",
+       "20:00"
+      ]
+     ],
+     "ts": [
+      [
+       "16:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P2",
+   "tramo": "Ruta 68 - Los Mares",
+   "km": 2.1,
+   "tarifas": {
+    "1": {
+     "tbfp": 211.03,
+     "tbp": 422.05,
+     "ts": 633.08
+    },
+    "2": {
+     "tbfp": 422.05,
+     "tbp": 844.11,
+     "ts": 1266.16
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "15:30",
+       "17:30"
+      ],
+      [
+       "19:30",
+       "20:00"
+      ]
+     ],
+     "ts": [
+      [
+       "17:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P17",
+   "tramo": "Los Mares - Ruta 78",
+   "km": 3.9,
+   "tarifas": {
+    "1": {
+     "tbfp": 391.91,
+     "tbp": 783.81,
+     "ts": 1175.72
+    },
+    "2": {
+     "tbfp": 783.81,
+     "tbp": 1567.63,
+     "ts": 2351.44
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "15:30",
+       "17:30"
+      ],
+      [
+       "19:30",
+       "20:00"
+      ]
+     ],
+     "ts": [
+      [
+       "17:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P1",
+   "tramo": "Ruta 78 - Santa Elena",
+   "km": 1.2,
+   "tarifas": {
+    "1": {
+     "tbfp": 120.59,
+     "tbp": 241.17,
+     "ts": 361.76
+    },
+    "2": {
+     "tbfp": 241.17,
+     "tbp": 482.35,
+     "ts": 723.52
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "06:30",
+       "07:00"
+      ],
+      [
+       "10:00",
+       "12:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:00",
+       "10:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P16",
+   "tramo": "Santa Elena - Ruta 68",
+   "km": 4.8,
+   "tarifas": {
+    "1": {
+     "tbfp": 482.35,
+     "tbp": 964.69,
+     "ts": 1447.04
+    },
+    "2": {
+     "tbfp": 964.69,
+     "tbp": 1929.39,
+     "ts": 2894.08
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "06:30",
+       "07:00"
+      ],
+      [
+       "10:00",
+       "12:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:00",
+       "10:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P3",
+   "tramo": "Ruta 68 - Costanera Norte",
+   "km": 3.5,
+   "tarifas": {
+    "1": {
+     "tbfp": 351.71,
+     "tbp": 703.42
+    },
+    "2": {
+     "tbfp": 703.42,
+     "tbp": 1406.85
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P5",
+   "tramo": "Costanera Norte - Condell",
+   "km": 4.5,
+   "tarifas": {
+    "1": {
+     "tbfp": 452.2,
+     "tbp": 904.4
+    },
+    "2": {
+     "tbfp": 904.4,
+     "tbp": 1808.8
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "08:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P7",
+   "tramo": "Condell - Lo Echevers",
+   "km": 1.04,
+   "tarifas": {
+    "1": {
+     "tbfp": 104.51,
+     "tbp": 209.02
+    },
+    "2": {
+     "tbfp": 209.02,
+     "tbp": 418.03
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:00"
+      ],
+      [
+       "10:30",
+       "11:30"
+      ],
+      [
+       "17:30",
+       "20:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P9",
+   "tramo": "Lo Echevers - Ruta 5 Norte",
+   "km": 5.46,
+   "tarifas": {
+    "1": {
+     "tbfp": 548.67,
+     "tbp": 1097.34
+    },
+    "2": {
+     "tbfp": 1097.34,
+     "tbp": 2194.68
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:00"
+      ],
+      [
+       "10:30",
+       "11:30"
+      ],
+      [
+       "17:30",
+       "20:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P10",
+   "tramo": "Ruta 5 Norte - Pedro Fontova",
+   "km": 3,
+   "tarifas": {
+    "1": {
+     "tbfp": 301.47,
+     "tbp": 602.93,
+     "ts": 904.4
+    },
+    "2": {
+     "tbfp": 602.93,
+     "tbp": 1205.87,
+     "ts": 1808.8
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "08:00"
+      ],
+      [
+       "09:00",
+       "09:30"
+      ],
+      [
+       "17:30",
+       "20:00"
+      ]
+     ],
+     "ts": [
+      [
+       "08:00",
+       "09:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P12",
+   "tramo": "Pedro Fontova - Guanaco",
+   "km": 0.69,
+   "tarifas": {
+    "1": {
+     "tbfp": 69.34,
+     "tbp": 138.67
+    },
+    "2": {
+     "tbfp": 138.67,
+     "tbp": 277.35
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Norte",
+   "codigo": "P14",
+   "tramo": "Guanaco - El Salto",
+   "km": 4.81,
+   "tarifas": {
+    "1": {
+     "tbfp": 483.35,
+     "tbp": 966.7
+    },
+    "2": {
+     "tbfp": 966.7,
+     "tbp": 1933.41
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "1.3",
+   "tramo": "2ª Transversal - Camino a Melipilla",
+   "km": 5.3,
+   "tarifas": {
+    "1": {
+     "tbfp": 532.59,
+     "tbp": 1065.18,
+     "ts": 1597.78
+    },
+    "2": {
+     "tbfp": 1065.18,
+     "tbp": 2130.37,
+     "ts": 3195.55
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "08:30",
+       "09:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "2.2",
+   "tramo": "Gral. Velásquez - Ruta 5",
+   "km": 2.5,
+   "tarifas": {
+    "1": {
+     "tbfp": 251.22,
+     "tbp": 502.45,
+     "ts": 753.67
+    },
+    "2": {
+     "tbfp": 502.45,
+     "tbp": 1004.89,
+     "ts": 1507.34
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "3.4",
+   "tramo": "Ruta 5 - Gran Avenida",
+   "km": 1.2,
+   "tarifas": {
+    "1": {
+     "tbfp": 120.59,
+     "tbp": 241.17,
+     "ts": 361.76
+    },
+    "2": {
+     "tbfp": 241.17,
+     "tbp": 482.35,
+     "ts": 723.52
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "18:00",
+       "18:30"
+      ],
+      [
+       "19:30",
+       "20:00"
+      ]
+     ],
+     "ts": [
+      [
+       "18:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "3.2",
+   "tramo": "Gran Avenida - Santa Rosa",
+   "km": 4.7,
+   "tarifas": {
+    "1": {
+     "tbfp": 472.3,
+     "tbp": 944.6,
+     "ts": 1416.89
+    },
+    "2": {
+     "tbfp": 944.6,
+     "tbp": 1889.19,
+     "ts": 2833.79
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "18:00",
+       "18:30"
+      ],
+      [
+       "19:30",
+       "20:00"
+      ]
+     ],
+     "ts": [
+      [
+       "18:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "4.3",
+   "tramo": "Coronel - Santa Julia",
+   "km": 0.45,
+   "tarifas": {
+    "1": {
+     "tbfp": 45.22,
+     "tbp": 90.44,
+     "ts": 135.66
+    },
+    "2": {
+     "tbfp": 90.44,
+     "tbp": 180.88,
+     "ts": 271.32
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "08:30",
+       "09:30"
+      ],
+      [
+       "18:00",
+       "18:30"
+      ],
+      [
+       "19:30",
+       "20:00"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "18:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "4.2",
+   "tramo": "Gnmo. de Alderete - V. Mackenna",
+   "km": 2.65,
+   "tarifas": {
+    "1": {
+     "tbfp": 266.3,
+     "tbp": 532.59,
+     "ts": 798.89
+    },
+    "2": {
+     "tbfp": 532.59,
+     "tbp": 1065.18,
+     "ts": 1597.78
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "08:30",
+       "09:30"
+      ],
+      [
+       "18:00",
+       "18:30"
+      ],
+      [
+       "19:30",
+       "20:00"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ],
+      [
+       "18:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "5.4",
+   "tramo": "Las Torres - Quilín",
+   "km": 3.81,
+   "tarifas": {
+    "1": {
+     "tbfp": 382.86,
+     "tbp": 765.73,
+     "ts": 1148.59
+    },
+    "2": {
+     "tbfp": 765.73,
+     "tbp": 1531.45,
+     "ts": 2297.18
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "08:30",
+       "09:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "5.2",
+   "tramo": "Quilín - Grecia",
+   "km": 2.89,
+   "tarifas": {
+    "1": {
+     "tbfp": 290.41,
+     "tbp": 580.83,
+     "ts": 871.24
+    },
+    "2": {
+     "tbfp": 580.83,
+     "tbp": 1161.65,
+     "ts": 1742.48
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "08:30",
+       "09:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "5.1",
+   "tramo": "Grecia - Quilín",
+   "km": 1.21,
+   "tarifas": {
+    "1": {
+     "tbfp": 121.59,
+     "tbp": 243.18,
+     "ts": 364.78
+    },
+    "2": {
+     "tbfp": 243.18,
+     "tbp": 486.37,
+     "ts": 729.55
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "20:00",
+       "22:00"
+      ]
+     ],
+     "ts": [
+      [
+       "19:00",
+       "20:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "5.3",
+   "tramo": "Quilín - Las Torres",
+   "km": 5.49,
+   "tarifas": {
+    "1": {
+     "tbfp": 551.68,
+     "tbp": 1103.37,
+     "ts": 1655.05
+    },
+    "2": {
+     "tbfp": 1103.37,
+     "tbp": 2206.74,
+     "ts": 3310.11
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "20:00",
+       "22:00"
+      ]
+     ],
+     "ts": [
+      [
+       "19:00",
+       "20:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "4.1",
+   "tramo": "Gnmo. de Alderete - Santa Julia",
+   "km": 3.1,
+   "tarifas": {
+    "1": {
+     "tbfp": 311.52,
+     "tbp": 623.03
+    },
+    "2": {
+     "tbfp": 623.03,
+     "tbp": 1246.06
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "3.1",
+   "tramo": "Santa Rosa - Gran Avenida",
+   "km": 3.31,
+   "tarifas": {
+    "1": {
+     "tbfp": 332.62,
+     "tbp": 665.24,
+     "ts": 997.86
+    },
+    "2": {
+     "tbfp": 665.24,
+     "tbp": 1330.47,
+     "ts": 1995.71
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "08:30",
+       "09:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "3.3",
+   "tramo": "Gran Avenida - Ruta 5",
+   "km": 2.59,
+   "tarifas": {
+    "1": {
+     "tbfp": 260.27,
+     "tbp": 520.53,
+     "ts": 780.8
+    },
+    "2": {
+     "tbfp": 520.53,
+     "tbp": 1041.07,
+     "ts": 1561.6
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "08:30",
+       "09:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "2.1",
+   "tramo": "Ruta 5 - General Velásquez",
+   "km": 2.5,
+   "tarifas": {
+    "1": {
+     "tbfp": 251.22,
+     "tbp": 502.45,
+     "ts": 753.67
+    },
+    "2": {
+     "tbfp": 502.45,
+     "tbp": 1004.89,
+     "ts": 1507.34
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "08:30",
+       "09:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "08:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Vespucio Sur",
+   "codigo": "1.1",
+   "tramo": "General Velásquez - Ruta 78",
+   "km": 5.3,
+   "tarifas": {
+    "1": {
+     "tbfp": 532.59,
+     "tbp": 1065.18
+    },
+    "2": {
+     "tbfp": 1065.18,
+     "tbp": 2130.37
+    }
+   }
+  },
+  {
+   "concesion": "Túnel San Cristóbal",
+   "codigo": "El Salto - Kennedy",
+   "tramo": "El Salto - Kennedy",
+   "km": 4.1,
+   "tarifas": {
+    "1": {
+     "tbfp": 565,
+     "tbp": 904,
+     "ts": 1131
+    },
+    "2": {
+     "tbfp": 1696,
+     "tbp": 2713,
+     "ts": 3392
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "07:30"
+      ],
+      [
+       "10:00",
+       "11:00"
+      ],
+      [
+       "15:30",
+       "17:30"
+      ]
+     ],
+     "ts": [
+      [
+       "07:30",
+       "09:30"
+      ],
+      [
+       "17:30",
+       "20:30"
+      ]
+     ]
+    },
+    "sabado": {
+     "tbp": [
+      [
+       "10:00",
+       "14:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Túnel San Cristóbal",
+   "codigo": "Kennedy - El Salto",
+   "tramo": "Kennedy - El Salto",
+   "km": 4.1,
+   "tarifas": {
+    "1": {
+     "tbfp": 452,
+     "tbp": 678
+    },
+    "2": {
+     "tbfp": 1357,
+     "tbp": 2035
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:00",
+       "10:00"
+      ],
+      [
+       "17:30",
+       "20:30"
+      ]
+     ]
+    },
+    "sabado": {
+     "tbp": [
+      [
+       "10:00",
+       "14:00"
+      ]
+     ]
+    },
+    "domingo": {
+     "tbp": [
+      [
+       "17:00",
+       "21:00"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Acceso Nororiente",
+   "codigo": "Sector Poniente",
+   "tramo": "Troncal sector poniente",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 4116,
+     "tbp": 6173
+    },
+    "2": {
+     "tbfp": 7408,
+     "tbp": 11112
+    }
+   },
+   "nota": "Horario punta no incluido en el PDF: se estima con tarifa normal [VALIDAR]"
+  },
+  {
+   "concesion": "Acceso Nororiente",
+   "codigo": "Sector Oriente",
+   "tramo": "Troncal sector oriente",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 4116,
+     "tbp": 6173
+    },
+    "2": {
+     "tbfp": 7408,
+     "tbp": 11112
+    }
+   },
+   "nota": "Horario punta no incluido en el PDF: se estima con tarifa normal [VALIDAR]"
+  },
+  {
+   "concesion": "Acceso Vial AMB",
+   "codigo": "Pórtico AMB",
+   "tramo": "Acceso Aeropuerto Arturo Merino Benítez",
+   "km": 0,
+   "tarifas": {
+    "1": {
+     "tbfp": 889
+    },
+    "2": {
+     "tbfp": 1778
+    }
+   }
+  },
+  {
+   "concesion": "Américo Vespucio Oriente",
+   "codigo": "AVO-I",
+   "tramo": "El Salto - Príncipe de Gales (tarifa por km entre pórtico de entrada y salida)",
+   "km": 0,
+   "porKm": true,
+   "tarifas": {
+    "1": {
+     "tbfp": 232,
+     "tbp": 464
+    },
+    "2": {
+     "tbfp": 464,
+     "tbp": 928
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ],
+      [
+       "17:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "concesion": "Américo Vespucio Oriente",
+   "codigo": "P110",
+   "tramo": "La Pirámide",
+   "km": 2.3,
+   "tarifas": {
+    "1": {
+     "tbfp": 267,
+     "tbp": 534
+    },
+    "2": {
+     "tbfp": 534,
+     "tbp": 1067
+    }
+   },
+   "horario": {
+    "laboral": {
+     "tbp": [
+      [
+       "07:30",
+       "09:30"
+      ],
+      [
+       "17:30",
+       "19:30"
+      ]
+     ]
+    }
+   }
+  }
+ ]
+}
